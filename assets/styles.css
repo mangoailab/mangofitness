@@ -67,13 +67,20 @@ body {
 
 .brand-heading { display:flex; align-items:center; gap:12px; }
 .brand-mark {
-  width: 64px;
+  width: 140px;
   height: 64px;
   border-radius: 18px;
   background: white;
+  border: 1px solid white;
   display: grid;
   place-items: center;
-  font-size: 34px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.brand-mark img {
+  width: 126px;
+  height: auto;
+  display: block;
 }
 
 h1 { margin:0 0 6px; font-size:32px; line-height:1.1; letter-spacing:-.03em; white-space:nowrap; }
