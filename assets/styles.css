@@ -659,3 +659,17 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     padding-bottom: 190px;
   }
 }
+
+/* Float autocomplete in front of nearby controls instead of adding extra space. */
+.exercise-rows:focus-within {
+  padding-bottom: 8px;
+}
+@media (max-width: 760px) {
+  .exercise-rows:focus-within {
+    padding-bottom: 10px;
+  }
+}
+.movement-suggestions {
+  position: fixed;
+  z-index: 9999;
+}

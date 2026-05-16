@@ -613,6 +613,13 @@ function initCoachApp() {
     function hideMovementSuggestions() {
       suggestionBox?.classList.add("hidden");
     }
+    function positionMovementSuggestions() {
+      if (!movementInput || !suggestionBox) return;
+      const box = movementInput.getBoundingClientRect();
+      suggestionBox.style.left = `${box.left}px`;
+      suggestionBox.style.top = `${box.bottom + 4}px`;
+      suggestionBox.style.width = `${box.width}px`;
+    }
     function applyMovement(movement) {
       if (!movementInput || !movement) return;
       movementInput.value = movement.name;
@@ -629,6 +636,7 @@ function initCoachApp() {
         .slice(0, 8) : [];
       suggestionBox.innerHTML = matches.map((movement) => `<button type="button" data-movement-id="${escapeHtml(movementId(movement))}">${escapeHtml(movement.name)}</button>`).join("");
       suggestionBox.classList.toggle("hidden", !matches.length);
+      if (matches.length) positionMovementSuggestions();
     });
     suggestionBox?.addEventListener("click", (event) => {
       const button = event.target.closest("[data-movement-id]");
@@ -637,6 +645,8 @@ function initCoachApp() {
     });
     movementInput?.addEventListener("blur", () => setTimeout(hideMovementSuggestions, 150));
     movementInput?.addEventListener("focus", () => movementInput.dispatchEvent(new Event("input")));
+    window.addEventListener("scroll", positionMovementSuggestions, true);
+    window.addEventListener("resize", positionMovementSuggestions);
     row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
     row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
     rows.appendChild(row);
