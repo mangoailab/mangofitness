@@ -22,6 +22,7 @@ const MangoFitnessStore = (() => {
       title: row.title,
       notes: row.notes || "",
       warmupNotes: row.warmup_notes || row.warmupNotes || "",
+      cardioNotes: row.cardio_notes || row.cardioNotes || "",
       format: row.workout_format || row.format || "Strength",
       rounds: row.rounds || "",
       scoreType: row.score_type || "",
@@ -49,6 +50,7 @@ const MangoFitnessStore = (() => {
       weight: row.working_weight ?? "",
       reps: row.reps_completed || "",
       notes: row.notes || "",
+      score: row.score_result || "",
       isPr: Boolean(row.is_pr)
     };
   }
@@ -71,7 +73,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, section_type, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, section_type, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -84,7 +86,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athlete_workout_results")
-        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, is_pr, workout_exercises (exercise_name, workout_id)")
+        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, is_pr, workout_exercises (exercise_name, workout_id)")
         .order("completed_on", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -107,6 +109,7 @@ const MangoFitnessStore = (() => {
         title: workout.title,
         notes: workout.notes || null,
         warmup_notes: workout.warmupNotes || null,
+        cardio_notes: workout.cardioNotes || null,
         workout_format: workout.format || "Strength",
         rounds: workout.rounds || null,
         score_type: workout.scoreType || null,
@@ -192,6 +195,7 @@ const MangoFitnessStore = (() => {
         working_weight: result.weight || null,
         reps_completed: result.reps || null,
         notes: result.notes || null,
+        score_result: result.score || null,
         is_pr: result.isPr
       });
       if (error) throw error;
@@ -229,6 +233,7 @@ function initCoachApp() {
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
   const warmupNotes = document.getElementById("warmupNotes");
+  const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
   const list = document.getElementById("coachWorkoutList");
   const resultsList = document.getElementById("coachResultsList");
@@ -368,6 +373,7 @@ function initCoachApp() {
     title.value = "";
     notes.value = "";
     warmupNotes.value = "";
+    cardioNotes.value = "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
     addExerciseRow("lifting");
     addExerciseRow("cardio");
@@ -395,6 +401,7 @@ function initCoachApp() {
     title.value = workout.title;
     notes.value = workout.notes || "";
     warmupNotes.value = workout.warmupNotes || "";
+    cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
     workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
@@ -417,6 +424,7 @@ function initCoachApp() {
           </div>
           ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
           ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
+          ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
           ${renderExerciseGroups(workout.exercises)}
         </article>
       `).join("") : `<p class="muted empty-state">No workouts saved yet. Build the first one above.</p>`;
@@ -424,7 +432,7 @@ function initCoachApp() {
       resultsList.innerHTML = results.length ? results.map((result) => `
         <article class="item-card">
           <strong>${escapeHtml(result.exerciseName)}</strong>
-          <p class="muted">${escapeHtml(result.completedOn)} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
+          <p class="muted">${escapeHtml(result.completedOn)}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
           ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
         </article>
       `).join("") : `<p class="muted empty-state">No athlete results logged yet.</p>`;
@@ -462,6 +470,7 @@ function initCoachApp() {
         title: title.value.trim(),
         notes: notes.value.trim(),
         warmupNotes: warmupNotes.value.trim(),
+        cardioNotes: cardioNotes.value.trim(),
         format: "Class workout",
         rounds: "",
         scoreType: "",
@@ -511,6 +520,7 @@ function initAthleteApp() {
             <p class="muted">${escapeHtml(workout.date)}</p>
             ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
             ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
+            ${workout.cardioNotes ? `<section class="athlete-workout-section"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></section>` : ""}
             <div class="list-stack">
               ${workoutSectionGroups(workout.exercises).map((group) => `
                 <section class="athlete-workout-section">
@@ -524,6 +534,7 @@ function initAthleteApp() {
                           ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
                         <div class="mini-grid">
+                          <div class="field"><label>Time / score</label><input name="score" type="text" placeholder="18:42 or 7+12" /></div>
                           <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
                           <div class="field"><label>Reps done</label><input name="reps" type="text" placeholder="6,6,5,5" /></div>
                           <label class="check-field"><input name="isPr" type="checkbox" /> PR</label>
@@ -543,7 +554,7 @@ function initAthleteApp() {
       history.innerHTML = results.length ? results.map((result) => `
         <article class="item-card">
           <strong>${escapeHtml(result.exerciseName)}</strong>
-          <p class="muted">${escapeHtml(result.completedOn)} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
+          <p class="muted">${escapeHtml(result.completedOn)}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
           ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
         </article>
       `).join("") : `<p class="muted empty-state">No results logged yet.</p>`;
@@ -559,6 +570,7 @@ function initAthleteApp() {
               exerciseId: form.dataset.exerciseId,
               exerciseName: form.dataset.exerciseName,
               completedOn: date.value || todayISO(),
+              score: data.get("score"),
               weight: data.get("weight"),
               reps: data.get("reps"),
               notes: data.get("notes"),

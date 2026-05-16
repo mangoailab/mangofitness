@@ -31,6 +31,7 @@ create table if not exists workouts (
   title text not null,
   notes text,
   warmup_notes text,
+  cardio_notes text,
   workout_format text not null default 'Strength',
   rounds text,
   score_type text,
@@ -70,6 +71,7 @@ create table if not exists athlete_workout_results (
   working_weight numeric,
   reps_completed text,
   notes text,
+  score_result text,
   is_pr boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -87,6 +89,7 @@ create table if not exists athlete_prs (
 );
 
 alter table workouts add column if not exists warmup_notes text;
+alter table workouts add column if not exists cardio_notes text;
 alter table workouts add column if not exists workout_format text not null default 'Strength';
 alter table workouts add column if not exists rounds text;
 alter table workouts add column if not exists score_type text;
@@ -96,6 +99,8 @@ alter table workout_exercises add column if not exists target_weight text;
 alter table workout_exercises add column if not exists section_type text not null default 'cardio';
 
 create index if not exists workout_exercises_workout_id_idx on workout_exercises(workout_id);
+alter table athlete_workout_results add column if not exists score_result text;
+
 create index if not exists athlete_workout_results_exercise_idx on athlete_workout_results(workout_exercise_id);
 create index if not exists athlete_workout_results_auth_user_idx on athlete_workout_results(auth_user_id);
 
