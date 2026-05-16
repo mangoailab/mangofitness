@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Coach Dashboard — Mango Fitness</title>
   <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
 </head>
 <body>
   <main class="container">
@@ -20,16 +22,38 @@
       <p class="muted hero-description">Create weekly programs, assign workouts, and review athlete progress.</p>
     </section>
 
-    <section class="card auth-card">
+    <section id="coachAuthCard" class="card auth-card">
       <h2>Coach Sign In</h2>
       <div class="field"><label for="coachEmail">Email</label><input id="coachEmail" type="email" placeholder="Email" /></div>
       <div class="field"><label for="coachPassword">Password</label><input id="coachPassword" type="password" placeholder="Password" /></div>
       <div class="actions" style="margin-top:14px;">
-        <button type="button" class="primary">Sign In</button>
-        <button type="button">Forgot Password</button>
+        <button type="button" id="coachSignInBtn" class="primary">Sign In</button>
+        <button type="button" id="coachForgotBtn">Forgot Password</button>
       </div>
+      <p id="coachAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
       <p class="muted" style="margin:12px 0 0;">Program builder coming next.</p>
     </section>
+
+    <section id="coachDashboard" class="card auth-card hidden">
+      <h2>Coach Dashboard</h2>
+      <p id="coachDashboardMessage" class="muted"></p>
+      <p class="muted">Supabase is connected. Program builder coming next.</p>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="coachSignOutBtn">Sign out</button></div>
+    </section>
   </main>
+  <script src="assets/auth.js"></script>
+  <script>
+    initLoginPage({
+      emailId: "coachEmail",
+      passwordId: "coachPassword",
+      signInBtnId: "coachSignInBtn",
+      forgotBtnId: "coachForgotBtn",
+      signOutBtnId: "coachSignOutBtn",
+      authCardId: "coachAuthCard",
+      dashboardId: "coachDashboard",
+      messageId: "coachAuthMessage",
+      dashboardMessageId: "coachDashboardMessage"
+    });
+  </script>
 </body>
 </html>
