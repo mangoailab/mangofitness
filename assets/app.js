@@ -27,6 +27,7 @@ const MangoFitnessStore = (() => {
         sets: exercise.sets || "",
         reps: exercise.reps || "",
         target: exercise.target || "",
+        weight: exercise.target_weight || exercise.weight || "",
         notes: exercise.notes || ""
       }))
     };
@@ -65,7 +66,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_exercises (id, exercise_name, sets, reps, target, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -130,6 +131,7 @@ const MangoFitnessStore = (() => {
           sets: exercise.sets || null,
           reps: exercise.reps || null,
           target: exercise.target || null,
+          target_weight: exercise.weight || null,
           notes: exercise.notes || null,
           sort_order: index
         };
@@ -232,21 +234,85 @@ function initCoachApp() {
 
   function addExerciseRow(values = {}) {
     const row = document.createElement("div");
-    row.className = "exercise-row";
+    row.className = "exercise-row exercise-table-row";
     row.dataset.exerciseId = values.id || uid("exercise");
+    row.draggable = true;
     row.innerHTML = `
-      <div class="field"><label>Exercise</label><input class="exercise-name" type="text" placeholder="Back squat" value="${escapeHtml(values.name)}" required /></div>
-      <div class="mini-grid">
-        <div class="field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
-        <div class="field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="6" value="${escapeHtml(values.reps)}" /></div>
-        <div class="field"><label>Target</label><input class="exercise-target" type="text" placeholder="75% or RPE 7" value="${escapeHtml(values.target)}" /></div>
-      </div>
-      <div class="field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Tempo, rest, cues" value="${escapeHtml(values.notes)}" /></div>
+      <button type="button" class="drag-handle" aria-label="Drag to reorder" title="Drag to reorder">☰</button>
+      <button type="button" class="move-row move-up" aria-label="Move up" title="Move up">↑</button>
+      <button type="button" class="move-row move-down" aria-label="Move down" title="Move down">↓</button>
+      <div class="field exercise-name-field"><label>Exercise</label><input class="exercise-name" type="text" placeholder="Back squat" value="${escapeHtml(values.name)}" required /></div>
+      <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
+      <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="6" value="${escapeHtml(values.reps)}" /></div>
+      <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="135 lb" value="${escapeHtml(values.weight)}" /></div>
+      <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="RPE 7" value="${escapeHtml(values.target)}" /></div>
+      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Tempo, rest, cues" value="${escapeHtml(values.notes)}" /></div>
       <button type="button" class="remove-row">Remove</button>
     `;
     row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
+    row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
     rows.appendChild(row);
   }
+
+  function rowAfterPointer(container, y) {
+    const draggableRows = [...container.querySelectorAll(".exercise-row:not(.dragging)")];
+    return draggableRows.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) return { offset, element: child };
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
+  rows.addEventListener("dragstart", (event) => {
+    const row = event.target.closest(".exercise-row");
+    if (!row) return;
+    row.classList.add("dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", row.dataset.exerciseId);
+  });
+
+  rows.addEventListener("dragend", (event) => {
+    event.target.closest(".exercise-row")?.classList.remove("dragging");
+  });
+
+  rows.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    const dragging = rows.querySelector(".dragging");
+    if (!dragging) return;
+    const after = rowAfterPointer(rows, event.clientY);
+    if (after) rows.insertBefore(dragging, after);
+    else rows.appendChild(dragging);
+  });
+
+  rows.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest(".drag-handle");
+    if (!handle) return;
+    const row = handle.closest(".exercise-row");
+    if (!row) return;
+
+    event.preventDefault();
+    handle.setPointerCapture(event.pointerId);
+    row.classList.add("dragging");
+
+    function move(pointerEvent) {
+      const after = rowAfterPointer(rows, pointerEvent.clientY);
+      if (after) rows.insertBefore(row, after);
+      else rows.appendChild(row);
+    }
+
+    function stop() {
+      row.classList.remove("dragging");
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", stop);
+      handle.removeEventListener("pointercancel", stop);
+    }
+
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", stop);
+    handle.addEventListener("pointercancel", stop);
+  });
 
   function clearForm() {
     form.dataset.editId = "";
@@ -265,6 +331,7 @@ function initCoachApp() {
       sets: row.querySelector(".exercise-sets").value.trim(),
       reps: row.querySelector(".exercise-reps").value.trim(),
       target: row.querySelector(".exercise-target").value.trim(),
+      weight: row.querySelector(".exercise-weight").value.trim(),
       notes: row.querySelector(".exercise-notes").value.trim()
     })).filter((exercise) => exercise.name);
   }
@@ -297,7 +364,7 @@ function initCoachApp() {
             </div>
           </div>
           ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-          <ul class="clean-list">${workout.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}</li>`).join("")}</ul>
+          <ul class="clean-list">${workout.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.weight ? `· ${escapeHtml(exercise.weight)}` : ""} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}</li>`).join("")}</ul>
         </article>
       `).join("") : `<p class="muted empty-state">No workouts saved yet. Build the first one above.</p>`;
 
@@ -380,7 +447,7 @@ function initAthleteApp() {
                 <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}">
                   <div>
                     <strong>${escapeHtml(exercise.name)}</strong>
-                    <p class="muted">${escapeHtml(exercise.sets || "-")} sets · ${escapeHtml(exercise.reps || "-")} reps${exercise.target ? ` · ${escapeHtml(exercise.target)}` : ""}</p>
+                    <p class="muted">${escapeHtml(exercise.sets || "-")} sets · ${escapeHtml(exercise.reps || "-")} reps${exercise.weight ? ` · ${escapeHtml(exercise.weight)}` : ""}${exercise.target ? ` · ${escapeHtml(exercise.target)}` : ""}</p>
                     ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                   </div>
                   <div class="mini-grid">

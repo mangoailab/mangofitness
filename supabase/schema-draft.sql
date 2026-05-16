@@ -42,6 +42,7 @@ create table if not exists workout_exercises (
   sets text,
   reps text,
   target text,
+  target_weight text,
   notes text,
   sort_order integer not null default 0,
   created_at timestamptz not null default now()
@@ -81,6 +82,8 @@ create table if not exists athlete_prs (
 );
 
 create index if not exists workouts_workout_date_idx on workouts(workout_date);
+alter table workout_exercises add column if not exists target_weight text;
+
 create index if not exists workout_exercises_workout_id_idx on workout_exercises(workout_id);
 create index if not exists athlete_workout_results_exercise_idx on athlete_workout_results(workout_exercise_id);
 create index if not exists athlete_workout_results_auth_user_idx on athlete_workout_results(auth_user_id);
