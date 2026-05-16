@@ -225,6 +225,15 @@ function friendlyError(error) {
   return message;
 }
 
+function exerciseSummary(exercise) {
+  const parts = [];
+  if (exercise.sets) parts.push(`${escapeHtml(exercise.sets)} sets`);
+  if (exercise.reps) parts.push(`${escapeHtml(exercise.reps)} reps`);
+  if (exercise.weight) parts.push(escapeHtml(exercise.weight));
+  if (exercise.target) parts.push(escapeHtml(exercise.target));
+  return parts.join(" · ");
+}
+
 function initCoachApp() {
   const form = document.getElementById("workoutForm");
   if (!form) return;
@@ -267,16 +276,23 @@ function initCoachApp() {
     row.dataset.exerciseId = values.id || uid("exercise");
     row.dataset.section = section;
     row.draggable = true;
-    row.innerHTML = `
-      <button type="button" class="drag-handle" aria-label="Drag to reorder" title="Drag to reorder">☰</button>
-      <button type="button" class="move-row move-up" aria-label="Move up" title="Move up">↑</button>
-      <button type="button" class="move-row move-down" aria-label="Move down" title="Move down">↓</button>
+    const rowFields = section === "cardio" ? `
+      <div class="field exercise-name-field"><label>Score item</label><input class="exercise-name" type="text" placeholder="Finish time, 4K row, rounds + reps" value="${escapeHtml(values.name)}" required /></div>
+      <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
+      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="What should the athlete record?" value="${escapeHtml(values.notes)}" /></div>
+    ` : `
       <div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
       <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
       <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
       <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="RPE, pace, or goal" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Coaching notes or scaling" value="${escapeHtml(values.notes)}" /></div>
+    `;
+    row.innerHTML = `
+      <button type="button" class="drag-handle" aria-label="Drag to reorder" title="Drag to reorder">☰</button>
+      <button type="button" class="move-row move-up" aria-label="Move up" title="Move up">↑</button>
+      <button type="button" class="move-row move-down" aria-label="Move down" title="Move down">↓</button>
+      ${rowFields}
       <button type="button" class="remove-row">Remove</button>
     `;
     row.querySelector(".remove-row").addEventListener("click", () => row.remove());
@@ -299,7 +315,7 @@ function initCoachApp() {
     return groups.map((group) => `
       <div class="exercise-group">
         <h4>${escapeHtml(group.label)}</h4>
-        <ul class="clean-list">${group.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.weight ? `· ${escapeHtml(exercise.weight)}` : ""} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}</li>`).join("")}</ul>
+        <ul class="clean-list">${group.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong>${exerciseSummary(exercise) ? ` — ${exerciseSummary(exercise)}` : ""}</li>`).join("")}</ul>
       </div>
     `).join("");
   }
@@ -385,11 +401,11 @@ function initCoachApp() {
       id: row.dataset.exerciseId,
       section: row.dataset.section || row.closest("[data-exercise-rows]")?.dataset.exerciseRows || "cardio",
       name: row.querySelector(".exercise-name").value.trim(),
-      sets: row.querySelector(".exercise-sets").value.trim(),
-      reps: row.querySelector(".exercise-reps").value.trim(),
-      target: row.querySelector(".exercise-target").value.trim(),
-      weight: row.querySelector(".exercise-weight").value.trim(),
-      notes: row.querySelector(".exercise-notes").value.trim()
+      sets: row.querySelector(".exercise-sets")?.value.trim() || "",
+      reps: row.querySelector(".exercise-reps")?.value.trim() || "",
+      target: row.querySelector(".exercise-target")?.value.trim() || "",
+      weight: row.querySelector(".exercise-weight")?.value.trim() || "",
+      notes: row.querySelector(".exercise-notes")?.value.trim() || ""
     })).filter((exercise) => exercise.name);
   }
 
@@ -530,7 +546,7 @@ function initAthleteApp() {
                       <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}">
                         <div>
                           <strong>${escapeHtml(exercise.name)}</strong>
-                          <p class="muted">${escapeHtml(exercise.sets || "-")} sets · ${escapeHtml(exercise.reps || "-")} reps${exercise.weight ? ` · ${escapeHtml(exercise.weight)}` : ""}${exercise.target ? ` · ${escapeHtml(exercise.target)}` : ""}</p>
+                          ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
                           ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
                         <div class="mini-grid">

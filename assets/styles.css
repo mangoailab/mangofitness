@@ -514,3 +514,16 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     max-width: none;
   }
 }
+
+/* Cardio score rows only need score item, score type, and notes. */
+.exercise-table-row[data-section="cardio"] {
+  grid-template-columns: 44px 36px 36px minmax(220px, 1.4fr) minmax(180px, 1fr) minmax(220px, 1.2fr) auto;
+}
+
+@media (max-width: 760px) {
+  .exercise-table-row[data-section="cardio"] {
+    width: 720px;
+    min-width: 720px;
+    grid-template-columns: 38px 34px 34px 210px 170px 180px 92px;
+  }
+}
