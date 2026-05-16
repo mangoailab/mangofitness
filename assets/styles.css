@@ -741,3 +741,25 @@ body.is-reordering .exercise-row.dragging {
 .benchmark-manager {
   margin-top: 12px;
 }
+
+.saved-workout-tools {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.week-actions {
+  width: 100%;
+}
+.week-actions button {
+  flex: 1 1 140px;
+}
+.search-field {
+  margin-bottom: 0;
+}
+
+@media (max-width: 760px) {
+  .week-actions button,
+  .item-actions button {
+    flex: 1 1 100%;
+  }
+}

@@ -551,6 +551,49 @@ function exerciseSummary(exercise) {
   return parts.join(" · ");
 }
 
+function parseLocalDate(value) {
+  const [year, month, day] = String(value || "").split("-").map(Number);
+  return new Date(year || 1970, (month || 1) - 1, day || 1);
+}
+
+function isoDate(dateValue) {
+  const date = new Date(dateValue);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function startOfWeek(dateValue) {
+  const date = new Date(dateValue);
+  date.setHours(0, 0, 0, 0);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  return date;
+}
+
+function addDays(dateValue, days) {
+  const date = new Date(dateValue);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function shortDate(dateValue) {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(dateValue);
+}
+
+function workoutSearchText(workout) {
+  return [
+    workout.title,
+    workout.date,
+    workout.notes,
+    workout.warmupNotes,
+    workout.cardioNotes,
+    ...workout.exercises.flatMap((exercise) => [exercise.name, exercise.notes, exercise.target, exercise.benchmarkName, exercise.movementName])
+  ].join(" ").toLowerCase();
+}
+
 function initCoachApp() {
   const form = document.getElementById("workoutForm");
   if (!form) return;
@@ -581,7 +624,13 @@ function initCoachApp() {
   const list = document.getElementById("coachWorkoutList");
   const resultsList = document.getElementById("coachResultsList");
   const count = document.getElementById("workoutCount");
+  const weekLabel = document.getElementById("workoutWeekLabel");
+  const workoutSearch = document.getElementById("workoutSearch");
+  const prevWeekBtn = document.getElementById("prevWeekBtn");
+  const thisWeekBtn = document.getElementById("thisWeekBtn");
+  const nextWeekBtn = document.getElementById("nextWeekBtn");
   const message = document.getElementById("coachAppMessage");
+  let selectedWeekStart = startOfWeek(new Date());
 
   date.value = todayISO();
 
@@ -914,18 +963,50 @@ function initCoachApp() {
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
 
+  async function copyWorkout(id) {
+    const workout = (await MangoFitnessStore.workouts()).find((item) => item.id === id);
+    if (!workout) return;
+    form.dataset.editId = "";
+    date.value = todayISO();
+    title.value = `${workout.title} copy`;
+    notes.value = workout.notes || "";
+    warmupNotes.value = workout.warmupNotes || "";
+    cardioNotes.value = workout.cardioNotes || "";
+    sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
+    workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", { ...exercise, id: "" }));
+    setAppMessage("Workout copied into the builder. Pick a date and save it.");
+    window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
+  }
+
   async function renderCoach() {
     try {
       const workouts = await MangoFitnessStore.workouts();
       const results = await MangoFitnessStore.results();
-      count.textContent = `${workouts.length} workout${workouts.length === 1 ? "" : "s"}`;
+      const searchQuery = workoutSearch?.value.trim().toLowerCase() || "";
+      const weekStart = selectedWeekStart;
+      const weekEnd = addDays(weekStart, 6);
+      const visibleWorkouts = workouts.filter((workout) => {
+        if (searchQuery) return workoutSearchText(workout).includes(searchQuery);
+        const workoutDate = parseLocalDate(workout.date);
+        return workoutDate >= weekStart && workoutDate <= weekEnd;
+      });
 
-      list.innerHTML = workouts.length ? workouts.map((workout) => `
+      count.textContent = searchQuery
+        ? `${visibleWorkouts.length} match${visibleWorkouts.length === 1 ? "" : "es"}`
+        : `${visibleWorkouts.length} this week`;
+      if (weekLabel) {
+        weekLabel.textContent = searchQuery
+          ? "Search results"
+          : `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
+      }
+
+      list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => `
         <article class="item-card">
           <div class="item-head">
             <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items</p></div>
             <div class="actions item-actions">
               <button type="button" data-edit="${workout.id}">Edit</button>
+              <button type="button" data-copy="${workout.id}">Copy</button>
               <button type="button" data-delete="${workout.id}">Delete</button>
             </div>
           </div>
@@ -934,7 +1015,7 @@ function initCoachApp() {
           ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
           ${renderExerciseGroups(workout.exercises)}
         </article>
-      `).join("") : `<p class="muted empty-state">No workouts saved yet. Build the first one above.</p>`;
+      `).join("") : `<p class="muted empty-state">${searchQuery ? "No workouts matched your search." : "No workouts saved for this week."}</p>`;
 
       resultsList.innerHTML = results.length ? results.map((result) => `
         <article class="item-card">
@@ -945,6 +1026,7 @@ function initCoachApp() {
       `).join("") : `<p class="muted empty-state">No athlete results logged yet.</p>`;
 
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
+      list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => {
         const workoutTitle = button.closest(".item-card")?.querySelector("strong")?.textContent || "this workout";
         if (!confirm(`Delete ${workoutTitle}? This cannot be undone.`)) return;
@@ -961,6 +1043,23 @@ function initCoachApp() {
       resultsList.innerHTML = `<p class="muted empty-state">Results unavailable until Supabase is ready.</p>`;
     }
   }
+
+  prevWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = addDays(selectedWeekStart, -7);
+    if (workoutSearch) workoutSearch.value = "";
+    renderCoach();
+  });
+  thisWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = startOfWeek(new Date());
+    if (workoutSearch) workoutSearch.value = "";
+    renderCoach();
+  });
+  nextWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = addDays(selectedWeekStart, 7);
+    if (workoutSearch) workoutSearch.value = "";
+    renderCoach();
+  });
+  workoutSearch?.addEventListener("input", renderCoach);
 
   warmupTemplate?.addEventListener("change", () => {
     const template = warmupTemplateByKey(warmupTemplate.value);
