@@ -374,17 +374,3 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
   display: grid;
   gap: 10px;
 }
-
-.notes-field {
-  grid-column: 4 / -2;
-}
-.notes-field textarea {
-  min-height: 58px;
-  resize: vertical;
-}
-
-@media (max-width: 900px) {
-  .notes-field {
-    grid-column: 4 / -2;
-  }
-}
