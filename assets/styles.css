@@ -323,3 +323,10 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     min-width: 86px;
   }
 }
+.exercise-actions {
+  justify-content: flex-start;
+  margin-top: -2px;
+}
+.exercise-actions button {
+  min-width: 150px;
+}
