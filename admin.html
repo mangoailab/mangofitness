@@ -55,8 +55,10 @@
           <div class="workout-sections">
             <section class="workout-section" data-section="warmup">
               <div class="section-head compact"><h3>Warm-up</h3></div>
-              <div class="exercise-rows" data-exercise-rows="warmup"></div>
-              <div class="actions exercise-actions"><button type="button" data-add-section="warmup">Add warm-up item</button></div>
+              <div class="field warmup-notes-field">
+                <label for="warmupNotes">Warm-up notes</label>
+                <textarea id="warmupNotes" rows="4" placeholder="Example: 3 rounds, alternating 5 push-ups and 8 ring rows. Move smooth, not for time."></textarea>
+              </div>
             </section>
 
             <section class="workout-section" data-section="lifting">

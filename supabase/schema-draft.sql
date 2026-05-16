@@ -30,6 +30,7 @@ create table if not exists workouts (
   workout_date date not null,
   title text not null,
   notes text,
+  warmup_notes text,
   workout_format text not null default 'Strength',
   rounds text,
   score_type text,
@@ -85,6 +86,7 @@ create table if not exists athlete_prs (
   created_at timestamptz not null default now()
 );
 
+alter table workouts add column if not exists warmup_notes text;
 alter table workouts add column if not exists workout_format text not null default 'Strength';
 alter table workouts add column if not exists rounds text;
 alter table workouts add column if not exists score_type text;
