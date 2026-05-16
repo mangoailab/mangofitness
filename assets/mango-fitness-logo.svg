@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 653" role="img" aria-labelledby="title desc">
+  <title id="title">Mango Fitness logo</title>
+  <desc id="desc">Mango wordmark with a green leaf and the word Fitness underneath.</desc>
+  <defs>
+    <linearGradient id="word" x1="190" y1="220" x2="1040" y2="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#EF4444"/>
+      <stop offset="0.34" stop-color="#F59E0B"/>
+      <stop offset="0.58" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="720" y1="44" x2="860" y2="155" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#86EFAC"/>
+      <stop offset="1" stop-color="#15803D"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="653" fill="#FFFFFF"/>
+
+  <text x="640" y="318"
+        text-anchor="middle"
+        font-family="Arial Rounded MT Bold, Arial Rounded Bold, Arial, sans-serif"
+        font-size="232"
+        font-weight="900"
+        letter-spacing="-13"
+        fill="url(#word)">mango</text>
+
+  <path d="M733 70c66-30 142 0 181 72-70 31-148 10-188-50 0-10 2-17 7-22Z" fill="url(#leaf)"/>
+  <path d="M746 91c45 13 87 30 126 51" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+
+  <path d="M190 443h185" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+  <path d="M190 443l42-25" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+  <path d="M190 443l42 25" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+
+  <text x="640" y="469"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="74"
+        font-weight="800"
+        letter-spacing="17"
+        fill="#166534">FITNESS</text>
+
+  <path d="M905 443h185" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+  <path d="M1090 443l-42-25" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+  <path d="M1090 443l-42 25" stroke="#166534" stroke-width="9" stroke-linecap="round"/>
+</svg>
