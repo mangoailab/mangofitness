@@ -603,3 +603,16 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
 .movement-manager {
   margin-top: 12px;
 }
+
+/* Strength rows use the autocomplete as the movement field, no duplicate station field. */
+.exercise-table-row[data-section="lifting"] {
+  grid-template-columns: 44px 36px 36px minmax(220px, 1.45fr) minmax(72px, .55fr) minmax(72px, .55fr) minmax(100px, .75fr) minmax(120px, .9fr) minmax(150px, 1fr) auto;
+}
+
+@media (max-width: 760px) {
+  .exercise-table-row[data-section="lifting"] {
+    width: 900px;
+    min-width: 900px;
+    grid-template-columns: 38px 34px 34px 230px 76px 86px 110px 130px 150px 92px;
+  }
+}
