@@ -223,6 +223,37 @@ function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+const warmupTemplates = [
+  {
+    key: "pushup-ringrow",
+    name: "Push-up + Ring Row",
+    notes: "3 rounds: alternate 5 push-ups and 8 ring rows. Move smooth, not for time."
+  },
+  {
+    key: "general-dynamic",
+    name: "General Dynamic Warm-up",
+    notes: "2 rounds: 10 air squats, 10 lunges, 10 band pull-aparts, 20 jumping jacks. Then easy movement prep for today’s workout."
+  },
+  {
+    key: "row-mobility",
+    name: "Row + Mobility",
+    notes: "5 min easy row, then 2 rounds: 10 pass-throughs, 10 inchworms, 10 glute bridges, 10 scap pull-ups."
+  },
+  {
+    key: "barbell-prep",
+    name: "Barbell Prep",
+    notes: "With empty bar: 2 rounds of 5 good mornings, 5 front squats, 5 strict press, 5 RDL, 5 hang power cleans."
+  }
+];
+
+function warmupTemplateOptions() {
+  return warmupTemplates.map((template) => `<option value="${escapeHtml(template.key)}">${escapeHtml(template.name)}</option>`).join("");
+}
+
+function warmupTemplateByKey(key) {
+  return warmupTemplates.find((template) => template.key === key);
+}
+
 const cardioBenchmarks = [
   { key: "", name: "Select benchmark" },
   { key: "4k-row", name: "4K Row", scoreType: "Time" },
@@ -272,6 +303,7 @@ function initCoachApp() {
   const date = document.getElementById("workoutDate");
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
+  const warmupTemplate = document.getElementById("warmupTemplate");
   const warmupNotes = document.getElementById("warmupNotes");
   const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
@@ -281,6 +313,7 @@ function initCoachApp() {
   const message = document.getElementById("coachAppMessage");
 
   date.value = todayISO();
+  if (warmupTemplate) warmupTemplate.innerHTML += warmupTemplateOptions();
 
   function setAppMessage(text, isError = false) {
     message.textContent = text || "";
@@ -426,8 +459,10 @@ function initCoachApp() {
   function clearForm() {
     form.dataset.editId = "";
     date.value = todayISO();
+  if (warmupTemplate) warmupTemplate.innerHTML += warmupTemplateOptions();
     title.value = "";
     notes.value = "";
+    if (warmupTemplate) warmupTemplate.value = "";
     warmupNotes.value = "";
     cardioNotes.value = "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
@@ -511,6 +546,11 @@ function initCoachApp() {
     }
   }
 
+  warmupTemplate?.addEventListener("change", () => {
+    const template = warmupTemplateByKey(warmupTemplate.value);
+    if (template) warmupNotes.value = template.notes;
+  });
+
   document.querySelectorAll("[data-add-section]").forEach((button) => {
     button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
   });
@@ -562,6 +602,7 @@ function initAthleteApp() {
   if (!date || !view || !history) return;
 
   date.value = todayISO();
+  if (warmupTemplate) warmupTemplate.innerHTML += warmupTemplateOptions();
 
   async function renderAthlete() {
     try {
