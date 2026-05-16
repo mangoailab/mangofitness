@@ -18,8 +18,10 @@ create table if not exists athletes (
 
 create table if not exists warmup_templates (
   id uuid primary key default gen_random_uuid(),
+  template_key text unique,
   name text not null,
   notes text not null,
+  is_builtin boolean not null default false,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -105,6 +107,17 @@ alter table workouts add column if not exists cardio_notes text;
 alter table workouts add column if not exists workout_format text not null default 'Strength';
 alter table workouts add column if not exists rounds text;
 alter table workouts add column if not exists score_type text;
+
+alter table warmup_templates add column if not exists template_key text unique;
+alter table warmup_templates add column if not exists is_builtin boolean not null default false;
+
+insert into warmup_templates (template_key, name, notes, is_builtin)
+values
+  ('pushup-ringrow', 'Push-up + Ring Row', '3 rounds: alternate 5 push-ups and 8 ring rows. Move smooth, not for time.', true),
+  ('general-dynamic', 'General Dynamic Warm-up', '2 rounds: 10 air squats, 10 lunges, 10 band pull-aparts, 20 jumping jacks. Then easy movement prep for today’s workout.', true),
+  ('row-mobility', 'Row + Mobility', '5 min easy row, then 2 rounds: 10 pass-throughs, 10 inchworms, 10 glute bridges, 10 scap pull-ups.', true),
+  ('barbell-prep', 'Barbell Prep', 'With empty bar: 2 rounds of 5 good mornings, 5 front squats, 5 strict press, 5 RDL, 5 hang power cleans.', true)
+on conflict (template_key) do nothing;
 
 create index if not exists workouts_workout_date_idx on workouts(workout_date);
 alter table workout_exercises add column if not exists target_weight text;

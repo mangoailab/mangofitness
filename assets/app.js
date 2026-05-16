@@ -396,7 +396,7 @@ function initCoachApp() {
   async function loadWarmupTemplates() {
     try {
       const savedTemplates = await MangoFitnessStore.warmupTemplates();
-      warmupTemplates = [...defaultWarmupTemplates, ...savedTemplates];
+      warmupTemplates = savedTemplates.length ? savedTemplates : [...defaultWarmupTemplates];
       renderWarmupTemplateOptions();
     } catch (error) {
       warmupTemplates = [...defaultWarmupTemplates];
@@ -657,7 +657,7 @@ function initCoachApp() {
     const name = warmupTemplateName.value.trim();
     const templateNotes = warmupNotes.value.trim();
     const selected = warmupTemplateByKey(id);
-    if (!id || !selected?.id) return setAppMessage("Select a saved template to update. Built-in templates can be copied with Save as new template.", true);
+    if (!id || !selected?.id) return setAppMessage("Select a template to update.", true);
     if (!name || !templateNotes) return setAppMessage("Add a template name and warm-up notes first.", true);
     try {
       await MangoFitnessStore.updateWarmupTemplate(id, { name, notes: templateNotes });
@@ -672,7 +672,7 @@ function initCoachApp() {
   deleteWarmupTemplateBtn?.addEventListener("click", async () => {
     const id = warmupTemplate.value;
     const selected = warmupTemplateByKey(id);
-    if (!id || !selected?.id) return setAppMessage("Select a saved template to delete. Built-in templates cannot be deleted.", true);
+    if (!id || !selected?.id) return setAppMessage("Select a template to delete.", true);
     if (!confirm(`Delete warm-up template “${selected.name}”? This cannot be undone.`)) return;
     try {
       await MangoFitnessStore.deleteWarmupTemplate(id);
