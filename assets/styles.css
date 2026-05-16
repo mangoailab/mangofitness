@@ -561,3 +561,30 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     flex: 1 1 100%;
   }
 }
+
+.template-manager {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: white;
+  padding: 10px 12px;
+}
+.template-manager summary {
+  cursor: pointer;
+  color: var(--accent-dark);
+  font-weight: 800;
+  user-select: none;
+}
+.template-manager[open] summary {
+  margin-bottom: 12px;
+}
+.template-manager .template-actions {
+  margin-top: 0;
+}
+.danger-button {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fff7f7;
+}
+.danger-button:hover {
+  box-shadow: 0 4px 16px rgba(185, 28, 28, .10);
+}
