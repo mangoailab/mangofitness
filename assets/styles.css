@@ -840,3 +840,25 @@ body.is-reordering .exercise-row.dragging {
     min-height: 76px;
   }
 }
+
+/* Keep week navigation on one line. */
+.week-actions {
+  flex-wrap: nowrap;
+}
+.week-actions button {
+  flex: 1 1 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .week-actions {
+    gap: 6px;
+  }
+  .week-actions button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 12px;
+  }
+}
