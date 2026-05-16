@@ -1,13 +1,13 @@
 :root {
-  --bg: #fff8ed;
+  --bg: #f8fff4;
   --card: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --line: #f1d9b5;
-  --accent: #f59e0b;
-  --accent-dark: #92400e;
-  --accent-green: #16a34a;
-  --soft: #fff7ed;
+  --text: #132018;
+  --muted: #5f6f63;
+  --line: #d9f5c9;
+  --accent: #ffb703;
+  --accent-dark: #0f7a3b;
+  --accent-green: #22c55e;
+  --soft: #f0fdf4;
 }
 
 * { box-sizing: border-box; }
@@ -16,9 +16,9 @@ body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(245, 158, 11, 0.22), transparent 28rem),
-    radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.12), transparent 24rem),
-    var(--bg);
+    radial-gradient(circle at top left, rgba(255, 183, 3, 0.30), transparent 30rem),
+    radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.22), transparent 28rem),
+    linear-gradient(180deg, #ffffff 0%, var(--bg) 54%, #efffe8 100%);
   color: var(--text);
 }
 
@@ -34,14 +34,14 @@ body {
   border: 1px solid var(--line);
   border-radius: 22px;
   padding: 18px;
-  box-shadow: 0 10px 28px rgba(180, 83, 9, 0.08);
+  box-shadow: 0 14px 34px rgba(34, 197, 94, 0.10);
 }
 
 .card.hero {
   border: 0;
   color: white;
-  background: linear-gradient(135deg, #78350f 0%, #f59e0b 58%, #16a34a 100%);
-  box-shadow: 0 18px 44px rgba(146,64,14,.22);
+  background: linear-gradient(135deg, #fb7185 0%, #ffb703 42%, #22c55e 100%);
+  box-shadow: 0 20px 46px rgba(34,197,94,.20);
 }
 
 .topbar {
@@ -113,7 +113,7 @@ input, textarea, select {
   outline-color:var(--accent);
 }
 input:focus, textarea:focus, select:focus {
-  outline:3px solid rgba(245,158,11,.18);
+  outline:3px solid rgba(34,197,94,.20);
   border-color:var(--accent);
 }
 button {
@@ -135,10 +135,10 @@ button {
   font-weight:600;
 }
 button.primary {
-  background:linear-gradient(135deg,var(--accent),#f97316);
-  color:#1f2937;
-  border-color:#f59e0b;
-  box-shadow:0 8px 20px rgba(245,158,11,.18);
+  background:linear-gradient(135deg,#ffb703,#22c55e);
+  color:#132018;
+  border-color:#ffb703;
+  box-shadow:0 10px 22px rgba(34,197,94,.20);
 }
 button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.08); }
 .muted { color:var(--muted); }
