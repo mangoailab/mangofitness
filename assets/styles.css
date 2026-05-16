@@ -641,3 +641,21 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
   border-radius: 10px;
   box-shadow: none;
 }
+
+/* Keep strength autocomplete suggestions visible above the add button on mobile. */
+.exercise-rows:focus-within {
+  padding-bottom: 170px;
+}
+.exercise-table-row:focus-within {
+  position: relative;
+  z-index: 30;
+}
+.movement-suggestions {
+  z-index: 1000;
+}
+
+@media (max-width: 760px) {
+  .exercise-rows:focus-within {
+    padding-bottom: 190px;
+  }
+}
