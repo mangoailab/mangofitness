@@ -591,7 +591,7 @@ function initCoachApp() {
     const selectedMovement = values.movementKey || "";
     const rowFields = section === "cardio" ? `
       <div class="field benchmark-field"><label>Benchmark map</label><select class="exercise-benchmark">${benchmarkOptions(selectedBenchmark)}</select></div>
-      <div class="field exercise-name-field"><label>Score item</label><input class="exercise-name" type="text" placeholder="Finish time, 4K row, rounds + reps" value="${escapeHtml(values.name || values.benchmarkName)}" required /></div>
+      <input class="exercise-name" type="hidden" value="${escapeHtml(values.name || values.benchmarkName || "Cardio score")}" />
       <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Description / notes</label><input class="exercise-notes" type="text" placeholder="Workout description or what the athlete should record" value="${escapeHtml(values.notes)}" /></div>
     ` : `
@@ -616,6 +616,7 @@ function initCoachApp() {
       const targetInput = row.querySelector(".exercise-target");
       const notesInput = row.querySelector(".exercise-notes");
       if (benchmark.key && benchmark.key !== "custom") nameInput.value = benchmark.name;
+      else if (!nameInput.value.trim()) nameInput.value = "Cardio score";
       if (benchmark.scoreType) targetInput.value = benchmark.scoreType;
       if (benchmark.description && !notesInput.value.trim()) notesInput.value = benchmark.description;
     });

@@ -725,3 +725,16 @@ body.is-reordering .exercise-row.dragging {
 .exercise-table-row[data-section="cardio"] {
   grid-template-columns: 48px minmax(170px, 1fr) minmax(190px, 1.15fr) minmax(150px, .9fr) minmax(210px, 1.2fr) auto;
 }
+
+/* Cardio rows no longer show a separate score-item field. */
+.exercise-table-row[data-section="cardio"] {
+  grid-template-columns: 48px minmax(190px, 1fr) minmax(160px, .9fr) minmax(240px, 1.3fr) auto;
+}
+
+@media (max-width: 760px) {
+  .exercise-table-row[data-section="cardio"] {
+    width: 690px;
+    min-width: 690px;
+    grid-template-columns: 48px 210px 150px 190px 92px;
+  }
+}
