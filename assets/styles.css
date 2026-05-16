@@ -477,3 +477,40 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     text-align: center;
   }
 }
+
+/* Mobile containment fix: keep the page narrow and make only workout tables scroll. */
+@media (max-width: 760px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .container,
+  .card,
+  .dashboard-card,
+  .builder-form,
+  .workout-sections,
+  .workout-section {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .exercise-rows {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 0 0 10px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .exercise-table-row {
+    width: 880px;
+    min-width: 880px;
+    max-width: none;
+  }
+}
