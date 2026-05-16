@@ -55,17 +55,11 @@
           <div class="workout-sections">
             <section class="workout-section" data-section="warmup">
               <div class="section-head compact"><h3>Warm-up</h3></div>
-              <div class="warmup-template-grid">
-                <div class="field warmup-template-field">
-                  <label for="warmupTemplate">Warm-up template</label>
-                  <select id="warmupTemplate">
-                    <option value="">Custom warm-up</option>
-                  </select>
-                </div>
-                <div class="field warmup-template-name-field">
-                  <label for="warmupTemplateName">Template name</label>
-                  <input id="warmupTemplateName" type="text" placeholder="Push-up + Ring Row" />
-                </div>
+              <div class="field warmup-template-field">
+                <label for="warmupTemplate">Warm-up template</label>
+                <select id="warmupTemplate">
+                  <option value="">Custom warm-up</option>
+                </select>
               </div>
               <div class="field warmup-notes-field">
                 <label for="warmupNotes">Warm-up notes</label>
@@ -73,6 +67,10 @@
               </div>
               <details class="template-manager">
                 <summary>Manage templates</summary>
+                <div class="field warmup-template-name-field">
+                  <label for="warmupTemplateName">Template name</label>
+                  <input id="warmupTemplateName" type="text" placeholder="Push-up + Ring Row" />
+                </div>
                 <div class="actions template-actions">
                   <button type="button" id="saveWarmupTemplateBtn">Save as new template</button>
                   <button type="button" id="updateWarmupTemplateBtn">Update selected</button>
