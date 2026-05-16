@@ -131,6 +131,7 @@ values
   ('front-squat', 'Front Squat', true),
   ('deadlift', 'Deadlift', true),
   ('bench-press', 'Bench Press', true),
+  ('incline-db-chest-press', 'Incline DB Chest Press', true),
   ('strict-press', 'Strict Press', true),
   ('push-press', 'Push Press', true),
   ('power-clean', 'Power Clean', true),
