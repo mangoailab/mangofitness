@@ -31,6 +31,7 @@ const MangoFitnessStore = (() => {
         reps: exercise.reps || "",
         target: exercise.target || "",
         weight: exercise.target_weight || exercise.weight || "",
+        section: exercise.section_type || exercise.section || "cardio",
         notes: exercise.notes || ""
       }))
     };
@@ -69,7 +70,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_format, rounds, score_type, workout_exercises (id, exercise_name, sets, reps, target, target_weight, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_format, rounds, score_type, workout_exercises (id, exercise_name, sets, reps, target, target_weight, section_type, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -138,6 +139,7 @@ const MangoFitnessStore = (() => {
           reps: exercise.reps || null,
           target: exercise.target || null,
           target_weight: exercise.weight || null,
+          section_type: exercise.section || "cardio",
           notes: exercise.notes || null,
           sort_order: index
         };
@@ -224,10 +226,7 @@ function initCoachApp() {
   const date = document.getElementById("workoutDate");
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
-  const format = document.getElementById("workoutFormat");
-  const rounds = document.getElementById("workoutRounds");
-  const scoreType = document.getElementById("workoutScoreType");
-  const rows = document.getElementById("exerciseRows");
+  const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
   const list = document.getElementById("coachWorkoutList");
   const resultsList = document.getElementById("coachResultsList");
   const count = document.getElementById("workoutCount");
@@ -241,27 +240,60 @@ function initCoachApp() {
     message.classList.toggle("error-text", Boolean(isError));
   }
 
-  function addExerciseRow(values = {}) {
+  const sectionLabels = {
+    warmup: "Warm-up",
+    lifting: "Weightlifting / Strength",
+    cardio: "Cardio / WOD",
+    partner: "Partner WOD"
+  };
+
+  function rowsForSection(section) {
+    return document.querySelector(`[data-exercise-rows="${section}"]`);
+  }
+
+  function addExerciseRow(section = "cardio", values = {}) {
+    const rows = rowsForSection(section);
+    if (!rows) return;
     const row = document.createElement("div");
     row.className = "exercise-row exercise-table-row";
     row.dataset.exerciseId = values.id || uid("exercise");
+    row.dataset.section = section;
     row.draggable = true;
     row.innerHTML = `
       <button type="button" class="drag-handle" aria-label="Drag to reorder" title="Drag to reorder">☰</button>
       <button type="button" class="move-row move-up" aria-label="Move up" title="Move up">↑</button>
       <button type="button" class="move-row move-down" aria-label="Move down" title="Move down">↓</button>
-      <div class="field exercise-name-field"><label>Exercise</label><input class="exercise-name" type="text" placeholder="Station 1 — Row + Burpees" value="${escapeHtml(values.name)}" required /></div>
+      <div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
       <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
       <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
-      <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="Partner A starts" value="${escapeHtml(values.target)}" /></div>
-      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Switch stations after both finish" value="${escapeHtml(values.notes)}" /></div>
+      <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="RPE, pace, or goal" value="${escapeHtml(values.target)}" /></div>
+      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Coaching notes or scaling" value="${escapeHtml(values.notes)}" /></div>
       <button type="button" class="remove-row">Remove</button>
     `;
     row.querySelector(".remove-row").addEventListener("click", () => row.remove());
     row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
     row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
     rows.appendChild(row);
+  }
+
+  function exercisesBySection(exercises) {
+    return Object.keys(sectionLabels).map((section) => ({
+      section,
+      label: sectionLabels[section],
+      exercises: exercises.filter((exercise) => (exercise.section || "cardio") === section)
+    })).filter((group) => group.exercises.length);
+  }
+
+  function renderExerciseGroups(exercises) {
+    const groups = exercisesBySection(exercises);
+    if (!groups.length) return "";
+    return groups.map((group) => `
+      <div class="exercise-group">
+        <h4>${escapeHtml(group.label)}</h4>
+        <ul class="clean-list">${group.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.weight ? `· ${escapeHtml(exercise.weight)}` : ""} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}</li>`).join("")}</ul>
+      </div>
+    `).join("");
   }
 
   function rowAfterPointer(container, y) {
@@ -274,71 +306,75 @@ function initCoachApp() {
     }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
   }
 
-  rows.addEventListener("dragstart", (event) => {
-    const row = event.target.closest(".exercise-row");
-    if (!row) return;
-    row.classList.add("dragging");
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", row.dataset.exerciseId);
-  });
+  function enableRowSorting(rows) {
+    rows.addEventListener("dragstart", (event) => {
+      const row = event.target.closest(".exercise-row");
+      if (!row) return;
+      row.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", row.dataset.exerciseId);
+    });
 
-  rows.addEventListener("dragend", (event) => {
-    event.target.closest(".exercise-row")?.classList.remove("dragging");
-  });
+    rows.addEventListener("dragend", (event) => {
+      event.target.closest(".exercise-row")?.classList.remove("dragging");
+    });
 
-  rows.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    const dragging = rows.querySelector(".dragging");
-    if (!dragging) return;
-    const after = rowAfterPointer(rows, event.clientY);
-    if (after) rows.insertBefore(dragging, after);
-    else rows.appendChild(dragging);
-  });
+    rows.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      const dragging = rows.querySelector(".dragging");
+      if (!dragging) return;
+      const after = rowAfterPointer(rows, event.clientY);
+      if (after) rows.insertBefore(dragging, after);
+      else rows.appendChild(dragging);
+    });
 
-  rows.addEventListener("pointerdown", (event) => {
-    const handle = event.target.closest(".drag-handle");
-    if (!handle) return;
-    const row = handle.closest(".exercise-row");
-    if (!row) return;
+    rows.addEventListener("pointerdown", (event) => {
+      const handle = event.target.closest(".drag-handle");
+      if (!handle) return;
+      const row = handle.closest(".exercise-row");
+      if (!row) return;
 
-    event.preventDefault();
-    handle.setPointerCapture(event.pointerId);
-    row.classList.add("dragging");
+      event.preventDefault();
+      handle.setPointerCapture(event.pointerId);
+      row.classList.add("dragging");
 
-    function move(pointerEvent) {
-      const after = rowAfterPointer(rows, pointerEvent.clientY);
-      if (after) rows.insertBefore(row, after);
-      else rows.appendChild(row);
-    }
+      function move(pointerEvent) {
+        const after = rowAfterPointer(rows, pointerEvent.clientY);
+        if (after) rows.insertBefore(row, after);
+        else rows.appendChild(row);
+      }
 
-    function stop() {
-      row.classList.remove("dragging");
-      handle.removeEventListener("pointermove", move);
-      handle.removeEventListener("pointerup", stop);
-      handle.removeEventListener("pointercancel", stop);
-    }
+      function stop() {
+        row.classList.remove("dragging");
+        handle.removeEventListener("pointermove", move);
+        handle.removeEventListener("pointerup", stop);
+        handle.removeEventListener("pointercancel", stop);
+      }
 
-    handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", stop);
-    handle.addEventListener("pointercancel", stop);
-  });
+      handle.addEventListener("pointermove", move);
+      handle.addEventListener("pointerup", stop);
+      handle.addEventListener("pointercancel", stop);
+    });
+  }
+
+  sectionRows.forEach(enableRowSorting);
 
   function clearForm() {
     form.dataset.editId = "";
     date.value = todayISO();
     title.value = "";
     notes.value = "";
-    format.value = "Strength";
-    rounds.value = "";
-    scoreType.value = "";
-    rows.innerHTML = "";
-    addExerciseRow();
+    sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
+    addExerciseRow("warmup");
+    addExerciseRow("lifting");
+    addExerciseRow("cardio");
     setAppMessage("");
   }
 
   function collectExercises() {
-    return [...rows.querySelectorAll(".exercise-row")].map((row) => ({
+    return sectionRows.flatMap((rowContainer) => [...rowContainer.querySelectorAll(".exercise-row")]).map((row) => ({
       id: row.dataset.exerciseId,
+      section: row.dataset.section || row.closest("[data-exercise-rows]")?.dataset.exerciseRows || "cardio",
       name: row.querySelector(".exercise-name").value.trim(),
       sets: row.querySelector(".exercise-sets").value.trim(),
       reps: row.querySelector(".exercise-reps").value.trim(),
@@ -355,11 +391,8 @@ function initCoachApp() {
     date.value = workout.date;
     title.value = workout.title;
     notes.value = workout.notes || "";
-    format.value = workout.format || "Strength";
-    rounds.value = workout.rounds || "";
-    scoreType.value = workout.scoreType || "";
-    rows.innerHTML = "";
-    workout.exercises.forEach(addExerciseRow);
+    sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
+    workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
 
@@ -372,14 +405,14 @@ function initCoachApp() {
       list.innerHTML = workouts.length ? workouts.map((workout) => `
         <article class="item-card">
           <div class="item-head">
-            <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${escapeHtml(workout.format || "Strength")}${workout.rounds ? ` · ${escapeHtml(workout.rounds)}` : ""}${workout.scoreType ? ` · Score: ${escapeHtml(workout.scoreType)}` : ""} · ${workout.exercises.length} rows</p></div>
+            <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items</p></div>
             <div class="actions item-actions">
               <button type="button" data-edit="${workout.id}">Edit</button>
               <button type="button" data-delete="${workout.id}">Delete</button>
             </div>
           </div>
           ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-          <ul class="clean-list">${workout.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.weight ? `· ${escapeHtml(exercise.weight)}` : ""} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}</li>`).join("")}</ul>
+          ${renderExerciseGroups(workout.exercises)}
         </article>
       `).join("") : `<p class="muted empty-state">No workouts saved yet. Build the first one above.</p>`;
 
@@ -407,7 +440,9 @@ function initCoachApp() {
     }
   }
 
-  document.getElementById("addExerciseBtn")?.addEventListener("click", () => addExerciseRow());
+  document.querySelectorAll("[data-add-section]").forEach((button) => {
+    button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
+  });
   document.getElementById("clearWorkoutBtn")?.addEventListener("click", clearForm);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -421,9 +456,9 @@ function initCoachApp() {
         date: date.value,
         title: title.value.trim(),
         notes: notes.value.trim(),
-        format: format.value,
-        rounds: rounds.value.trim(),
-        scoreType: scoreType.value.trim(),
+        format: "Class workout",
+        rounds: "",
+        scoreType: "",
         exercises
       });
       clearForm();
@@ -436,6 +471,15 @@ function initCoachApp() {
 
   clearForm();
   renderCoach();
+}
+
+function workoutSectionGroups(exercises) {
+  const labels = { warmup: "Warm-up", lifting: "Weightlifting / Strength", cardio: "Cardio / WOD", partner: "Partner WOD" };
+  return Object.keys(labels).map((section) => ({
+    section,
+    label: labels[section],
+    exercises: exercises.filter((exercise) => (exercise.section || "cardio") === section)
+  })).filter((group) => group.exercises.length);
 }
 
 function initAthleteApp() {
@@ -458,24 +502,31 @@ function initAthleteApp() {
         view.innerHTML = `
           <article class="item-card workout-detail">
             <h3>${escapeHtml(workout.title)}</h3>
-            <p class="muted">${escapeHtml(workout.date)} · ${escapeHtml(workout.format || "Strength")}${workout.rounds ? ` · ${escapeHtml(workout.rounds)}` : ""}${workout.scoreType ? ` · Score: ${escapeHtml(workout.scoreType)}` : ""}</p>
+            <p class="muted">${escapeHtml(workout.date)}</p>
             ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
             <div class="list-stack">
-              ${workout.exercises.map((exercise) => `
-                <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}">
-                  <div>
-                    <strong>${escapeHtml(exercise.name)}</strong>
-                    <p class="muted">${escapeHtml(exercise.sets || "-")} sets · ${escapeHtml(exercise.reps || "-")} reps${exercise.weight ? ` · ${escapeHtml(exercise.weight)}` : ""}${exercise.target ? ` · ${escapeHtml(exercise.target)}` : ""}</p>
-                    ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
+              ${workoutSectionGroups(workout.exercises).map((group) => `
+                <section class="athlete-workout-section">
+                  <h4>${escapeHtml(group.label)}</h4>
+                  <div class="list-stack">
+                    ${group.exercises.map((exercise) => `
+                      <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}">
+                        <div>
+                          <strong>${escapeHtml(exercise.name)}</strong>
+                          <p class="muted">${escapeHtml(exercise.sets || "-")} sets · ${escapeHtml(exercise.reps || "-")} reps${exercise.weight ? ` · ${escapeHtml(exercise.weight)}` : ""}${exercise.target ? ` · ${escapeHtml(exercise.target)}` : ""}</p>
+                          ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
+                        </div>
+                        <div class="mini-grid">
+                          <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
+                          <div class="field"><label>Reps done</label><input name="reps" type="text" placeholder="6,6,5,5" /></div>
+                          <label class="check-field"><input name="isPr" type="checkbox" /> PR</label>
+                        </div>
+                        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
+                        <button type="submit" class="primary">Log result</button>
+                      </form>
+                    `).join("")}
                   </div>
-                  <div class="mini-grid">
-                    <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
-                    <div class="field"><label>Reps done</label><input name="reps" type="text" placeholder="6,6,5,5" /></div>
-                    <label class="check-field"><input name="isPr" type="checkbox" /> PR</label>
-                  </div>
-                  <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
-                  <button type="submit" class="primary">Log result</button>
-                </form>
+                </section>
               `).join("")}
             </div>
           </article>

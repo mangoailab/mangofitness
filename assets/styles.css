@@ -342,3 +342,35 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     grid-template-columns: 1fr;
   }
 }
+
+.workout-sections {
+  display: grid;
+  gap: 18px;
+}
+.workout-section {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(240, 253, 244, .62);
+  padding: 14px;
+}
+.workout-section .section-head {
+  margin-bottom: 10px;
+}
+.optional-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+.exercise-group {
+  margin-top: 14px;
+}
+.exercise-group h4,
+.athlete-workout-section h4 {
+  margin: 0 0 8px;
+  color: var(--accent-dark);
+  font-size: 15px;
+  letter-spacing: -.01em;
+}
+.athlete-workout-section {
+  display: grid;
+  gap: 10px;
+}

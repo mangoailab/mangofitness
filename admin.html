@@ -50,32 +50,32 @@
             <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Partner Cardio" required /></div>
           </div>
 
-          <div class="workout-format-grid">
-            <div class="field">
-              <label for="workoutFormat">Format</label>
-              <select id="workoutFormat">
-                <option value="Strength">Strength</option>
-                <option value="Cardio">Cardio</option>
-                <option value="Circuit">Circuit</option>
-                <option value="Partner">Partner</option>
-                <option value="AMRAP">AMRAP</option>
-                <option value="EMOM">EMOM</option>
-                <option value="For time">For time</option>
-              </select>
-            </div>
-            <div class="field"><label for="workoutRounds">Rounds / time</label><input id="workoutRounds" type="text" placeholder="4 rounds" /></div>
-            <div class="field"><label for="workoutScoreType">Score</label><input id="workoutScoreType" type="text" placeholder="Time, rounds, meters, notes" /></div>
-          </div>
+          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Overall focus, pacing, scaling, or coaching notes"></textarea></div>
 
-          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Partner A starts at Station 1, Partner B starts at Station 2. Switch after both finish."></textarea></div>
+          <div class="workout-sections">
+            <section class="workout-section" data-section="warmup">
+              <div class="section-head compact"><h3>Warm-up</h3></div>
+              <div class="exercise-rows" data-exercise-rows="warmup"></div>
+              <div class="actions exercise-actions"><button type="button" data-add-section="warmup">Add warm-up item</button></div>
+            </section>
 
-          <div class="section-head compact">
-            <h3>Stations / Exercises</h3>
-          </div>
-          <div id="exerciseRows" class="exercise-rows"></div>
+            <section class="workout-section" data-section="lifting">
+              <div class="section-head compact"><h3>Weightlifting / Strength</h3></div>
+              <div class="exercise-rows" data-exercise-rows="lifting"></div>
+              <div class="actions exercise-actions"><button type="button" data-add-section="lifting">Add lifting item</button></div>
+            </section>
 
-          <div class="actions exercise-actions">
-            <button type="button" id="addExerciseBtn">Add exercise</button>
+            <section class="workout-section" data-section="cardio">
+              <div class="section-head compact"><h3>Cardio / WOD</h3></div>
+              <div class="exercise-rows" data-exercise-rows="cardio"></div>
+              <div class="actions exercise-actions"><button type="button" data-add-section="cardio">Add cardio item</button></div>
+            </section>
+
+            <section class="workout-section" data-section="partner">
+              <div class="section-head compact"><h3>Partner WOD <span class="muted optional-label">optional</span></h3></div>
+              <div class="exercise-rows" data-exercise-rows="partner"></div>
+              <div class="actions exercise-actions"><button type="button" data-add-section="partner">Add partner item</button></div>
+            </section>
           </div>
 
           <div class="actions form-actions">
