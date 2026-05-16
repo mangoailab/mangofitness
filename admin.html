@@ -31,17 +31,56 @@
         <button type="button" id="coachForgotBtn">Forgot Password</button>
       </div>
       <p id="coachAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
-      <p class="muted" style="margin:12px 0 0;">Program builder coming next.</p>
+      <p class="muted" style="margin:12px 0 0;">Sign in to create workouts and review athlete logs.</p>
     </section>
 
-    <section id="coachDashboard" class="card auth-card hidden">
-      <h2>Coach Dashboard</h2>
-      <p id="coachDashboardMessage" class="muted"></p>
-      <p class="muted">Supabase is connected. Program builder coming next.</p>
-      <div class="actions" style="margin-top:14px;"><button type="button" id="coachSignOutBtn">Sign out</button></div>
+    <section id="coachDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="section-head">
+          <div>
+            <h2>Workout Builder</h2>
+            <p id="coachDashboardMessage" class="muted"></p>
+          </div>
+          <button type="button" id="coachSignOutBtn">Sign out</button>
+        </div>
+
+        <form id="workoutForm" class="builder-form">
+          <div class="grid-2 form-grid">
+            <div class="field"><label for="workoutDate">Workout date</label><input id="workoutDate" type="date" required /></div>
+            <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Monday Lower Body" required /></div>
+          </div>
+          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Focus, warmup, tempo, or reminders"></textarea></div>
+
+          <div class="section-head compact">
+            <h3>Exercises</h3>
+            <button type="button" id="addExerciseBtn">Add exercise</button>
+          </div>
+          <div id="exerciseRows" class="exercise-rows"></div>
+
+          <div class="actions form-actions">
+            <button type="submit" class="primary">Save workout</button>
+            <button type="button" id="clearWorkoutBtn">Clear form</button>
+          </div>
+          <p id="coachAppMessage" class="muted hidden"></p>
+        </form>
+      </div>
+
+      <div class="card dashboard-card">
+        <div class="section-head compact">
+          <h2>Saved Workouts</h2>
+          <span id="workoutCount" class="pill">0 workouts</span>
+        </div>
+        <div id="coachWorkoutList" class="list-stack"></div>
+      </div>
+
+      <div class="card dashboard-card">
+        <h2>Athlete Results</h2>
+        <div id="coachResultsList" class="list-stack"></div>
+      </div>
     </section>
   </main>
   <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
   <script>
     initLoginPage({
       emailId: "coachEmail",
@@ -54,6 +93,7 @@
       messageId: "coachAuthMessage",
       dashboardMessageId: "coachDashboardMessage"
     });
+    initCoachApp();
   </script>
 </body>
 </html>

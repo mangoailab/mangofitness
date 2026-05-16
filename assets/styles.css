@@ -163,3 +163,111 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
   .actions > * { flex:1 1 calc(50% - 8px); }
   .hero .top-actions > * { flex:0 0 auto; }
 }
+
+.dashboard-stack {
+  display: grid;
+  gap: 16px;
+}
+.dashboard-card {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.section-head.compact { align-items: center; }
+.section-head h2,
+.section-head h3 { margin: 0; }
+.builder-form { display: grid; gap: 12px; }
+.form-grid { gap: 12px; }
+.exercise-rows,
+.list-stack {
+  display: grid;
+  gap: 12px;
+}
+.exercise-row,
+.item-card,
+.result-form {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--soft);
+  padding: 14px;
+}
+.exercise-row {
+  display: grid;
+  gap: 10px;
+}
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.form-actions { margin-top: 2px; }
+.item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.item-head p,
+.item-card p,
+.result-form p { margin: 4px 0 0; line-height: 1.45; }
+.item-actions { width: auto; justify-content: flex-end; }
+.clean-list {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.empty-state { margin: 0; }
+.narrow-field { max-width: 240px; }
+.workout-detail h3 { margin: 0; font-size: 20px; }
+.result-form {
+  background: white;
+  display: grid;
+  gap: 10px;
+}
+.check-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  font-weight: 700;
+  color: var(--text);
+}
+.check-field input {
+  width: auto;
+  min-height: 0;
+}
+
+@media (max-width: 760px) {
+  .section-head,
+  .item-head {
+    display: grid;
+  }
+  .mini-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .item-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

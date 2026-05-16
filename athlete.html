@@ -31,17 +31,30 @@
         <button type="button" id="athleteForgotBtn">Forgot Password</button>
       </div>
       <p id="athleteAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
-      <p class="muted" style="margin:12px 0 0;">Daily workout view coming next.</p>
+      <p class="muted" style="margin:12px 0 0;">Sign in to view workouts and log your results.</p>
     </section>
 
-    <section id="athleteDashboard" class="card auth-card hidden">
-      <h2>Athlete Portal</h2>
-      <p id="athleteDashboardMessage" class="muted"></p>
-      <p class="muted">Supabase is connected. Daily workout view coming next.</p>
-      <div class="actions" style="margin-top:14px;"><button type="button" id="athleteSignOutBtn">Sign out</button></div>
+    <section id="athleteDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="section-head">
+          <div>
+            <h2>Today’s Training</h2>
+            <p id="athleteDashboardMessage" class="muted"></p>
+          </div>
+          <button type="button" id="athleteSignOutBtn">Sign out</button>
+        </div>
+        <div class="field narrow-field"><label for="athleteWorkoutDate">Workout date</label><input id="athleteWorkoutDate" type="date" /></div>
+        <div id="athleteWorkoutView" class="list-stack"></div>
+      </div>
+
+      <div class="card dashboard-card">
+        <h2>Progress History</h2>
+        <div id="athleteHistoryList" class="list-stack"></div>
+      </div>
     </section>
   </main>
   <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
   <script>
     initLoginPage({
       emailId: "athleteEmail",
@@ -54,6 +67,7 @@
       messageId: "athleteAuthMessage",
       dashboardMessageId: "athleteDashboardMessage"
     });
+    initAthleteApp();
   </script>
 </body>
 </html>
