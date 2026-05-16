@@ -435,3 +435,45 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     grid-column: 1 / -1;
   }
 }
+
+/* Keep workout rows horizontal on mobile, but make them scroll instead of squeezing. */
+@media (max-width: 760px) {
+  .exercise-rows {
+    overflow-x: auto;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .exercise-table-row {
+    min-width: 940px;
+    grid-template-columns: 38px 34px 34px minmax(170px, 1.2fr) 76px 86px 110px 130px 150px 92px;
+    align-items: end;
+  }
+
+  .exercise-table-row .exercise-name-field,
+  .exercise-table-row .target-field,
+  .exercise-table-row .notes-field,
+  .exercise-table-row .compact-field,
+  .exercise-table-row .remove-row {
+    grid-column: auto;
+  }
+
+  .exercise-table-row .drag-handle,
+  .exercise-table-row .move-row {
+    width: 34px;
+  }
+
+  .exercise-table-row .remove-row {
+    width: auto;
+    min-width: 86px;
+  }
+
+  .exercise-table-row input {
+    min-height: 42px;
+    padding: 10px 12px;
+  }
+
+  .compact-field input {
+    text-align: center;
+  }
+}
