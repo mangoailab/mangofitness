@@ -330,3 +330,15 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
 .exercise-actions button {
   min-width: 150px;
 }
+
+.workout-format-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, .8fr) minmax(150px, .8fr) minmax(220px, 1.2fr);
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .workout-format-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -30,6 +30,9 @@ create table if not exists workouts (
   workout_date date not null,
   title text not null,
   notes text,
+  workout_format text not null default 'Strength',
+  rounds text,
+  score_type text,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -80,6 +83,10 @@ create table if not exists athlete_prs (
   notes text,
   created_at timestamptz not null default now()
 );
+
+alter table workouts add column if not exists workout_format text not null default 'Strength';
+alter table workouts add column if not exists rounds text;
+alter table workouts add column if not exists score_type text;
 
 create index if not exists workouts_workout_date_idx on workouts(workout_date);
 alter table workout_exercises add column if not exists target_weight text;

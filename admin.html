@@ -47,12 +47,30 @@
         <form id="workoutForm" class="builder-form">
           <div class="grid-2 form-grid">
             <div class="field"><label for="workoutDate">Workout date</label><input id="workoutDate" type="date" required /></div>
-            <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Monday Lower Body" required /></div>
+            <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Partner Cardio" required /></div>
           </div>
-          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Focus, warmup, tempo, or reminders"></textarea></div>
+
+          <div class="workout-format-grid">
+            <div class="field">
+              <label for="workoutFormat">Format</label>
+              <select id="workoutFormat">
+                <option value="Strength">Strength</option>
+                <option value="Cardio">Cardio</option>
+                <option value="Circuit">Circuit</option>
+                <option value="Partner">Partner</option>
+                <option value="AMRAP">AMRAP</option>
+                <option value="EMOM">EMOM</option>
+                <option value="For time">For time</option>
+              </select>
+            </div>
+            <div class="field"><label for="workoutRounds">Rounds / time</label><input id="workoutRounds" type="text" placeholder="4 rounds" /></div>
+            <div class="field"><label for="workoutScoreType">Score</label><input id="workoutScoreType" type="text" placeholder="Time, rounds, meters, notes" /></div>
+          </div>
+
+          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Partner A starts at Station 1, Partner B starts at Station 2. Switch after both finish."></textarea></div>
 
           <div class="section-head compact">
-            <h3>Exercises</h3>
+            <h3>Stations / Exercises</h3>
           </div>
           <div id="exerciseRows" class="exercise-rows"></div>
 

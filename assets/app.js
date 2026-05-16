@@ -21,6 +21,9 @@ const MangoFitnessStore = (() => {
       date: row.workout_date,
       title: row.title,
       notes: row.notes || "",
+      format: row.workout_format || row.format || "Strength",
+      rounds: row.rounds || "",
+      scoreType: row.score_type || "",
       exercises: (row.workout_exercises || []).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((exercise) => ({
         id: exercise.id,
         name: exercise.exercise_name,
@@ -66,7 +69,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_format, rounds, score_type, workout_exercises (id, exercise_name, sets, reps, target, target_weight, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -101,6 +104,9 @@ const MangoFitnessStore = (() => {
         workout_date: workout.date,
         title: workout.title,
         notes: workout.notes || null,
+        workout_format: workout.format || "Strength",
+        rounds: workout.rounds || null,
+        score_type: workout.scoreType || null,
         created_by: user?.id || null
       };
 
@@ -218,6 +224,9 @@ function initCoachApp() {
   const date = document.getElementById("workoutDate");
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
+  const format = document.getElementById("workoutFormat");
+  const rounds = document.getElementById("workoutRounds");
+  const scoreType = document.getElementById("workoutScoreType");
   const rows = document.getElementById("exerciseRows");
   const list = document.getElementById("coachWorkoutList");
   const resultsList = document.getElementById("coachResultsList");
@@ -241,12 +250,12 @@ function initCoachApp() {
       <button type="button" class="drag-handle" aria-label="Drag to reorder" title="Drag to reorder">☰</button>
       <button type="button" class="move-row move-up" aria-label="Move up" title="Move up">↑</button>
       <button type="button" class="move-row move-down" aria-label="Move down" title="Move down">↓</button>
-      <div class="field exercise-name-field"><label>Exercise</label><input class="exercise-name" type="text" placeholder="Back squat" value="${escapeHtml(values.name)}" required /></div>
+      <div class="field exercise-name-field"><label>Exercise</label><input class="exercise-name" type="text" placeholder="Station 1 — Row + Burpees" value="${escapeHtml(values.name)}" required /></div>
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
-      <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="6" value="${escapeHtml(values.reps)}" /></div>
-      <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="135 lb" value="${escapeHtml(values.weight)}" /></div>
-      <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="RPE 7" value="${escapeHtml(values.target)}" /></div>
-      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Tempo, rest, cues" value="${escapeHtml(values.notes)}" /></div>
+      <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
+      <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
+      <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="Partner A starts" value="${escapeHtml(values.target)}" /></div>
+      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Switch stations after both finish" value="${escapeHtml(values.notes)}" /></div>
       <button type="button" class="remove-row">Remove</button>
     `;
     row.querySelector(".remove-row").addEventListener("click", () => row.remove());
@@ -319,6 +328,9 @@ function initCoachApp() {
     date.value = todayISO();
     title.value = "";
     notes.value = "";
+    format.value = "Strength";
+    rounds.value = "";
+    scoreType.value = "";
     rows.innerHTML = "";
     addExerciseRow();
     setAppMessage("");
@@ -343,6 +355,9 @@ function initCoachApp() {
     date.value = workout.date;
     title.value = workout.title;
     notes.value = workout.notes || "";
+    format.value = workout.format || "Strength";
+    rounds.value = workout.rounds || "";
+    scoreType.value = workout.scoreType || "";
     rows.innerHTML = "";
     workout.exercises.forEach(addExerciseRow);
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
@@ -357,7 +372,7 @@ function initCoachApp() {
       list.innerHTML = workouts.length ? workouts.map((workout) => `
         <article class="item-card">
           <div class="item-head">
-            <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} exercises</p></div>
+            <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${escapeHtml(workout.format || "Strength")}${workout.rounds ? ` · ${escapeHtml(workout.rounds)}` : ""}${workout.scoreType ? ` · Score: ${escapeHtml(workout.scoreType)}` : ""} · ${workout.exercises.length} rows</p></div>
             <div class="actions item-actions">
               <button type="button" data-edit="${workout.id}">Edit</button>
               <button type="button" data-delete="${workout.id}">Delete</button>
@@ -406,6 +421,9 @@ function initCoachApp() {
         date: date.value,
         title: title.value.trim(),
         notes: notes.value.trim(),
+        format: format.value,
+        rounds: rounds.value.trim(),
+        scoreType: scoreType.value.trim(),
         exercises
       });
       clearForm();
@@ -440,7 +458,7 @@ function initAthleteApp() {
         view.innerHTML = `
           <article class="item-card workout-detail">
             <h3>${escapeHtml(workout.title)}</h3>
-            <p class="muted">${escapeHtml(workout.date)}</p>
+            <p class="muted">${escapeHtml(workout.date)} · ${escapeHtml(workout.format || "Strength")}${workout.rounds ? ` · ${escapeHtml(workout.rounds)}` : ""}${workout.scoreType ? ` · Score: ${escapeHtml(workout.scoreType)}` : ""}</p>
             ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
             <div class="list-stack">
               ${workout.exercises.map((exercise) => `
