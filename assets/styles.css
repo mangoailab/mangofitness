@@ -763,3 +763,80 @@ body.is-reordering .exercise-row.dragging {
     flex: 1 1 100%;
   }
 }
+
+.workout-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+.calendar-day {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--soft);
+  overflow: hidden;
+}
+.calendar-day-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  background: white;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.calendar-day-body {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  min-height: 120px;
+}
+.calendar-workout-card {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 8px 18px rgba(34, 197, 94, .08);
+}
+.calendar-workout-card strong {
+  font-size: 13px;
+  line-height: 1.25;
+}
+.calendar-workout-card p {
+  margin: 0;
+  font-size: 12px;
+}
+.calendar-card-actions {
+  gap: 6px;
+}
+.calendar-card-actions button {
+  min-height: 34px;
+  padding: 7px 8px;
+  font-size: 12px;
+  flex: 1 1 auto;
+}
+.calendar-empty {
+  margin: 0;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .workout-calendar {
+    grid-template-columns: 1fr;
+  }
+  .calendar-day {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+  }
+  .calendar-day-head {
+    display: grid;
+    align-content: start;
+    border-bottom: 0;
+    border-right: 1px solid var(--line);
+  }
+  .calendar-day-body {
+    min-height: 76px;
+  }
+}

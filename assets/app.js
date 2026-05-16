@@ -583,6 +583,14 @@ function shortDate(dateValue) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(dateValue);
 }
 
+function weekdayLabel(dateValue) {
+  return new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(dateValue);
+}
+
+function calendarDayLabel(dateValue) {
+  return `${weekdayLabel(dateValue)} ${shortDate(dateValue)}`;
+}
+
 function workoutSearchText(workout) {
   return [
     workout.title,
@@ -1000,22 +1008,57 @@ function initCoachApp() {
           : `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       }
 
-      list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => `
-        <article class="item-card">
-          <div class="item-head">
-            <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items</p></div>
-            <div class="actions item-actions">
-              <button type="button" data-edit="${workout.id}">Edit</button>
-              <button type="button" data-copy="${workout.id}">Copy</button>
-              <button type="button" data-delete="${workout.id}">Delete</button>
+      if (searchQuery) {
+        list.className = "list-stack";
+        list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => `
+          <article class="item-card">
+            <div class="item-head">
+              <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items</p></div>
+              <div class="actions item-actions">
+                <button type="button" data-edit="${workout.id}">Edit</button>
+                <button type="button" data-copy="${workout.id}">Copy</button>
+                <button type="button" data-delete="${workout.id}">Delete</button>
+              </div>
             </div>
-          </div>
-          ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-          ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
-          ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
-          ${renderExerciseGroups(workout.exercises)}
-        </article>
-      `).join("") : `<p class="muted empty-state">${searchQuery ? "No workouts matched your search." : "No workouts saved for this week."}</p>`;
+            ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
+            ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
+            ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
+            ${renderExerciseGroups(workout.exercises)}
+          </article>
+        `).join("") : `<p class="muted empty-state">No workouts matched your search.</p>`;
+      } else {
+        const workoutsByDate = visibleWorkouts.reduce((map, workout) => {
+          if (!map.has(workout.date)) map.set(workout.date, []);
+          map.get(workout.date).push(workout);
+          return map;
+        }, new Map());
+        list.className = "workout-calendar";
+        list.innerHTML = Array.from({ length: 7 }, (_, index) => {
+          const day = addDays(weekStart, index);
+          const dayIso = isoDate(day);
+          const dayWorkouts = workoutsByDate.get(dayIso) || [];
+          return `
+            <section class="calendar-day">
+              <div class="calendar-day-head">
+                <strong>${escapeHtml(calendarDayLabel(day))}</strong>
+                <span class="muted">${dayWorkouts.length || ""}</span>
+              </div>
+              <div class="calendar-day-body">
+                ${dayWorkouts.length ? dayWorkouts.map((workout) => `
+                  <article class="calendar-workout-card">
+                    <strong>${escapeHtml(workout.title)}</strong>
+                    <p class="muted">${workout.exercises.length} items${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>
+                    <div class="actions calendar-card-actions">
+                      <button type="button" data-edit="${workout.id}">Edit</button>
+                      <button type="button" data-copy="${workout.id}">Copy</button>
+                    </div>
+                  </article>
+                `).join("") : `<p class="muted calendar-empty">No workout</p>`}
+              </div>
+            </section>
+          `;
+        }).join("");
+      }
 
       resultsList.innerHTML = results.length ? results.map((result) => `
         <article class="item-card">
@@ -1039,6 +1082,7 @@ function initCoachApp() {
       }));
     } catch (error) {
       count.textContent = "0 workouts";
+      list.className = "list-stack";
       list.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
       resultsList.innerHTML = `<p class="muted empty-state">Results unavailable until Supabase is ready.</p>`;
     }
