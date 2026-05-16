@@ -113,6 +113,32 @@
               </div>
               <div class="exercise-rows" data-exercise-rows="cardio"></div>
               <div class="actions exercise-actions"><button type="button" data-add-section="cardio">Add score item</button></div>
+              <details class="template-manager benchmark-manager">
+                <summary>Manage cardio benchmarks</summary>
+                <div class="workout-format-grid">
+                  <div class="field">
+                    <label for="benchmarkManagerSelect">Benchmark</label>
+                    <select id="benchmarkManagerSelect"><option value="">New benchmark</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="benchmarkManagerName">Benchmark name</label>
+                    <input id="benchmarkManagerName" type="text" placeholder="Cindy" />
+                  </div>
+                  <div class="field">
+                    <label for="benchmarkManagerScoreType">Score type</label>
+                    <input id="benchmarkManagerScoreType" type="text" placeholder="Time, rounds + reps, calories" />
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="benchmarkManagerDescription">Description</label>
+                  <textarea id="benchmarkManagerDescription" rows="3" placeholder="20 min AMRAP: 5 pull-ups, 10 push-ups, 15 air squats."></textarea>
+                </div>
+                <div class="actions template-actions">
+                  <button type="button" id="saveBenchmarkBtn">Save as new benchmark</button>
+                  <button type="button" id="updateBenchmarkBtn">Update selected</button>
+                  <button type="button" id="deleteBenchmarkBtn" class="danger-button">Delete selected</button>
+                </div>
+              </details>
             </section>
 
             <section class="workout-section" data-section="partner">

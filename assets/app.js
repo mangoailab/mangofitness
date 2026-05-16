@@ -3,6 +3,7 @@ const MangoFitnessStore = (() => {
   const localResultKey = "mangoFitness.results.v1";
   const localWarmupTemplateKey = "mangoFitness.warmupTemplates.v1";
   const localStrengthMovementKey = "mangoFitness.strengthMovements.v1";
+  const localCardioBenchmarkKey = "mangoFitness.cardioBenchmarks.v1";
 
   function client() {
     return window.mangoSupabaseClient || (typeof supabaseClient !== "undefined" ? supabaseClient : null);
@@ -77,6 +78,64 @@ const MangoFitnessStore = (() => {
   }
 
   return {
+    async cardioBenchmarks() {
+      const sb = client();
+      if (!sb) return readLocal(localCardioBenchmarkKey);
+
+      const { data, error } = await sb
+        .from("cardio_benchmarks")
+        .select("id, benchmark_key, name, score_type, description")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async saveCardioBenchmark(benchmark) {
+      const sb = client();
+      if (!sb) {
+        const benchmarks = readLocal(localCardioBenchmarkKey);
+        const saved = { ...benchmark, id: uid("cardio-benchmark") };
+        benchmarks.push(saved);
+        writeLocal(localCardioBenchmarkKey, benchmarks.sort((a, b) => a.name.localeCompare(b.name)));
+        return saved;
+      }
+      const user = await requireUser();
+      const { data, error } = await sb
+        .from("cardio_benchmarks")
+        .insert({ name: benchmark.name, score_type: benchmark.scoreType, description: benchmark.description, created_by: user?.id || null })
+        .select("id, benchmark_key, name, score_type, description")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async updateCardioBenchmark(id, benchmark) {
+      const sb = client();
+      if (!sb) {
+        const benchmarks = readLocal(localCardioBenchmarkKey).map((item) => item.id === id ? { ...item, ...benchmark } : item);
+        writeLocal(localCardioBenchmarkKey, benchmarks.sort((a, b) => a.name.localeCompare(b.name)));
+        return { id, ...benchmark };
+      }
+      const { data, error } = await sb
+        .from("cardio_benchmarks")
+        .update({ name: benchmark.name, score_type: benchmark.scoreType, description: benchmark.description })
+        .eq("id", id)
+        .select("id, benchmark_key, name, score_type, description")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async deleteCardioBenchmark(id) {
+      const sb = client();
+      if (!sb) {
+        writeLocal(localCardioBenchmarkKey, readLocal(localCardioBenchmarkKey).filter((item) => item.id !== id));
+        return;
+      }
+      const { error } = await sb.from("cardio_benchmarks").delete().eq("id", id);
+      if (error) throw error;
+    },
+
     async strengthMovements() {
       const sb = client();
       if (!sb) return readLocal(localStrengthMovementKey);
@@ -439,7 +498,7 @@ function strengthMovementByName(name) {
   return strengthMovements.find((movement) => movement.name.toLowerCase() === normalized);
 }
 
-const cardioBenchmarks = [
+const defaultCardioBenchmarks = [
   { key: "", name: "Select benchmark" },
   { key: "4k-row", name: "4K Row", scoreType: "Time", description: "For time: row 4,000 meters. Record finish time." },
   { key: "2k-row", name: "2K Row", scoreType: "Time", description: "For time: row 2,000 meters. Record finish time." },
@@ -456,12 +515,23 @@ const cardioBenchmarks = [
   { key: "custom", name: "Custom / one-off", scoreType: "" }
 ];
 
+let cardioBenchmarks = [...defaultCardioBenchmarks];
+
+function benchmarkId(benchmark) {
+  return benchmark.id || benchmark.benchmark_key || benchmark.key || "";
+}
+
+function benchmarkScoreType(benchmark) {
+  return benchmark?.score_type || benchmark?.scoreType || "";
+}
+
 function benchmarkByKey(key) {
-  return cardioBenchmarks.find((benchmark) => benchmark.key === key) || cardioBenchmarks[0];
+  if (!key) return cardioBenchmarks[0];
+  return cardioBenchmarks.find((benchmark) => benchmarkId(benchmark) === key) || cardioBenchmarks[0];
 }
 
 function benchmarkOptions(selectedKey = "") {
-  return cardioBenchmarks.map((benchmark) => `<option value="${escapeHtml(benchmark.key)}"${benchmark.key === selectedKey ? " selected" : ""}>${escapeHtml(benchmark.name)}</option>`).join("");
+  return cardioBenchmarks.map((benchmark) => `<option value="${escapeHtml(benchmarkId(benchmark))}"${benchmarkId(benchmark) === selectedKey ? " selected" : ""}>${escapeHtml(benchmark.name)}</option>`).join("");
 }
 
 function friendlyError(error) {
@@ -498,6 +568,13 @@ function initCoachApp() {
   const saveMovementBtn = document.getElementById("saveMovementBtn");
   const updateMovementBtn = document.getElementById("updateMovementBtn");
   const deleteMovementBtn = document.getElementById("deleteMovementBtn");
+  const benchmarkManagerSelect = document.getElementById("benchmarkManagerSelect");
+  const benchmarkManagerName = document.getElementById("benchmarkManagerName");
+  const benchmarkManagerScoreType = document.getElementById("benchmarkManagerScoreType");
+  const benchmarkManagerDescription = document.getElementById("benchmarkManagerDescription");
+  const saveBenchmarkBtn = document.getElementById("saveBenchmarkBtn");
+  const updateBenchmarkBtn = document.getElementById("updateBenchmarkBtn");
+  const deleteBenchmarkBtn = document.getElementById("deleteBenchmarkBtn");
   const warmupNotes = document.getElementById("warmupNotes");
   const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
@@ -568,6 +645,32 @@ function initCoachApp() {
     }
   }
 
+  function renderBenchmarkManagerOptions(selectedId = "") {
+    if (!benchmarkManagerSelect) return;
+    benchmarkManagerSelect.innerHTML = `<option value="">New benchmark</option>${benchmarkOptions(selectedId)}`;
+  }
+
+  function refreshBenchmarkDropdowns() {
+    document.querySelectorAll(".exercise-benchmark").forEach((select) => {
+      const selected = select.value;
+      select.innerHTML = benchmarkOptions(selected);
+    });
+  }
+
+  async function loadCardioBenchmarks() {
+    try {
+      const savedBenchmarks = await MangoFitnessStore.cardioBenchmarks();
+      cardioBenchmarks = savedBenchmarks.length ? [{ key: "", name: "Select benchmark" }, ...savedBenchmarks, { key: "custom", name: "Custom / one-off", scoreType: "" }] : [...defaultCardioBenchmarks];
+      renderBenchmarkManagerOptions();
+      refreshBenchmarkDropdowns();
+    } catch (error) {
+      cardioBenchmarks = [...defaultCardioBenchmarks];
+      renderBenchmarkManagerOptions();
+      refreshBenchmarkDropdowns();
+      setAppMessage(friendlyError(error), true);
+    }
+  }
+
   const sectionLabels = {
     warmup: "Warm-up",
     lifting: "Weightlifting / Strength",
@@ -615,9 +718,9 @@ function initCoachApp() {
       const nameInput = row.querySelector(".exercise-name");
       const targetInput = row.querySelector(".exercise-target");
       const notesInput = row.querySelector(".exercise-notes");
-      if (benchmark.key && benchmark.key !== "custom") nameInput.value = benchmark.name;
+      if (benchmarkId(benchmark) && benchmarkId(benchmark) !== "custom") nameInput.value = benchmark.name;
       else if (!nameInput.value.trim()) nameInput.value = "Cardio score";
-      if (benchmark.scoreType) targetInput.value = benchmark.scoreType;
+      if (benchmarkScoreType(benchmark)) targetInput.value = benchmarkScoreType(benchmark);
       if (benchmark.description && !notesInput.value.trim()) notesInput.value = benchmark.description;
     });
     const movementInput = row.querySelector(".exercise-movement");
@@ -961,6 +1064,63 @@ function initCoachApp() {
     }
   });
 
+  benchmarkManagerSelect?.addEventListener("change", () => {
+    const benchmark = benchmarkByKey(benchmarkManagerSelect.value);
+    benchmarkManagerName.value = benchmark?.name?.replace("Select benchmark", "").replace("Custom / one-off", "") || "";
+    benchmarkManagerScoreType.value = benchmarkScoreType(benchmark);
+    benchmarkManagerDescription.value = benchmark?.description || "";
+  });
+
+  saveBenchmarkBtn?.addEventListener("click", async () => {
+    const name = benchmarkManagerName.value.trim();
+    const scoreType = benchmarkManagerScoreType.value.trim();
+    const description = benchmarkManagerDescription.value.trim();
+    if (!name) return setAppMessage("Add a benchmark name first.", true);
+    try {
+      const saved = await MangoFitnessStore.saveCardioBenchmark({ name, scoreType, description });
+      await loadCardioBenchmarks();
+      renderBenchmarkManagerOptions(saved.id);
+      setAppMessage("Cardio benchmark saved.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
+  updateBenchmarkBtn?.addEventListener("click", async () => {
+    const id = benchmarkManagerSelect.value;
+    const benchmark = benchmarkByKey(id);
+    const name = benchmarkManagerName.value.trim();
+    const scoreType = benchmarkManagerScoreType.value.trim();
+    const description = benchmarkManagerDescription.value.trim();
+    if (!id || !benchmark?.id) return setAppMessage("Select a benchmark to update.", true);
+    if (!name) return setAppMessage("Add a benchmark name first.", true);
+    try {
+      await MangoFitnessStore.updateCardioBenchmark(id, { name, scoreType, description });
+      await loadCardioBenchmarks();
+      renderBenchmarkManagerOptions(id);
+      setAppMessage("Cardio benchmark updated.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
+  deleteBenchmarkBtn?.addEventListener("click", async () => {
+    const id = benchmarkManagerSelect.value;
+    const benchmark = benchmarkByKey(id);
+    if (!id || !benchmark?.id) return setAppMessage("Select a benchmark to delete.", true);
+    if (!confirm(`Delete cardio benchmark “${benchmark.name}”? This cannot be undone.`)) return;
+    try {
+      await MangoFitnessStore.deleteCardioBenchmark(id);
+      await loadCardioBenchmarks();
+      benchmarkManagerName.value = "";
+      benchmarkManagerScoreType.value = "";
+      benchmarkManagerDescription.value = "";
+      setAppMessage("Cardio benchmark deleted.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
   document.querySelectorAll("[data-add-section]").forEach((button) => {
     button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
   });
@@ -994,6 +1154,7 @@ function initCoachApp() {
 
   loadWarmupTemplates();
   loadStrengthMovements();
+  loadCardioBenchmarks();
   clearForm();
   renderCoach();
 }

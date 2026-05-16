@@ -738,3 +738,6 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 48px 210px 150px 190px 92px;
   }
 }
+.benchmark-manager {
+  margin-top: 12px;
+}

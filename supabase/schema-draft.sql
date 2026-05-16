@@ -17,6 +17,19 @@ create table if not exists athletes (
 
 
 
+
+create table if not exists cardio_benchmarks (
+  id uuid primary key default gen_random_uuid(),
+  benchmark_key text unique,
+  name text not null,
+  score_type text,
+  description text,
+  is_builtin boolean not null default false,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists strength_movements (
   id uuid primary key default gen_random_uuid(),
   movement_key text unique,
@@ -125,6 +138,23 @@ alter table warmup_templates add column if not exists template_key text unique;
 alter table warmup_templates add column if not exists is_builtin boolean not null default false;
 
 
+
+insert into cardio_benchmarks (benchmark_key, name, score_type, description, is_builtin)
+values
+  ('4k-row', '4K Row', 'Time', 'For time: row 4,000 meters. Record finish time.', true),
+  ('2k-row', '2K Row', 'Time', 'For time: row 2,000 meters. Record finish time.', true),
+  ('1-mile-run', '1 Mile Run', 'Time', null, true),
+  ('5k-run', '5K Run', 'Time', null, true),
+  ('assault-bike-calories', 'Assault Bike Calories', 'Calories', null, true),
+  ('ski-erg-calories', 'SkiErg Calories', 'Calories', null, true),
+  ('cindy', 'Cindy', 'Rounds + reps', '20 min AMRAP: 5 pull-ups, 10 push-ups, 15 air squats.', true),
+  ('murph', 'Murph', 'Time', 'For time: 1 mile run, 100 pull-ups, 200 push-ups, 300 air squats, 1 mile run. Partition reps as needed. Vest optional.', true),
+  ('fran', 'Fran', 'Time', '21-15-9 reps for time: thrusters and pull-ups.', true),
+  ('helen', 'Helen', 'Time', '3 rounds for time: 400m run, 21 kettlebell swings, 12 pull-ups.', true),
+  ('annie', 'Annie', 'Time', '50-40-30-20-10 reps for time: double-unders and sit-ups.', true),
+  ('grace', 'Grace', 'Time', 'For time: 30 clean and jerks.', true)
+on conflict (benchmark_key) do nothing;
+
 insert into strength_movements (movement_key, name, is_builtin)
 values
   ('back-squat', 'Back Squat', true),
@@ -190,9 +220,15 @@ create trigger strength_movements_set_updated_at
 before update on strength_movements
 for each row execute function set_updated_at();
 
+drop trigger if exists cardio_benchmarks_set_updated_at on cardio_benchmarks;
+create trigger cardio_benchmarks_set_updated_at
+before update on cardio_benchmarks
+for each row execute function set_updated_at();
+
 alter table athletes enable row level security;
 alter table warmup_templates enable row level security;
 alter table strength_movements enable row level security;
+alter table cardio_benchmarks enable row level security;
 alter table programs enable row level security;
 alter table workouts enable row level security;
 alter table workout_exercises enable row level security;
@@ -207,6 +243,12 @@ drop policy if exists "authenticated manage athletes" on athletes;
 create policy "authenticated manage athletes" on athletes for all to authenticated using (true) with check (true);
 
 
+
+
+drop policy if exists "authenticated read cardio benchmarks" on cardio_benchmarks;
+create policy "authenticated read cardio benchmarks" on cardio_benchmarks for select to authenticated using (true);
+drop policy if exists "authenticated manage cardio benchmarks" on cardio_benchmarks;
+create policy "authenticated manage cardio benchmarks" on cardio_benchmarks for all to authenticated using (true) with check (true);
 
 drop policy if exists "authenticated read strength movements" on strength_movements;
 create policy "authenticated read strength movements" on strength_movements for select to authenticated using (true);
