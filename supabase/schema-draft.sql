@@ -15,6 +15,16 @@ create table if not exists athletes (
   created_at timestamptz not null default now()
 );
 
+
+create table if not exists warmup_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  notes text not null,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists programs (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -121,7 +131,13 @@ create trigger workouts_set_updated_at
 before update on workouts
 for each row execute function set_updated_at();
 
+drop trigger if exists warmup_templates_set_updated_at on warmup_templates;
+create trigger warmup_templates_set_updated_at
+before update on warmup_templates
+for each row execute function set_updated_at();
+
 alter table athletes enable row level security;
+alter table warmup_templates enable row level security;
 alter table programs enable row level security;
 alter table workouts enable row level security;
 alter table workout_exercises enable row level security;
@@ -134,6 +150,12 @@ drop policy if exists "authenticated read athletes" on athletes;
 create policy "authenticated read athletes" on athletes for select to authenticated using (true);
 drop policy if exists "authenticated manage athletes" on athletes;
 create policy "authenticated manage athletes" on athletes for all to authenticated using (true) with check (true);
+
+
+drop policy if exists "authenticated read warmup templates" on warmup_templates;
+create policy "authenticated read warmup templates" on warmup_templates for select to authenticated using (true);
+drop policy if exists "authenticated manage warmup templates" on warmup_templates;
+create policy "authenticated manage warmup templates" on warmup_templates for all to authenticated using (true) with check (true);
 
 drop policy if exists "authenticated read programs" on programs;
 create policy "authenticated read programs" on programs for select to authenticated using (true);

@@ -543,3 +543,21 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     grid-template-columns: 38px 34px 34px 180px 210px 150px 180px 92px;
   }
 }
+
+.warmup-template-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 12px;
+}
+.template-actions {
+  margin-top: -2px;
+}
+
+@media (max-width: 760px) {
+  .warmup-template-grid {
+    grid-template-columns: 1fr;
+  }
+  .template-actions button {
+    flex: 1 1 100%;
+  }
+}

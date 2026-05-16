@@ -1,6 +1,7 @@
 const MangoFitnessStore = (() => {
   const localWorkoutKey = "mangoFitness.workouts.v1";
   const localResultKey = "mangoFitness.results.v1";
+  const localWarmupTemplateKey = "mangoFitness.warmupTemplates.v1";
 
   function client() {
     return window.mangoSupabaseClient || (typeof supabaseClient !== "undefined" ? supabaseClient : null);
@@ -71,6 +72,67 @@ const MangoFitnessStore = (() => {
   }
 
   return {
+    async warmupTemplates() {
+      const sb = client();
+      if (!sb) return readLocal(localWarmupTemplateKey);
+
+      const { data, error } = await sb
+        .from("warmup_templates")
+        .select("id, name, notes")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async saveWarmupTemplate(template) {
+      const sb = client();
+      if (!sb) {
+        const templates = readLocal(localWarmupTemplateKey);
+        const saved = { ...template, id: uid("warmup-template") };
+        templates.push(saved);
+        writeLocal(localWarmupTemplateKey, templates.sort((a, b) => a.name.localeCompare(b.name)));
+        return saved;
+      }
+
+      const user = await requireUser();
+      const { data, error } = await sb
+        .from("warmup_templates")
+        .insert({ name: template.name, notes: template.notes, created_by: user?.id || null })
+        .select("id, name, notes")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async updateWarmupTemplate(id, template) {
+      const sb = client();
+      if (!sb) {
+        const templates = readLocal(localWarmupTemplateKey).map((item) => item.id === id ? { ...item, ...template } : item);
+        writeLocal(localWarmupTemplateKey, templates.sort((a, b) => a.name.localeCompare(b.name)));
+        return { id, ...template };
+      }
+
+      const { data, error } = await sb
+        .from("warmup_templates")
+        .update({ name: template.name, notes: template.notes })
+        .eq("id", id)
+        .select("id, name, notes")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async deleteWarmupTemplate(id) {
+      const sb = client();
+      if (!sb) {
+        writeLocal(localWarmupTemplateKey, readLocal(localWarmupTemplateKey).filter((item) => item.id !== id));
+        return;
+      }
+
+      const { error } = await sb.from("warmup_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+
     async workouts() {
       const sb = client();
       if (!sb) return readLocal(localWorkoutKey);
@@ -223,7 +285,7 @@ function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const warmupTemplates = [
+const defaultWarmupTemplates = [
   {
     key: "pushup-ringrow",
     name: "Push-up + Ring Row",
@@ -246,12 +308,14 @@ const warmupTemplates = [
   }
 ];
 
-function warmupTemplateOptions() {
-  return warmupTemplates.map((template) => `<option value="${escapeHtml(template.key)}">${escapeHtml(template.name)}</option>`).join("");
+let warmupTemplates = [...defaultWarmupTemplates];
+
+function warmupTemplateOptions(selectedId = "") {
+  return warmupTemplates.map((template) => `<option value="${escapeHtml(template.id || template.key)}"${(template.id || template.key) === selectedId ? " selected" : ""}>${escapeHtml(template.name)}</option>`).join("");
 }
 
 function warmupTemplateByKey(key) {
-  return warmupTemplates.find((template) => template.key === key);
+  return warmupTemplates.find((template) => (template.id || template.key) === key);
 }
 
 const cardioBenchmarks = [
@@ -304,6 +368,10 @@ function initCoachApp() {
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
   const warmupTemplate = document.getElementById("warmupTemplate");
+  const warmupTemplateName = document.getElementById("warmupTemplateName");
+  const saveWarmupTemplateBtn = document.getElementById("saveWarmupTemplateBtn");
+  const updateWarmupTemplateBtn = document.getElementById("updateWarmupTemplateBtn");
+  const deleteWarmupTemplateBtn = document.getElementById("deleteWarmupTemplateBtn");
   const warmupNotes = document.getElementById("warmupNotes");
   const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
@@ -313,12 +381,28 @@ function initCoachApp() {
   const message = document.getElementById("coachAppMessage");
 
   date.value = todayISO();
-  if (warmupTemplate) warmupTemplate.innerHTML += warmupTemplateOptions();
 
   function setAppMessage(text, isError = false) {
     message.textContent = text || "";
     message.classList.toggle("hidden", !text);
     message.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function renderWarmupTemplateOptions(selectedId = "") {
+    if (!warmupTemplate) return;
+    warmupTemplate.innerHTML = `<option value="">Custom warm-up</option>${warmupTemplateOptions(selectedId)}`;
+  }
+
+  async function loadWarmupTemplates() {
+    try {
+      const savedTemplates = await MangoFitnessStore.warmupTemplates();
+      warmupTemplates = [...defaultWarmupTemplates, ...savedTemplates];
+      renderWarmupTemplateOptions();
+    } catch (error) {
+      warmupTemplates = [...defaultWarmupTemplates];
+      renderWarmupTemplateOptions();
+      setAppMessage(friendlyError(error), true);
+    }
   }
 
   const sectionLabels = {
@@ -459,10 +543,10 @@ function initCoachApp() {
   function clearForm() {
     form.dataset.editId = "";
     date.value = todayISO();
-  if (warmupTemplate) warmupTemplate.innerHTML += warmupTemplateOptions();
     title.value = "";
     notes.value = "";
     if (warmupTemplate) warmupTemplate.value = "";
+    if (warmupTemplateName) warmupTemplateName.value = "";
     warmupNotes.value = "";
     cardioNotes.value = "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
@@ -548,7 +632,54 @@ function initCoachApp() {
 
   warmupTemplate?.addEventListener("change", () => {
     const template = warmupTemplateByKey(warmupTemplate.value);
+    warmupTemplateName.value = template?.name || "";
     if (template) warmupNotes.value = template.notes;
+  });
+
+  saveWarmupTemplateBtn?.addEventListener("click", async () => {
+    const name = warmupTemplateName.value.trim();
+    const templateNotes = warmupNotes.value.trim();
+    if (!name || !templateNotes) return setAppMessage("Add a template name and warm-up notes first.", true);
+    try {
+      const saved = await MangoFitnessStore.saveWarmupTemplate({ name, notes: templateNotes });
+      await loadWarmupTemplates();
+      renderWarmupTemplateOptions(saved.id);
+      setAppMessage("Warm-up template saved.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
+  updateWarmupTemplateBtn?.addEventListener("click", async () => {
+    const id = warmupTemplate.value;
+    const name = warmupTemplateName.value.trim();
+    const templateNotes = warmupNotes.value.trim();
+    const selected = warmupTemplateByKey(id);
+    if (!id || !selected?.id) return setAppMessage("Select a saved template to update. Built-in templates can be copied with Save as new template.", true);
+    if (!name || !templateNotes) return setAppMessage("Add a template name and warm-up notes first.", true);
+    try {
+      await MangoFitnessStore.updateWarmupTemplate(id, { name, notes: templateNotes });
+      await loadWarmupTemplates();
+      renderWarmupTemplateOptions(id);
+      setAppMessage("Warm-up template updated.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
+  deleteWarmupTemplateBtn?.addEventListener("click", async () => {
+    const id = warmupTemplate.value;
+    const selected = warmupTemplateByKey(id);
+    if (!id || !selected?.id) return setAppMessage("Select a saved template to delete. Built-in templates cannot be deleted.", true);
+    try {
+      await MangoFitnessStore.deleteWarmupTemplate(id);
+      await loadWarmupTemplates();
+      warmupTemplateName.value = "";
+      warmupNotes.value = "";
+      setAppMessage("Warm-up template deleted.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
   });
 
   document.querySelectorAll("[data-add-section]").forEach((button) => {
@@ -582,6 +713,7 @@ function initCoachApp() {
     }
   });
 
+  loadWarmupTemplates();
   clearForm();
   renderCoach();
 }
@@ -602,7 +734,6 @@ function initAthleteApp() {
   if (!date || !view || !history) return;
 
   date.value = todayISO();
-  if (warmupTemplate) warmupTemplate.innerHTML += warmupTemplateOptions();
 
   async function renderAthlete() {
     try {
