@@ -600,3 +600,6 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     grid-template-columns: 38px 34px 34px 180px 190px 76px 86px 110px 130px 150px 92px;
   }
 }
+.movement-manager {
+  margin-top: 12px;
+}

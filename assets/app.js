@@ -2,6 +2,7 @@ const MangoFitnessStore = (() => {
   const localWorkoutKey = "mangoFitness.workouts.v1";
   const localResultKey = "mangoFitness.results.v1";
   const localWarmupTemplateKey = "mangoFitness.warmupTemplates.v1";
+  const localStrengthMovementKey = "mangoFitness.strengthMovements.v1";
 
   function client() {
     return window.mangoSupabaseClient || (typeof supabaseClient !== "undefined" ? supabaseClient : null);
@@ -76,6 +77,64 @@ const MangoFitnessStore = (() => {
   }
 
   return {
+    async strengthMovements() {
+      const sb = client();
+      if (!sb) return readLocal(localStrengthMovementKey);
+
+      const { data, error } = await sb
+        .from("strength_movements")
+        .select("id, movement_key, name")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async saveStrengthMovement(movement) {
+      const sb = client();
+      if (!sb) {
+        const movements = readLocal(localStrengthMovementKey);
+        const saved = { ...movement, id: uid("strength-movement") };
+        movements.push(saved);
+        writeLocal(localStrengthMovementKey, movements.sort((a, b) => a.name.localeCompare(b.name)));
+        return saved;
+      }
+      const user = await requireUser();
+      const { data, error } = await sb
+        .from("strength_movements")
+        .insert({ name: movement.name, created_by: user?.id || null })
+        .select("id, movement_key, name")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async updateStrengthMovement(id, movement) {
+      const sb = client();
+      if (!sb) {
+        const movements = readLocal(localStrengthMovementKey).map((item) => item.id === id ? { ...item, ...movement } : item);
+        writeLocal(localStrengthMovementKey, movements.sort((a, b) => a.name.localeCompare(b.name)));
+        return { id, ...movement };
+      }
+      const { data, error } = await sb
+        .from("strength_movements")
+        .update({ name: movement.name })
+        .eq("id", id)
+        .select("id, movement_key, name")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async deleteStrengthMovement(id) {
+      const sb = client();
+      if (!sb) {
+        writeLocal(localStrengthMovementKey, readLocal(localStrengthMovementKey).filter((item) => item.id !== id));
+        return;
+      }
+      const { error } = await sb.from("strength_movements").delete().eq("id", id);
+      if (error) throw error;
+    },
+
     async warmupTemplates() {
       const sb = client();
       if (!sb) return readLocal(localWarmupTemplateKey);
@@ -324,7 +383,7 @@ function warmupTemplateByKey(key) {
   return warmupTemplates.find((template) => (template.id || template.key) === key);
 }
 
-const strengthMovements = [
+const defaultStrengthMovements = [
   { key: "", name: "Select movement" },
   { key: "back-squat", name: "Back Squat" },
   { key: "front-squat", name: "Front Squat" },
@@ -344,12 +403,18 @@ const strengthMovements = [
   { key: "custom", name: "Custom / one-off" }
 ];
 
+let strengthMovements = [...defaultStrengthMovements];
+
+function movementId(movement) {
+  return movement.id || movement.movement_key || movement.key || "";
+}
+
 function strengthMovementByKey(key) {
-  return strengthMovements.find((movement) => movement.key === key) || strengthMovements[0];
+  return strengthMovements.find((movement) => movementId(movement) === key) || strengthMovements[0];
 }
 
 function strengthMovementOptions(selectedKey = "") {
-  return strengthMovements.map((movement) => `<option value="${escapeHtml(movement.key)}"${movement.key === selectedKey ? " selected" : ""}>${escapeHtml(movement.name)}</option>`).join("");
+  return strengthMovements.map((movement) => `<option value="${escapeHtml(movementId(movement))}"${movementId(movement) === selectedKey ? " selected" : ""}>${escapeHtml(movement.name)}</option>`).join("");
 }
 
 const cardioBenchmarks = [
@@ -406,6 +471,11 @@ function initCoachApp() {
   const saveWarmupTemplateBtn = document.getElementById("saveWarmupTemplateBtn");
   const updateWarmupTemplateBtn = document.getElementById("updateWarmupTemplateBtn");
   const deleteWarmupTemplateBtn = document.getElementById("deleteWarmupTemplateBtn");
+  const movementManagerSelect = document.getElementById("movementManagerSelect");
+  const movementManagerName = document.getElementById("movementManagerName");
+  const saveMovementBtn = document.getElementById("saveMovementBtn");
+  const updateMovementBtn = document.getElementById("updateMovementBtn");
+  const deleteMovementBtn = document.getElementById("deleteMovementBtn");
   const warmupNotes = document.getElementById("warmupNotes");
   const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
@@ -435,6 +505,32 @@ function initCoachApp() {
     } catch (error) {
       warmupTemplates = [...defaultWarmupTemplates];
       renderWarmupTemplateOptions();
+      setAppMessage(friendlyError(error), true);
+    }
+  }
+
+  function renderMovementManagerOptions(selectedId = "") {
+    if (!movementManagerSelect) return;
+    movementManagerSelect.innerHTML = `<option value="">New movement</option>${strengthMovementOptions(selectedId)}`;
+  }
+
+  function refreshMovementDropdowns() {
+    document.querySelectorAll(".exercise-movement").forEach((select) => {
+      const selected = select.value;
+      select.innerHTML = strengthMovementOptions(selected);
+    });
+  }
+
+  async function loadStrengthMovements() {
+    try {
+      const savedMovements = await MangoFitnessStore.strengthMovements();
+      strengthMovements = savedMovements.length ? [...savedMovements, { key: "custom", name: "Custom / one-off" }] : [...defaultStrengthMovements];
+      renderMovementManagerOptions();
+      refreshMovementDropdowns();
+    } catch (error) {
+      strengthMovements = [...defaultStrengthMovements];
+      renderMovementManagerOptions();
+      refreshMovementDropdowns();
       setAppMessage(friendlyError(error), true);
     }
   }
@@ -728,6 +824,55 @@ function initCoachApp() {
     }
   });
 
+  movementManagerSelect?.addEventListener("change", () => {
+    const movement = strengthMovementByKey(movementManagerSelect.value);
+    movementManagerName.value = movement?.name || "";
+  });
+
+  saveMovementBtn?.addEventListener("click", async () => {
+    const name = movementManagerName.value.trim();
+    if (!name) return setAppMessage("Add a movement name first.", true);
+    try {
+      const saved = await MangoFitnessStore.saveStrengthMovement({ name });
+      await loadStrengthMovements();
+      renderMovementManagerOptions(saved.id);
+      setAppMessage("Strength movement saved.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
+  updateMovementBtn?.addEventListener("click", async () => {
+    const id = movementManagerSelect.value;
+    const movement = strengthMovementByKey(id);
+    const name = movementManagerName.value.trim();
+    if (!id || !movement?.id) return setAppMessage("Select a movement to update.", true);
+    if (!name) return setAppMessage("Add a movement name first.", true);
+    try {
+      await MangoFitnessStore.updateStrengthMovement(id, { name });
+      await loadStrengthMovements();
+      renderMovementManagerOptions(id);
+      setAppMessage("Strength movement updated.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
+  deleteMovementBtn?.addEventListener("click", async () => {
+    const id = movementManagerSelect.value;
+    const movement = strengthMovementByKey(id);
+    if (!id || !movement?.id) return setAppMessage("Select a movement to delete.", true);
+    if (!confirm(`Delete strength movement “${movement.name}”? This cannot be undone.`)) return;
+    try {
+      await MangoFitnessStore.deleteStrengthMovement(id);
+      await loadStrengthMovements();
+      movementManagerName.value = "";
+      setAppMessage("Strength movement deleted.");
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  });
+
   document.querySelectorAll("[data-add-section]").forEach((button) => {
     button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
   });
@@ -760,6 +905,7 @@ function initCoachApp() {
   });
 
   loadWarmupTemplates();
+  loadStrengthMovements();
   clearForm();
   renderCoach();
 }

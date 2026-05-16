@@ -16,6 +16,17 @@ create table if not exists athletes (
 );
 
 
+
+create table if not exists strength_movements (
+  id uuid primary key default gen_random_uuid(),
+  movement_key text unique,
+  name text not null,
+  is_builtin boolean not null default false,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists warmup_templates (
   id uuid primary key default gen_random_uuid(),
   template_key text unique,
@@ -113,6 +124,26 @@ alter table workouts add column if not exists score_type text;
 alter table warmup_templates add column if not exists template_key text unique;
 alter table warmup_templates add column if not exists is_builtin boolean not null default false;
 
+
+insert into strength_movements (movement_key, name, is_builtin)
+values
+  ('back-squat', 'Back Squat', true),
+  ('front-squat', 'Front Squat', true),
+  ('deadlift', 'Deadlift', true),
+  ('bench-press', 'Bench Press', true),
+  ('strict-press', 'Strict Press', true),
+  ('push-press', 'Push Press', true),
+  ('power-clean', 'Power Clean', true),
+  ('squat-clean', 'Squat Clean', true),
+  ('power-snatch', 'Power Snatch', true),
+  ('squat-snatch', 'Squat Snatch', true),
+  ('clean-and-jerk', 'Clean & Jerk', true),
+  ('pull-up', 'Pull-up', true),
+  ('ring-row', 'Ring Row', true),
+  ('push-up', 'Push-up', true),
+  ('kettlebell-swing', 'Kettlebell Swing', true)
+on conflict (movement_key) do nothing;
+
 insert into warmup_templates (template_key, name, notes, is_builtin)
 values
   ('pushup-ringrow', 'Push-up + Ring Row', '3 rounds: alternate 5 push-ups and 8 ring rows. Move smooth, not for time.', true),
@@ -153,8 +184,14 @@ create trigger warmup_templates_set_updated_at
 before update on warmup_templates
 for each row execute function set_updated_at();
 
+drop trigger if exists strength_movements_set_updated_at on strength_movements;
+create trigger strength_movements_set_updated_at
+before update on strength_movements
+for each row execute function set_updated_at();
+
 alter table athletes enable row level security;
 alter table warmup_templates enable row level security;
+alter table strength_movements enable row level security;
 alter table programs enable row level security;
 alter table workouts enable row level security;
 alter table workout_exercises enable row level security;
@@ -168,6 +205,12 @@ create policy "authenticated read athletes" on athletes for select to authentica
 drop policy if exists "authenticated manage athletes" on athletes;
 create policy "authenticated manage athletes" on athletes for all to authenticated using (true) with check (true);
 
+
+
+drop policy if exists "authenticated read strength movements" on strength_movements;
+create policy "authenticated read strength movements" on strength_movements for select to authenticated using (true);
+drop policy if exists "authenticated manage strength movements" on strength_movements;
+create policy "authenticated manage strength movements" on strength_movements for all to authenticated using (true) with check (true);
 
 drop policy if exists "authenticated read warmup templates" on warmup_templates;
 create policy "authenticated read warmup templates" on warmup_templates for select to authenticated using (true);

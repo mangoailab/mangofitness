@@ -85,6 +85,24 @@
               <div class="section-head compact"><h3>Weightlifting / Strength</h3></div>
               <div class="exercise-rows" data-exercise-rows="lifting"></div>
               <div class="actions exercise-actions"><button type="button" data-add-section="lifting">Add lifting item</button></div>
+              <details class="template-manager movement-manager">
+                <summary>Manage strength movements</summary>
+                <div class="warmup-template-grid">
+                  <div class="field">
+                    <label for="movementManagerSelect">Movement</label>
+                    <select id="movementManagerSelect"><option value="">New movement</option></select>
+                  </div>
+                  <div class="field">
+                    <label for="movementManagerName">Movement name</label>
+                    <input id="movementManagerName" type="text" placeholder="Incline DB Chest Press" />
+                  </div>
+                </div>
+                <div class="actions template-actions">
+                  <button type="button" id="saveMovementBtn">Save as new movement</button>
+                  <button type="button" id="updateMovementBtn">Update selected</button>
+                  <button type="button" id="deleteMovementBtn" class="danger-button">Delete selected</button>
+                </div>
+              </details>
             </section>
 
             <section class="workout-section" data-section="cardio">
