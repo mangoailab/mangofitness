@@ -610,15 +610,30 @@ function initCoachApp() {
     });
     const movementInput = row.querySelector(".exercise-movement");
     const suggestionBox = row.querySelector(".movement-suggestions");
+    if (suggestionBox && suggestionBox.parentElement !== document.body) {
+      document.body.appendChild(suggestionBox);
+    }
     function hideMovementSuggestions() {
       suggestionBox?.classList.add("hidden");
     }
     function positionMovementSuggestions() {
-      if (!movementInput || !suggestionBox) return;
+      if (!movementInput || !suggestionBox || suggestionBox.classList.contains("hidden")) return;
       const box = movementInput.getBoundingClientRect();
-      suggestionBox.style.left = `${box.left}px`;
-      suggestionBox.style.top = `${box.bottom + 4}px`;
-      suggestionBox.style.width = `${box.width}px`;
+      const viewport = window.visualViewport;
+      const offsetLeft = viewport?.offsetLeft || 0;
+      const offsetTop = viewport?.offsetTop || 0;
+      const viewportWidth = viewport?.width || window.innerWidth;
+      const viewportHeight = viewport?.height || window.innerHeight;
+      const suggestionHeight = Math.min(220, suggestionBox.scrollHeight || 160);
+      const left = Math.max(8 + offsetLeft, Math.min(box.left + offsetLeft, viewportWidth + offsetLeft - box.width - 8));
+      let top = box.bottom + offsetTop + 4;
+      if (top + suggestionHeight > viewportHeight + offsetTop - 8) {
+        top = Math.max(8 + offsetTop, box.top + offsetTop - suggestionHeight - 4);
+      }
+      suggestionBox.style.left = `${left}px`;
+      suggestionBox.style.top = `${top}px`;
+      suggestionBox.style.width = `${Math.min(box.width, viewportWidth - 16)}px`;
+      suggestionBox.style.maxHeight = `${suggestionHeight}px`;
     }
     function applyMovement(movement) {
       if (!movementInput || !movement) return;
@@ -647,6 +662,8 @@ function initCoachApp() {
     movementInput?.addEventListener("focus", () => movementInput.dispatchEvent(new Event("input")));
     window.addEventListener("scroll", positionMovementSuggestions, true);
     window.addEventListener("resize", positionMovementSuggestions);
+    window.visualViewport?.addEventListener("resize", positionMovementSuggestions);
+    window.visualViewport?.addEventListener("scroll", positionMovementSuggestions);
     row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
     row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
     rows.appendChild(row);

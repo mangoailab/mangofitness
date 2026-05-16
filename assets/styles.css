@@ -673,3 +673,11 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
   position: fixed;
   z-index: 9999;
 }
+
+/* Portal autocomplete to the viewport so portrait iPhone scroll containers cannot cover it. */
+body > .movement-suggestions {
+  position: fixed;
+  z-index: 2147483647;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
