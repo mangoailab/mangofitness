@@ -681,3 +681,47 @@ body > .movement-suggestions {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Reorder rows with the grip handle instead of arrow buttons. */
+.move-row {
+  display: none;
+}
+.drag-handle {
+  width: 48px;
+  min-height: 48px;
+  font-size: 22px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+body.is-reordering {
+  user-select: none;
+  touch-action: none;
+}
+body.is-reordering .exercise-row.dragging {
+  transform: scale(1.01);
+  outline: 2px solid rgba(15, 122, 59, .24);
+}
+
+@media (max-width: 760px) {
+  .exercise-table-row[data-section="lifting"] {
+    grid-template-columns: 48px minmax(230px, 1.45fr) 76px 86px 110px 130px 150px 92px;
+    width: 875px;
+    min-width: 875px;
+  }
+  .exercise-table-row[data-section="cardio"] {
+    grid-template-columns: 48px 180px 210px 150px 180px 92px;
+    width: 770px;
+    min-width: 770px;
+  }
+}
+
+.exercise-table-row {
+  grid-template-columns: 48px minmax(180px, 1.35fr) minmax(72px, .55fr) minmax(72px, .55fr) minmax(100px, .75fr) minmax(120px, .9fr) minmax(150px, 1fr) auto;
+}
+.exercise-table-row[data-section="lifting"] {
+  grid-template-columns: 48px minmax(220px, 1.45fr) minmax(72px, .55fr) minmax(72px, .55fr) minmax(100px, .75fr) minmax(120px, .9fr) minmax(150px, 1fr) auto;
+}
+.exercise-table-row[data-section="cardio"] {
+  grid-template-columns: 48px minmax(170px, 1fr) minmax(190px, 1.15fr) minmax(150px, .9fr) minmax(210px, 1.2fr) auto;
+}

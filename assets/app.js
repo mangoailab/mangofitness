@@ -736,10 +736,11 @@ function initCoachApp() {
       if (!row) return;
 
       event.preventDefault();
-      handle.setPointerCapture(event.pointerId);
       row.classList.add("dragging");
+      document.body.classList.add("is-reordering");
 
       function move(pointerEvent) {
+        pointerEvent.preventDefault();
         const after = rowAfterPointer(rows, pointerEvent.clientY);
         if (after) rows.insertBefore(row, after);
         else rows.appendChild(row);
@@ -747,14 +748,15 @@ function initCoachApp() {
 
       function stop() {
         row.classList.remove("dragging");
-        handle.removeEventListener("pointermove", move);
-        handle.removeEventListener("pointerup", stop);
-        handle.removeEventListener("pointercancel", stop);
+        document.body.classList.remove("is-reordering");
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+        window.removeEventListener("pointercancel", stop);
       }
 
-      handle.addEventListener("pointermove", move);
-      handle.addEventListener("pointerup", stop);
-      handle.addEventListener("pointercancel", stop);
+      window.addEventListener("pointermove", move, { passive: false });
+      window.addEventListener("pointerup", stop, { once: true });
+      window.addEventListener("pointercancel", stop, { once: true });
     });
   }
 
