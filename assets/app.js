@@ -36,6 +36,8 @@ const MangoFitnessStore = (() => {
         weight: exercise.target_weight || exercise.weight || "",
         benchmarkKey: exercise.benchmark_key || exercise.benchmarkKey || "",
         benchmarkName: exercise.benchmark_name || exercise.benchmarkName || "",
+        movementKey: exercise.movement_key || exercise.movementKey || "",
+        movementName: exercise.movement_name || exercise.movementName || "",
         section: exercise.section_type || exercise.section || "cardio",
         notes: exercise.notes || ""
       }))
@@ -48,9 +50,11 @@ const MangoFitnessStore = (() => {
       id: row.id,
       workoutId: exercise.workout_id || "",
       exerciseId: row.workout_exercise_id,
-      exerciseName: exercise.benchmark_name || exercise.exercise_name || "Exercise",
+      exerciseName: exercise.benchmark_name || exercise.movement_name || exercise.exercise_name || "Exercise",
       benchmarkKey: exercise.benchmark_key || "",
       benchmarkName: exercise.benchmark_name || "",
+      movementKey: exercise.movement_key || "",
+      movementName: exercise.movement_name || "",
       completedOn: row.completed_on,
       weight: row.working_weight ?? "",
       reps: row.reps_completed || "",
@@ -139,7 +143,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, section_type, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, movement_key, movement_name, section_type, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -152,7 +156,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athlete_workout_results")
-        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name)")
+        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
         .order("completed_on", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -212,6 +216,8 @@ const MangoFitnessStore = (() => {
           target_weight: exercise.weight || null,
           benchmark_key: exercise.benchmarkKey || null,
           benchmark_name: exercise.benchmarkName || null,
+          movement_key: exercise.movementKey || null,
+          movement_name: exercise.movementName || null,
           section_type: exercise.section || "cardio",
           notes: exercise.notes || null,
           sort_order: index
@@ -316,6 +322,34 @@ function warmupTemplateOptions(selectedId = "") {
 
 function warmupTemplateByKey(key) {
   return warmupTemplates.find((template) => (template.id || template.key) === key);
+}
+
+const strengthMovements = [
+  { key: "", name: "Select movement" },
+  { key: "back-squat", name: "Back Squat" },
+  { key: "front-squat", name: "Front Squat" },
+  { key: "deadlift", name: "Deadlift" },
+  { key: "bench-press", name: "Bench Press" },
+  { key: "strict-press", name: "Strict Press" },
+  { key: "push-press", name: "Push Press" },
+  { key: "power-clean", name: "Power Clean" },
+  { key: "squat-clean", name: "Squat Clean" },
+  { key: "power-snatch", name: "Power Snatch" },
+  { key: "squat-snatch", name: "Squat Snatch" },
+  { key: "clean-and-jerk", name: "Clean & Jerk" },
+  { key: "pull-up", name: "Pull-up" },
+  { key: "ring-row", name: "Ring Row" },
+  { key: "push-up", name: "Push-up" },
+  { key: "kettlebell-swing", name: "Kettlebell Swing" },
+  { key: "custom", name: "Custom / one-off" }
+];
+
+function strengthMovementByKey(key) {
+  return strengthMovements.find((movement) => movement.key === key) || strengthMovements[0];
+}
+
+function strengthMovementOptions(selectedKey = "") {
+  return strengthMovements.map((movement) => `<option value="${escapeHtml(movement.key)}"${movement.key === selectedKey ? " selected" : ""}>${escapeHtml(movement.name)}</option>`).join("");
 }
 
 const cardioBenchmarks = [
@@ -425,13 +459,15 @@ function initCoachApp() {
     row.dataset.section = section;
     row.draggable = true;
     const selectedBenchmark = values.benchmarkKey || "";
+    const selectedMovement = values.movementKey || "";
     const rowFields = section === "cardio" ? `
       <div class="field benchmark-field"><label>Benchmark map</label><select class="exercise-benchmark">${benchmarkOptions(selectedBenchmark)}</select></div>
       <div class="field exercise-name-field"><label>Score item</label><input class="exercise-name" type="text" placeholder="Finish time, 4K row, rounds + reps" value="${escapeHtml(values.name || values.benchmarkName)}" required /></div>
       <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="What should the athlete record?" value="${escapeHtml(values.notes)}" /></div>
     ` : `
-      <div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>
+      ${section === "lifting" ? `<div class="field movement-map-field"><label>Movement map</label><select class="exercise-movement">${strengthMovementOptions(selectedMovement)}</select></div>` : ""}
+      <div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name || values.movementName)}" required /></div>
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
       <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
       <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
@@ -452,6 +488,11 @@ function initCoachApp() {
       const targetInput = row.querySelector(".exercise-target");
       if (benchmark.key && benchmark.key !== "custom") nameInput.value = benchmark.name;
       if (benchmark.scoreType) targetInput.value = benchmark.scoreType;
+    });
+    row.querySelector(".exercise-movement")?.addEventListener("change", (event) => {
+      const movement = strengthMovementByKey(event.target.value);
+      const nameInput = row.querySelector(".exercise-name");
+      if (movement.key && movement.key !== "custom") nameInput.value = movement.name;
     });
     row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
     row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
@@ -561,6 +602,8 @@ function initCoachApp() {
       section: row.dataset.section || row.closest("[data-exercise-rows]")?.dataset.exerciseRows || "cardio",
       benchmarkKey: row.querySelector(".exercise-benchmark")?.value || "",
       benchmarkName: benchmarkByKey(row.querySelector(".exercise-benchmark")?.value || "").name.replace("Select benchmark", "").replace("Custom / one-off", ""),
+      movementKey: row.querySelector(".exercise-movement")?.value || "",
+      movementName: strengthMovementByKey(row.querySelector(".exercise-movement")?.value || "").name.replace("Select movement", "").replace("Custom / one-off", ""),
       name: row.querySelector(".exercise-name").value.trim(),
       sets: row.querySelector(".exercise-sets")?.value.trim() || "",
       reps: row.querySelector(".exercise-reps")?.value.trim() || "",
