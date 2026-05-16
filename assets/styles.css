@@ -90,6 +90,26 @@ h2 { margin:0 0 10px; font-size:22px; letter-spacing:-.02em; }
 .top-actions { align-items:center; gap:14px; flex-shrink:0; }
 .nav-link { color:white; font-size:14px; font-weight:800; text-decoration:none; }
 .nav-link:hover { text-decoration:underline; }
+.link-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: white;
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  min-height: 0;
+  padding: 0;
+}
+.link-button:hover {
+  box-shadow: none;
+  text-decoration: underline;
+  transform: none;
+}
 .nav-separator { color:rgba(255,255,255,.72); font-weight:700; }
 
 .grid-2 { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:16px; }
@@ -876,20 +896,11 @@ body.is-reordering .exercise-row.dragging {
   color: rgba(255, 255, 255, .9);
   font-weight: 700;
 }
-.header-auth button {
-  min-height: 38px;
-  padding: 9px 12px;
-  border-color: rgba(255,255,255,.7);
-}
-
 @media (max-width: 640px) {
   .header-auth {
     justify-content: flex-start;
     align-items: stretch;
     display: grid;
     gap: 8px;
-  }
-  .header-auth button {
-    width: 100%;
   }
 }

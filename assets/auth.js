@@ -19,7 +19,8 @@ async function initLoginPage(options) {
   const signIn = document.getElementById(options.signInBtnId);
   const forgot = document.getElementById(options.forgotBtnId);
   const signOut = document.getElementById(options.signOutBtnId);
-  const headerAuth = signOut?.closest(".header-auth");
+  const signOutSeparator = signOut ? document.getElementById(`${options.signOutBtnId.replace("Btn", "Separator")}`) : null;
+  const headerAuth = document.getElementById("coachHeaderAuth") || signOut?.closest(".header-auth");
   const authCard = document.getElementById(options.authCardId);
   const dashboard = document.getElementById(options.dashboardId);
 
@@ -27,6 +28,8 @@ async function initLoginPage(options) {
     if (authCard) authCard.classList.add("hidden");
     if (dashboard) dashboard.classList.remove("hidden");
     if (headerAuth) headerAuth.classList.remove("hidden");
+    if (signOut) signOut.classList.remove("hidden");
+    if (signOutSeparator) signOutSeparator.classList.remove("hidden");
     setMessage(options.dashboardMessageId, `Signed in as ${userEmail || "your account"}.`);
   }
 
@@ -34,6 +37,8 @@ async function initLoginPage(options) {
     if (authCard) authCard.classList.remove("hidden");
     if (dashboard) dashboard.classList.add("hidden");
     if (headerAuth) headerAuth.classList.add("hidden");
+    if (signOut) signOut.classList.add("hidden");
+    if (signOutSeparator) signOutSeparator.classList.add("hidden");
   }
 
   const { data: sessionData } = await supabaseClient.auth.getSession();
