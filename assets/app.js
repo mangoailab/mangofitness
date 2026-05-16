@@ -548,7 +548,7 @@ function initCoachApp() {
   async function loadStrengthMovements() {
     try {
       const savedMovements = await MangoFitnessStore.strengthMovements();
-      strengthMovements = savedMovements.length ? [...savedMovements, { key: "custom", name: "Custom / one-off" }] : [...defaultStrengthMovements];
+      strengthMovements = savedMovements.length ? [{ key: "", name: "Select movement" }, ...savedMovements, { key: "custom", name: "Custom / one-off" }] : [...defaultStrengthMovements];
       renderMovementManagerOptions();
       refreshMovementDropdowns();
     } catch (error) {
