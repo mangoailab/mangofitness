@@ -441,18 +441,18 @@ function strengthMovementByName(name) {
 
 const cardioBenchmarks = [
   { key: "", name: "Select benchmark" },
-  { key: "4k-row", name: "4K Row", scoreType: "Time" },
-  { key: "2k-row", name: "2K Row", scoreType: "Time" },
+  { key: "4k-row", name: "4K Row", scoreType: "Time", description: "For time: row 4,000 meters. Record finish time." },
+  { key: "2k-row", name: "2K Row", scoreType: "Time", description: "For time: row 2,000 meters. Record finish time." },
   { key: "1-mile-run", name: "1 Mile Run", scoreType: "Time" },
   { key: "5k-run", name: "5K Run", scoreType: "Time" },
   { key: "assault-bike-calories", name: "Assault Bike Calories", scoreType: "Calories" },
   { key: "ski-erg-calories", name: "SkiErg Calories", scoreType: "Calories" },
-  { key: "cindy", name: "Cindy", scoreType: "Rounds + reps" },
-  { key: "murph", name: "Murph", scoreType: "Time" },
-  { key: "fran", name: "Fran", scoreType: "Time" },
-  { key: "helen", name: "Helen", scoreType: "Time" },
-  { key: "annie", name: "Annie", scoreType: "Time" },
-  { key: "grace", name: "Grace", scoreType: "Time" },
+  { key: "cindy", name: "Cindy", scoreType: "Rounds + reps", description: "20 min AMRAP: 5 pull-ups, 10 push-ups, 15 air squats." },
+  { key: "murph", name: "Murph", scoreType: "Time", description: "For time: 1 mile run, 100 pull-ups, 200 push-ups, 300 air squats, 1 mile run. Partition reps as needed. Vest optional." },
+  { key: "fran", name: "Fran", scoreType: "Time", description: "21-15-9 reps for time: thrusters and pull-ups." },
+  { key: "helen", name: "Helen", scoreType: "Time", description: "3 rounds for time: 400m run, 21 kettlebell swings, 12 pull-ups." },
+  { key: "annie", name: "Annie", scoreType: "Time", description: "50-40-30-20-10 reps for time: double-unders and sit-ups." },
+  { key: "grace", name: "Grace", scoreType: "Time", description: "For time: 30 clean and jerks." },
   { key: "custom", name: "Custom / one-off", scoreType: "" }
 ];
 
@@ -593,7 +593,7 @@ function initCoachApp() {
       <div class="field benchmark-field"><label>Benchmark map</label><select class="exercise-benchmark">${benchmarkOptions(selectedBenchmark)}</select></div>
       <div class="field exercise-name-field"><label>Score item</label><input class="exercise-name" type="text" placeholder="Finish time, 4K row, rounds + reps" value="${escapeHtml(values.name || values.benchmarkName)}" required /></div>
       <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
-      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="What should the athlete record?" value="${escapeHtml(values.notes)}" /></div>
+      <div class="field notes-field"><label>Description / notes</label><input class="exercise-notes" type="text" placeholder="Workout description or what the athlete should record" value="${escapeHtml(values.notes)}" /></div>
     ` : `
       ${section === "lifting" ? `<div class="field exercise-name-field movement-map-field"><label>Movement</label><input class="exercise-name exercise-movement" data-movement-key="${escapeHtml(selectedMovement)}" placeholder="Start typing, e.g. chest" value="${escapeHtml(movementInputValue(values, selectedMovement))}" autocomplete="off" required /><div class="movement-suggestions hidden"></div></div>` : `<div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>`}
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
@@ -614,8 +614,10 @@ function initCoachApp() {
       const benchmark = benchmarkByKey(event.target.value);
       const nameInput = row.querySelector(".exercise-name");
       const targetInput = row.querySelector(".exercise-target");
+      const notesInput = row.querySelector(".exercise-notes");
       if (benchmark.key && benchmark.key !== "custom") nameInput.value = benchmark.name;
       if (benchmark.scoreType) targetInput.value = benchmark.scoreType;
+      if (benchmark.description && !notesInput.value.trim()) notesInput.value = benchmark.description;
     });
     const movementInput = row.querySelector(".exercise-movement");
     const suggestionBox = row.querySelector(".movement-suggestions");
