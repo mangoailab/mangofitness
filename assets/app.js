@@ -616,6 +616,8 @@ function initCoachApp() {
 
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => {
+        const workoutTitle = button.closest(".item-card")?.querySelector("strong")?.textContent || "this workout";
+        if (!confirm(`Delete ${workoutTitle}? This cannot be undone.`)) return;
         try {
           await MangoFitnessStore.deleteWorkout(button.dataset.delete);
           await renderCoach();
@@ -671,6 +673,7 @@ function initCoachApp() {
     const id = warmupTemplate.value;
     const selected = warmupTemplateByKey(id);
     if (!id || !selected?.id) return setAppMessage("Select a saved template to delete. Built-in templates cannot be deleted.", true);
+    if (!confirm(`Delete warm-up template “${selected.name}”? This cannot be undone.`)) return;
     try {
       await MangoFitnessStore.deleteWarmupTemplate(id);
       await loadWarmupTemplates();
