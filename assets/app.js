@@ -231,6 +231,12 @@ const cardioBenchmarks = [
   { key: "5k-run", name: "5K Run", scoreType: "Time" },
   { key: "assault-bike-calories", name: "Assault Bike Calories", scoreType: "Calories" },
   { key: "ski-erg-calories", name: "SkiErg Calories", scoreType: "Calories" },
+  { key: "cindy", name: "Cindy", scoreType: "Rounds + reps" },
+  { key: "murph", name: "Murph", scoreType: "Time" },
+  { key: "fran", name: "Fran", scoreType: "Time" },
+  { key: "helen", name: "Helen", scoreType: "Time" },
+  { key: "annie", name: "Annie", scoreType: "Time" },
+  { key: "grace", name: "Grace", scoreType: "Time" },
   { key: "custom", name: "Custom / one-off", scoreType: "" }
 ];
 
