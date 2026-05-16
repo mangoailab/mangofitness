@@ -374,3 +374,64 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
   display: grid;
   gap: 10px;
 }
+
+@media (max-width: 760px) {
+  .workout-section {
+    padding: 12px;
+  }
+
+  .exercise-rows {
+    overflow-x: visible;
+    padding-bottom: 0;
+  }
+
+  .exercise-table-row {
+    min-width: 0;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .exercise-table-row .drag-handle,
+  .exercise-table-row .move-row {
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .exercise-table-row .exercise-name-field,
+  .exercise-table-row .target-field,
+  .exercise-table-row .notes-field {
+    grid-column: 1 / -1;
+  }
+
+  .exercise-table-row .compact-field {
+    grid-column: span 1;
+  }
+
+  .exercise-table-row .remove-row {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .exercise-table-row input {
+    min-height: 46px;
+    padding: 12px 14px;
+    text-align: left;
+  }
+
+  .compact-field input {
+    text-align: left;
+  }
+}
+
+@media (max-width: 430px) {
+  .exercise-table-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .exercise-table-row .compact-field {
+    grid-column: 1 / -1;
+  }
+}
