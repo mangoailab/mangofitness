@@ -586,7 +586,7 @@ function initCoachApp() {
       <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="What should the athlete record?" value="${escapeHtml(values.notes)}" /></div>
     ` : `
-      ${section === "lifting" ? `<div class="field exercise-name-field movement-map-field"><label>Movement</label><input class="exercise-name exercise-movement" list="strengthMovementOptions" data-movement-key="${escapeHtml(selectedMovement)}" placeholder="Start typing, e.g. chest" value="${escapeHtml(values.name || values.movementName || strengthMovementByKey(selectedMovement).name.replace("Select movement", "").replace("Custom / one-off", ""))}" required /></div>` : `<div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>`}
+      ${section === "lifting" ? `<div class="field exercise-name-field movement-map-field"><label>Movement</label><input class="exercise-name exercise-movement" data-movement-key="${escapeHtml(selectedMovement)}" placeholder="Start typing, e.g. chest" value="${escapeHtml(values.name || values.movementName || strengthMovementByKey(selectedMovement).name.replace("Select movement", "").replace("Custom / one-off", ""))}" autocomplete="off" required /><div class="movement-suggestions hidden"></div></div>` : `<div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>`}
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
       <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
       <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
@@ -608,11 +608,35 @@ function initCoachApp() {
       if (benchmark.key && benchmark.key !== "custom") nameInput.value = benchmark.name;
       if (benchmark.scoreType) targetInput.value = benchmark.scoreType;
     });
-    row.querySelector(".exercise-movement")?.addEventListener("input", (event) => {
-      const movement = strengthMovementByName(event.target.value);
-      event.target.dataset.movementKey = movement ? movementId(movement) : "";
-      if (movement) event.target.value = movement.name;
+    const movementInput = row.querySelector(".exercise-movement");
+    const suggestionBox = row.querySelector(".movement-suggestions");
+    function hideMovementSuggestions() {
+      suggestionBox?.classList.add("hidden");
+    }
+    function applyMovement(movement) {
+      if (!movementInput || !movement) return;
+      movementInput.value = movement.name;
+      movementInput.dataset.movementKey = movementId(movement);
+      hideMovementSuggestions();
+    }
+    movementInput?.addEventListener("input", (event) => {
+      const query = event.target.value.trim().toLowerCase();
+      const exactMovement = strengthMovementByName(event.target.value);
+      event.target.dataset.movementKey = exactMovement ? movementId(exactMovement) : "";
+      if (!suggestionBox) return;
+      const matches = query ? strengthMovements
+        .filter((movement) => movementId(movement) && movementId(movement) !== "custom" && movement.name.toLowerCase().includes(query))
+        .slice(0, 8) : [];
+      suggestionBox.innerHTML = matches.map((movement) => `<button type="button" data-movement-id="${escapeHtml(movementId(movement))}">${escapeHtml(movement.name)}</button>`).join("");
+      suggestionBox.classList.toggle("hidden", !matches.length);
     });
+    suggestionBox?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-movement-id]");
+      if (!button) return;
+      applyMovement(strengthMovementByKey(button.dataset.movementId));
+    });
+    movementInput?.addEventListener("blur", () => setTimeout(hideMovementSuggestions, 150));
+    movementInput?.addEventListener("focus", () => movementInput.dispatchEvent(new Event("input")));
     row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
     row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
     rows.appendChild(row);

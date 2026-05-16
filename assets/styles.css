@@ -616,3 +616,28 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     grid-template-columns: 38px 34px 34px 230px 76px 86px 110px 130px 150px 92px;
   }
 }
+
+.movement-map-field {
+  position: relative;
+}
+.movement-suggestions {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, .12);
+}
+.movement-suggestions button {
+  justify-content: flex-start;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  box-shadow: none;
+}
