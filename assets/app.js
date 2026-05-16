@@ -268,7 +268,7 @@ function initCoachApp() {
       <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
       <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
       <div class="field target-field"><label>Target</label><input class="exercise-target" type="text" placeholder="RPE, pace, or goal" value="${escapeHtml(values.target)}" /></div>
-      <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="Coaching notes or scaling" value="${escapeHtml(values.notes)}" /></div>
+      <div class="field notes-field"><label>Details / Instructions</label><textarea class="exercise-notes" rows="2" placeholder="Alternate back and forth, move smooth, not for time">${escapeHtml(values.notes)}</textarea></div>
       <button type="button" class="remove-row">Remove</button>
     `;
     row.querySelector(".remove-row").addEventListener("click", () => row.remove());
@@ -291,7 +291,7 @@ function initCoachApp() {
     return groups.map((group) => `
       <div class="exercise-group">
         <h4>${escapeHtml(group.label)}</h4>
-        <ul class="clean-list">${group.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.weight ? `· ${escapeHtml(exercise.weight)}` : ""} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}</li>`).join("")}</ul>
+        <ul class="clean-list">${group.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong> — ${escapeHtml(exercise.sets || "-")} x ${escapeHtml(exercise.reps || "-")} ${exercise.weight ? `· ${escapeHtml(exercise.weight)}` : ""} ${exercise.target ? `· ${escapeHtml(exercise.target)}` : ""}${exercise.notes ? `<br><span class="muted"><strong>Details:</strong> ${escapeHtml(exercise.notes)}</span>` : ""}</li>`).join("")}</ul>
       </div>
     `).join("");
   }
@@ -514,7 +514,7 @@ function initAthleteApp() {
                         <div>
                           <strong>${escapeHtml(exercise.name)}</strong>
                           <p class="muted">${escapeHtml(exercise.sets || "-")} sets · ${escapeHtml(exercise.reps || "-")} reps${exercise.weight ? ` · ${escapeHtml(exercise.weight)}` : ""}${exercise.target ? ` · ${escapeHtml(exercise.target)}` : ""}</p>
-                          ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
+                          ${exercise.notes ? `<p><strong>Details:</strong> ${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
                         <div class="mini-grid">
                           <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
