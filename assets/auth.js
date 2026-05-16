@@ -19,18 +19,21 @@ async function initLoginPage(options) {
   const signIn = document.getElementById(options.signInBtnId);
   const forgot = document.getElementById(options.forgotBtnId);
   const signOut = document.getElementById(options.signOutBtnId);
+  const headerAuth = signOut?.closest(".header-auth");
   const authCard = document.getElementById(options.authCardId);
   const dashboard = document.getElementById(options.dashboardId);
 
   function showSignedIn(userEmail) {
     if (authCard) authCard.classList.add("hidden");
     if (dashboard) dashboard.classList.remove("hidden");
+    if (headerAuth) headerAuth.classList.remove("hidden");
     setMessage(options.dashboardMessageId, `Signed in as ${userEmail || "your account"}.`);
   }
 
   function showSignedOut() {
     if (authCard) authCard.classList.remove("hidden");
     if (dashboard) dashboard.classList.add("hidden");
+    if (headerAuth) headerAuth.classList.add("hidden");
   }
 
   const { data: sessionData } = await supabaseClient.auth.getSession();

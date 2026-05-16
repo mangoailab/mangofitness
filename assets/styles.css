@@ -862,3 +862,34 @@ body.is-reordering .exercise-row.dragging {
     font-size: 12px;
   }
 }
+
+.header-auth {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+.header-auth p {
+  margin: 0;
+  color: rgba(255, 255, 255, .9);
+  font-weight: 700;
+}
+.header-auth button {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-color: rgba(255,255,255,.7);
+}
+
+@media (max-width: 640px) {
+  .header-auth {
+    justify-content: flex-start;
+    align-items: stretch;
+    display: grid;
+    gap: 8px;
+  }
+  .header-auth button {
+    width: 100%;
+  }
+}
