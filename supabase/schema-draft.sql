@@ -48,6 +48,8 @@ create table if not exists workout_exercises (
   reps text,
   target text,
   target_weight text,
+  benchmark_key text,
+  benchmark_name text,
   section_type text not null default 'cardio',
   notes text,
   sort_order integer not null default 0,
@@ -96,6 +98,8 @@ alter table workouts add column if not exists score_type text;
 
 create index if not exists workouts_workout_date_idx on workouts(workout_date);
 alter table workout_exercises add column if not exists target_weight text;
+alter table workout_exercises add column if not exists benchmark_key text;
+alter table workout_exercises add column if not exists benchmark_name text;
 alter table workout_exercises add column if not exists section_type text not null default 'cardio';
 
 create index if not exists workout_exercises_workout_id_idx on workout_exercises(workout_id);

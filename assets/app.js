@@ -33,6 +33,8 @@ const MangoFitnessStore = (() => {
         reps: exercise.reps || "",
         target: exercise.target || "",
         weight: exercise.target_weight || exercise.weight || "",
+        benchmarkKey: exercise.benchmark_key || exercise.benchmarkKey || "",
+        benchmarkName: exercise.benchmark_name || exercise.benchmarkName || "",
         section: exercise.section_type || exercise.section || "cardio",
         notes: exercise.notes || ""
       }))
@@ -45,7 +47,9 @@ const MangoFitnessStore = (() => {
       id: row.id,
       workoutId: exercise.workout_id || "",
       exerciseId: row.workout_exercise_id,
-      exerciseName: exercise.exercise_name || "Exercise",
+      exerciseName: exercise.benchmark_name || exercise.exercise_name || "Exercise",
+      benchmarkKey: exercise.benchmark_key || "",
+      benchmarkName: exercise.benchmark_name || "",
       completedOn: row.completed_on,
       weight: row.working_weight ?? "",
       reps: row.reps_completed || "",
@@ -73,7 +77,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, section_type, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, section_type, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -86,7 +90,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athlete_workout_results")
-        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, is_pr, workout_exercises (exercise_name, workout_id)")
+        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name)")
         .order("completed_on", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -144,6 +148,8 @@ const MangoFitnessStore = (() => {
           reps: exercise.reps || null,
           target: exercise.target || null,
           target_weight: exercise.weight || null,
+          benchmark_key: exercise.benchmarkKey || null,
+          benchmark_name: exercise.benchmarkName || null,
           section_type: exercise.section || "cardio",
           notes: exercise.notes || null,
           sort_order: index
@@ -217,6 +223,25 @@ function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+const cardioBenchmarks = [
+  { key: "", name: "Select benchmark" },
+  { key: "4k-row", name: "4K Row", scoreType: "Time" },
+  { key: "2k-row", name: "2K Row", scoreType: "Time" },
+  { key: "1-mile-run", name: "1 Mile Run", scoreType: "Time" },
+  { key: "5k-run", name: "5K Run", scoreType: "Time" },
+  { key: "assault-bike-calories", name: "Assault Bike Calories", scoreType: "Calories" },
+  { key: "ski-erg-calories", name: "SkiErg Calories", scoreType: "Calories" },
+  { key: "custom", name: "Custom / one-off", scoreType: "" }
+];
+
+function benchmarkByKey(key) {
+  return cardioBenchmarks.find((benchmark) => benchmark.key === key) || cardioBenchmarks[0];
+}
+
+function benchmarkOptions(selectedKey = "") {
+  return cardioBenchmarks.map((benchmark) => `<option value="${escapeHtml(benchmark.key)}"${benchmark.key === selectedKey ? " selected" : ""}>${escapeHtml(benchmark.name)}</option>`).join("");
+}
+
 function friendlyError(error) {
   const message = error?.message || String(error || "Something went wrong.");
   if (message.includes("relation") && message.includes("does not exist")) {
@@ -276,8 +301,10 @@ function initCoachApp() {
     row.dataset.exerciseId = values.id || uid("exercise");
     row.dataset.section = section;
     row.draggable = true;
+    const selectedBenchmark = values.benchmarkKey || "";
     const rowFields = section === "cardio" ? `
-      <div class="field exercise-name-field"><label>Score item</label><input class="exercise-name" type="text" placeholder="Finish time, 4K row, rounds + reps" value="${escapeHtml(values.name)}" required /></div>
+      <div class="field benchmark-field"><label>Benchmark map</label><select class="exercise-benchmark">${benchmarkOptions(selectedBenchmark)}</select></div>
+      <div class="field exercise-name-field"><label>Score item</label><input class="exercise-name" type="text" placeholder="Finish time, 4K row, rounds + reps" value="${escapeHtml(values.name || values.benchmarkName)}" required /></div>
       <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Notes</label><input class="exercise-notes" type="text" placeholder="What should the athlete record?" value="${escapeHtml(values.notes)}" /></div>
     ` : `
@@ -296,6 +323,13 @@ function initCoachApp() {
       <button type="button" class="remove-row">Remove</button>
     `;
     row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    row.querySelector(".exercise-benchmark")?.addEventListener("change", (event) => {
+      const benchmark = benchmarkByKey(event.target.value);
+      const nameInput = row.querySelector(".exercise-name");
+      const targetInput = row.querySelector(".exercise-target");
+      if (benchmark.key && benchmark.key !== "custom") nameInput.value = benchmark.name;
+      if (benchmark.scoreType) targetInput.value = benchmark.scoreType;
+    });
     row.querySelector(".move-up").addEventListener("click", () => row.previousElementSibling?.before(row));
     row.querySelector(".move-down").addEventListener("click", () => row.nextElementSibling?.after(row));
     rows.appendChild(row);
@@ -400,6 +434,8 @@ function initCoachApp() {
     return sectionRows.flatMap((rowContainer) => [...rowContainer.querySelectorAll(".exercise-row")]).map((row) => ({
       id: row.dataset.exerciseId,
       section: row.dataset.section || row.closest("[data-exercise-rows]")?.dataset.exerciseRows || "cardio",
+      benchmarkKey: row.querySelector(".exercise-benchmark")?.value || "",
+      benchmarkName: benchmarkByKey(row.querySelector(".exercise-benchmark")?.value || "").name.replace("Select benchmark", "").replace("Custom / one-off", ""),
       name: row.querySelector(".exercise-name").value.trim(),
       sets: row.querySelector(".exercise-sets")?.value.trim() || "",
       reps: row.querySelector(".exercise-reps")?.value.trim() || "",

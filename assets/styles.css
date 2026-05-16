@@ -527,3 +527,19 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     grid-template-columns: 38px 34px 34px 210px 170px 180px 92px;
   }
 }
+
+.exercise-table-row[data-section="cardio"] {
+  grid-template-columns: 44px 36px 36px minmax(170px, 1fr) minmax(190px, 1.15fr) minmax(150px, .9fr) minmax(210px, 1.2fr) auto;
+}
+.exercise-table-row select {
+  min-height: 42px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 760px) {
+  .exercise-table-row[data-section="cardio"] {
+    width: 860px;
+    min-width: 860px;
+    grid-template-columns: 38px 34px 34px 180px 210px 150px 180px 92px;
+  }
+}
