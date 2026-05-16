@@ -27,13 +27,23 @@ Athletes can:
 
 ## Backend
 
-Planned backend: Supabase Auth + Postgres.
+Backend: Supabase Auth + Postgres.
 
-Main tables planned:
+To create/update the MVP database, apply:
+
+```sql
+supabase/schema-draft.sql
+```
+
+Main tables:
 - `athletes`
 - `programs`
-- `program_weeks`
 - `workouts`
 - `workout_exercises`
 - `athlete_workout_results`
 - `athlete_prs`
+
+Current MVP behavior:
+- Coach dashboard saves workouts and exercises to Supabase.
+- Athlete portal reads workouts from Supabase and writes results to Supabase.
+- RLS policies are intentionally permissive for signed-in users while the prototype is being built. Tighten these before production.

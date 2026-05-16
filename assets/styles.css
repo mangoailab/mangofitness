@@ -271,3 +271,7 @@ button:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,23,42,.
     justify-content: flex-start;
   }
 }
+.error-text {
+  color: #b91c1c;
+  font-weight: 700;
+}

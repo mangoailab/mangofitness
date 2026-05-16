@@ -1,5 +1,6 @@
 const supabaseConfig = window.MANGO_FITNESS_SUPABASE;
 const supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+window.mangoSupabaseClient = supabaseClient;
 
 function setMessage(id, text) {
   const el = document.getElementById(id);
