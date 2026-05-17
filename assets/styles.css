@@ -1807,3 +1807,37 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
+
+/* Body scan card: keep collapsed view clean; actions live inside expanded area. */
+.scan-history-summary {
+  position: relative;
+  padding-right: 54px;
+}
+.scan-summary-chevron {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+}
+.scan-expanded-actions {
+  display: none;
+  grid-template-columns: repeat(2, 74px);
+  gap: 8px;
+  justify-content: end;
+  padding: 0 14px 12px;
+}
+.scan-history-card[open] .scan-expanded-actions {
+  display: grid;
+}
+.scan-history-card[open] .scan-summary-chevron {
+  transform: rotate(180deg);
+}
+@media (max-width: 640px) {
+  .scan-history-summary {
+    grid-template-columns: 1fr;
+    padding-right: 54px;
+  }
+  .scan-expanded-actions {
+    grid-template-columns: 1fr 1fr;
+    justify-content: stretch;
+  }
+}

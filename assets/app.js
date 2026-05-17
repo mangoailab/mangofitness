@@ -1713,12 +1713,12 @@ function renderBodyScanPreview(scan) {
             <span>PBF: ${scanMetric(scan.bodyFatPercent, "%")}</span>
           </div>
         </div>
-        <div class="scan-summary-actions">
-          ${scan.id ? `<button type="button" class="scan-action-btn scan-edit-btn" data-scan-edit="${escapeHtml(scan.id)}">Edit</button><button type="button" class="scan-action-btn scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
-          <span class="section-chevron" aria-hidden="true">⌄</span>
-        </div>
+        <span class="section-chevron scan-summary-chevron" aria-hidden="true">⌄</span>
       </summary>
       <div class="scan-edit-slot"></div>
+      <div class="scan-expanded-actions">
+        ${scan.id ? `<button type="button" class="scan-action-btn scan-edit-btn" data-scan-edit="${escapeHtml(scan.id)}">Edit</button><button type="button" class="scan-action-btn scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
+      </div>
       <div class="scan-metric-grid scan-history-details">
         <div><span>Weight</span><strong>${scanMetric(scan.bodyWeight, " lb")}</strong></div>
         <div><span>Body fat</span><strong>${scanMetric(scan.bodyFatPercent, "%")}</strong></div>
