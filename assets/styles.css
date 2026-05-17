@@ -1063,3 +1063,46 @@ body.is-reordering .exercise-row.dragging {
     max-width: 100%;
   }
 }
+
+/* Phone landscape: prevent form input bubbles from running past card width. */
+@media (max-width: 900px) and (orientation: landscape) {
+  .dashboard-card,
+  .builder-form,
+  .form-grid,
+  .assignment-grid,
+  .workout-section,
+  .exercise-row,
+  .field {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .builder-form input,
+  .builder-form textarea,
+  .builder-form select,
+  .workout-section input,
+  .workout-section textarea,
+  .workout-section select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .grid-2.form-grid,
+  .assignment-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .exercise-table-row {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  #workoutDate {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
