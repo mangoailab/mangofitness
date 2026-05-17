@@ -934,3 +934,15 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 1fr;
   }
 }
+
+/* Keep the date field compact so it does not feel pushed too far right. */
+.form-grid {
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
