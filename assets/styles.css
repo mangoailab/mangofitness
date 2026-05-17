@@ -1290,3 +1290,40 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 1fr;
   }
 }
+
+.athlete-tabs {
+  position: sticky;
+  top: 8px;
+  z-index: 4;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(34, 197, 94, .10);
+}
+.athlete-tab {
+  flex: 1 1 160px;
+  font-weight: 800;
+}
+.athlete-tab.active {
+  background: linear-gradient(135deg, #ffb703, #22c55e);
+  border-color: #ffb703;
+  color: #132018;
+}
+.athlete-tab-panel {
+  display: none;
+}
+.athlete-tab-panel.active {
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .athlete-tabs {
+    top: 6px;
+    gap: 6px;
+  }
+  .athlete-tab {
+    flex: 1 1 100%;
+  }
+}

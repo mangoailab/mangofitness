@@ -1612,7 +1612,21 @@ function renderSetLogFields(exercise) {
   `;
 }
 
+function initAthleteTabs() {
+  const tabs = [...document.querySelectorAll("[data-athlete-tab]")];
+  const panels = [...document.querySelectorAll("[data-athlete-panel]")];
+  if (!tabs.length || !panels.length) return;
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.athleteTab;
+      tabs.forEach((item) => item.classList.toggle("active", item === tab));
+      panels.forEach((panel) => panel.classList.toggle("active", panel.dataset.athletePanel === target));
+    });
+  });
+}
+
 function initAthleteApp() {
+  initAthleteTabs();
   const date = document.getElementById("athleteWorkoutDate");
   const view = document.getElementById("athleteWorkoutView");
   const scheduleView = document.getElementById("athleteScheduleView");

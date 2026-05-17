@@ -41,7 +41,13 @@
     </section>
 
     <section id="athleteDashboard" class="dashboard-stack hidden">
-      <div class="card dashboard-card">
+      <div class="athlete-tabs actions">
+        <button type="button" class="athlete-tab active" data-athlete-tab="training">Training</button>
+        <button type="button" class="athlete-tab" data-athlete-tab="metrics">Body Metrics</button>
+        <button type="button" class="athlete-tab" data-athlete-tab="history">Progress History</button>
+      </div>
+
+      <div class="card dashboard-card athlete-tab-panel active" data-athlete-panel="training">
         <div class="section-head compact">
           <div>
             <h2>Training Schedule</h2>
@@ -64,7 +70,7 @@
         <div id="athleteWorkoutView" class="list-stack athlete-detail-stack"></div>
       </div>
 
-      <div class="card dashboard-card">
+      <div class="card dashboard-card athlete-tab-panel" data-athlete-panel="metrics">
         <div class="section-head compact">
           <div>
             <h2>Body Metrics</h2>
@@ -79,7 +85,7 @@
         <div id="bodyScanList" class="list-stack"></div>
       </div>
 
-      <div class="card dashboard-card">
+      <div class="card dashboard-card athlete-tab-panel" data-athlete-panel="history">
         <h2>Progress History</h2>
         <div id="athleteHistoryList" class="list-stack"></div>
       </div>
