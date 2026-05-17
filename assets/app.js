@@ -1440,13 +1440,12 @@ function renderSetLogFields(exercise) {
   }
   return `
     <div class="set-log-table">
-      <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span><span>PR</span></div>
+      <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
       ${Array.from({ length: prescribedSetCount(exercise) }, (_, index) => `
         <div class="set-log-row">
           <strong>${index + 1}</strong>
           <input name="set_${index + 1}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" />
           <input name="set_${index + 1}_weight" type="number" min="0" step="0.5" placeholder="lb" />
-          <label class="set-pr"><input name="set_${index + 1}_pr" type="checkbox" /><span>PR</span></label>
         </div>
       `).join("")}
     </div>
@@ -1585,8 +1584,7 @@ function initAthleteApp() {
                 const setNumber = index + 1;
                 const reps = data.get(`set_${setNumber}_reps`);
                 const weight = data.get(`set_${setNumber}_weight`);
-                const isPr = data.get(`set_${setNumber}_pr`) === "on";
-                if (!reps && !weight && !isPr) continue;
+                if (!reps && !weight) continue;
                 savedAnySet = true;
                 await MangoFitnessStore.saveResult({
                   id: uid("result"),
@@ -1599,7 +1597,7 @@ function initAthleteApp() {
                   weight,
                   reps,
                   notes: data.get("notes"),
-                  isPr
+                  isPr: false
                 });
               }
               if (!savedAnySet) throw new Error("Enter reps or weight for at least one set.");

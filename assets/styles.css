@@ -1202,7 +1202,7 @@ body.is-reordering .exercise-row.dragging {
 .set-log-head,
 .set-log-row {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr) 56px;
+  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
   align-items: center;
 }
@@ -1225,27 +1225,10 @@ body.is-reordering .exercise-row.dragging {
   min-height: 42px;
   padding: 9px 10px;
 }
-.set-pr {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 42px;
-  font-size: 12px;
-  font-weight: 800;
-}
-.set-pr input {
-  width: auto;
-  min-height: 0;
-}
-
 @media (max-width: 420px) {
   .set-log-head,
   .set-log-row {
-    grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 48px;
+    grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px;
-  }
-  .set-pr span {
-    display: none;
   }
 }
