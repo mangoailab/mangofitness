@@ -1497,44 +1497,106 @@ function numberFromMatch(text, regex) {
   return Number(String(match[1]).replace(/,/g, ""));
 }
 
-function scanDateFromText(text) {
-  const match = String(text || "").match(/Measured Date\s+.*?(\d{1,2}\/\d{1,2}\/\d{4})/i) || String(text || "").match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
-  if (!match) return todayISO();
-  const [month, day, year] = match[1].split("/").map(Number);
+function plausibleNumber(value, min, max) {
+  const number = Number(String(value || "").replace(/,/g, ""));
+  return Number.isFinite(number) && number >= min && number <= max ? number : "";
+}
+
+function numbersNearLabel(text, labelRegex, min, max, limit = 260) {
+  const source = String(text || "");
+  const match = source.match(labelRegex);
+  if (!match) return [];
+  const start = Math.max(0, match.index || 0);
+  const slice = source.slice(start, start + limit);
+  return [...slice.matchAll(/\d{1,3}(?:,\d{3})*(?:\.\d+)?/g)]
+    .map((item) => plausibleNumber(item[0], min, max))
+    .filter((value) => value !== "");
+}
+
+function firstNumberNearLabel(text, labelRegex, min, max, limit = 260) {
+  return numbersNearLabel(text, labelRegex, min, max, limit)[0] || "";
+}
+
+function dateFromFilename(filename) {
+  const match = String(filename || "").match(/(20\d{2})[._-](\d{1,2})[._-](\d{1,2})/);
+  if (!match) return "";
+  return `${match[1]}-${String(match[2]).padStart(2, "0")}-${String(match[3]).padStart(2, "0")}`;
+}
+
+function scanDateFromText(text, filename = "") {
+  const match = String(text || "").match(/Measured Date\s+.*?(\d{1,2}\/\d{1,2}\/\d{4})/i)
+    || String(text || "").match(/Test Date\s+.*?(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4})/i)
+    || String(text || "").match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (!match) return dateFromFilename(filename) || todayISO();
+  const parts = match[1].split(/[\/.-]/).map(Number);
+  const [month, day, year] = parts[0] > 1900 ? [parts[1], parts[2], parts[0]] : parts;
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function parseBodyScanText(text) {
+function parseInBodyCoreMetrics(compact) {
+  const values = {
+    bodyWeight: firstNumberNearLabel(compact, /\bWeight\b|Wt\.?\s*\(?lb/i, 70, 400, 360),
+    skeletalMuscleMass: firstNumberNearLabel(compact, /Skeletal\s+Muscle\s+Mass|\bSMM\b/i, 35, 180, 360),
+    bodyFatPercent: firstNumberNearLabel(compact, /Percent\s+Body\s+Fat|\bPBF\b/i, 3, 60, 360)
+  };
+
+  const bodyFatMass = firstNumberNearLabel(compact, /Body\s+Fat\s+Mass|\bBFM\b/i, 3, 160, 360);
+  if (bodyFatMass) values.fatMass = bodyFatMass;
+
+  const bmi = firstNumberNearLabel(compact, /\bBMI\b/i, 10, 60, 260);
+  if (bmi) values.bmi = bmi;
+
+  const rmr = firstNumberNearLabel(compact, /Basal\s+Metabolic\s+Rate|\bBMR\b|\bRMR\b/i, 900, 3500, 260);
+  if (rmr) values.rmr = rmr;
+
+  const visceral = firstNumberNearLabel(compact, /Visceral\s+Fat\s+Level/i, 1, 30, 220);
+  if (visceral) values.visceralFatLevel = visceral;
+
+  // InBody OCR often preserves the summary values as a compact sequence:
+  // weight, skeletal muscle mass, body fat mass, BMI, PBF.
+  // Use this only when it fits realistic InBody ranges.
+  if (!values.bodyWeight || !values.skeletalMuscleMass || !values.bodyFatPercent) {
+    const nums = [...compact.matchAll(/\b\d{2,3}\.\d\b/g)].map((match) => Number(match[0]));
+    for (let i = 0; i <= nums.length - 5; i += 1) {
+      const [weight, smm, fatMass, bmiValue, pbf] = nums.slice(i, i + 5);
+      if (weight >= 70 && weight <= 400 && smm >= 35 && smm <= 180 && fatMass >= 3 && fatMass <= 160 && bmiValue >= 10 && bmiValue <= 60 && pbf >= 3 && pbf <= 60) {
+        values.bodyWeight = values.bodyWeight || weight;
+        values.skeletalMuscleMass = values.skeletalMuscleMass || smm;
+        values.fatMass = values.fatMass || fatMass;
+        values.bmi = values.bmi || bmiValue;
+        values.bodyFatPercent = values.bodyFatPercent || pbf;
+        break;
+      }
+    }
+  }
+
+  return values;
+}
+
+function parseBodyScanText(text, filename = "") {
   const compact = String(text || "").replace(/\s+/g, " ");
   const summary = compact.match(/SUMMARY RESULTS.*?(\d{1,2}\/\d{1,2}\/\d{4})\s+([0-9.]+)%\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/i);
   const regionalTotal = compact.match(/Total\s+([0-9.]+)%\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/i);
-  const inbody = /inbody|skeletal muscle mass|visceral fat level/i.test(compact);
-  const inbodyWeight = numberFromMatch(compact, /Weight\s*\(?lb\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /Weight\s+([0-9.]+)\s*lb/i);
-  const skeletalMuscleMass = numberFromMatch(compact, /Skeletal Muscle Mass\s*\(?lb\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /Skeletal Muscle Mass\s+([0-9.]+)/i);
-  const bodyFatMass = numberFromMatch(compact, /Body Fat Mass\s*\(?lb\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /Body Fat Mass\s+([0-9.]+)/i);
-  const percentBodyFat = numberFromMatch(compact, /Percent Body Fat\s*\(?%\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /PBF\s*\(?%\)?\s*([0-9.]+)/i);
+  const inbody = /inbody|skeletal muscle mass|visceral fat level|percent body fat|\bSMM\b|\bPBF\b/i.test(compact) || /inbody/i.test(filename);
+  const inbodyMetrics = inbody ? parseInBodyCoreMetrics(compact) : {};
   return {
     source: /bodyspec/i.test(compact) ? "BodySpec DEXA PDF" : inbody ? "InBody PDF" : "PDF upload",
-    scannedOn: summary ? scanDateFromText(summary[1]) : scanDateFromText(compact),
-    bodyFatPercent: summary ? Number(summary[2]) : regionalTotal ? Number(regionalTotal[1]) : percentBodyFat || numberFromMatch(compact, /Total Body Fat %[^0-9]*([0-9.]+)/i),
-    bodyWeight: summary ? Number(summary[3]) : regionalTotal ? Number(regionalTotal[2]) : inbodyWeight,
-    fatMass: summary ? Number(summary[4]) : regionalTotal ? Number(regionalTotal[3]) : bodyFatMass,
+    scannedOn: summary ? scanDateFromText(summary[1], filename) : scanDateFromText(compact, filename),
+    bodyFatPercent: summary ? Number(summary[2]) : regionalTotal ? Number(regionalTotal[1]) : inbodyMetrics.bodyFatPercent || numberFromMatch(compact, /Total Body Fat %[^0-9]*([0-9.]+)/i),
+    bodyWeight: summary ? Number(summary[3]) : regionalTotal ? Number(regionalTotal[2]) : inbodyMetrics.bodyWeight || "",
+    fatMass: summary ? Number(summary[4]) : regionalTotal ? Number(regionalTotal[3]) : inbodyMetrics.fatMass || "",
     leanMass: summary ? Number(summary[5]) : regionalTotal ? Number(regionalTotal[4]) : "",
-    skeletalMuscleMass,
-    bmi: numberFromMatch(compact, /BMI\s*\(?kg\/m²?\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /BMI\s+([0-9.]+)/i),
+    skeletalMuscleMass: inbodyMetrics.skeletalMuscleMass || "",
+    bmi: inbodyMetrics.bmi || "",
     boneMineralContent: summary ? Number(summary[6]) : regionalTotal ? Number(regionalTotal[5]) : "",
-    rmr: numberFromMatch(compact, /Basal Metabolic Rate\s*([0-9,]+)/i) || numberFromMatch(compact, /([0-9,]+)\s*(?:cal\/day|kcal)/i),
+    rmr: inbodyMetrics.rmr || numberFromMatch(compact, /([0-9,]+)\s*(?:cal\/day|kcal)/i),
     vat: numberFromMatch(compact, /Mass \(lbs\)\s+([0-9.]+)/i),
-    visceralFatLevel: numberFromMatch(compact, /Visceral Fat Level\s*([0-9.]+)/i),
+    visceralFatLevel: inbodyMetrics.visceralFatLevel || "",
     androidFatPercent: numberFromMatch(compact, /Android \(A\).*?([0-9.]+)%/i) || numberFromMatch(compact, /Android\s+([0-9.]+)%/i),
     gynoidFatPercent: numberFromMatch(compact, /Gynoid \(G\).*?([0-9.]+)%/i) || numberFromMatch(compact, /Gynoid\s+([0-9.]+)%/i),
     agRatio: numberFromMatch(compact, /A\/G Ratio[^0-9]*([0-9.]+)/i),
     notes: "Imported from uploaded PDF."
   };
-}
-
-function scanMetric(value, suffix = "") {
-  return value === "" || value == null ? "-" : `${escapeHtml(value)}${suffix}`;
 }
 
 function scanInputValue(value) {
@@ -1548,6 +1610,7 @@ function renderBodyScanEditForm(scan) {
         <div><strong>Review scan before saving</strong><p class="muted">OCR can miss InBody fields. Correct anything that looks wrong, then save.</p></div>
         <button type="button" class="primary" id="saveBodyScanBtn">Save scan</button>
       </div>
+      ${(!scan.scannedOn || !scan.bodyWeight || !scan.skeletalMuscleMass || !scan.bodyFatPercent) ? `<p class="scan-warning">Check required InBody fields: scan date, weight, SMM, and PBF.</p>` : ""}
       <div class="scan-edit-grid">
         <div class="field"><label for="scanScannedOn">Scan date</label><input id="scanScannedOn" data-scan-field="scannedOn" type="date" value="${scanInputValue(scan.scannedOn)}" /></div>
         <div class="field"><label for="scanBodyWeight">Weight lb</label><input id="scanBodyWeight" data-scan-field="bodyWeight" type="number" step="0.1" value="${scanInputValue(scan.bodyWeight)}" /></div>
@@ -1985,7 +2048,7 @@ function initBodyMetricsApp() {
       parseBodyScanBtn.disabled = true;
       parseBodyScanBtn.textContent = "Parsing...";
       const text = await pdfTextFromFile(bodyScanPdf.files[0]);
-      parsedBodyScan = { ...parseBodyScanText(text), athleteId: "" };
+      parsedBodyScan = { ...parseBodyScanText(text, bodyScanPdf.files[0].name), athleteId: "" };
       if (bodyScanPreview) {
         bodyScanPreview.innerHTML = renderBodyScanEditForm(parsedBodyScan);
         bodyScanPreview.classList.remove("hidden");

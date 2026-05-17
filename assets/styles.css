@@ -1390,3 +1390,13 @@ body.is-reordering .exercise-row.dragging {
     display: grid;
   }
 }
+
+.scan-warning {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-weight: 800;
+}
