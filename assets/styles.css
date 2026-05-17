@@ -1502,3 +1502,30 @@ body.is-reordering .exercise-row.dragging {
     gap: 16px;
   }
 }
+
+.scan-edit-btn {
+  font-weight: 900;
+  padding: 8px 4px;
+  white-space: nowrap;
+}
+.scan-inline-edit {
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--line);
+}
+.scan-edit-actions {
+  margin-top: 12px;
+}
+.scan-history-card .scan-history-details.hidden {
+  display: none;
+}
+@media (max-width: 640px) {
+  .scan-summary-actions {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-items: end;
+    row-gap: 6px;
+  }
+  .scan-history-card .section-chevron {
+    grid-column: 2;
+  }
+}

@@ -475,6 +475,37 @@ const MangoFitnessStore = (() => {
       if (error) throw error;
     },
 
+    async updateBodyScan(id, scan) {
+      const sb = client();
+      if (!sb) return null;
+      const user = await requireUser();
+      const { data, error } = await sb
+        .from("athlete_body_scans")
+        .update({
+          scanned_on: scan.scannedOn,
+          body_weight: scan.bodyWeight || null,
+          body_fat_percent: scan.bodyFatPercent || null,
+          fat_mass: scan.fatMass || null,
+          lean_mass: scan.leanMass || null,
+          skeletal_muscle_mass: scan.skeletalMuscleMass || null,
+          bmi: scan.bmi || null,
+          bone_mineral_content: scan.boneMineralContent || null,
+          resting_metabolic_rate: scan.rmr || null,
+          visceral_adipose_tissue: scan.vat || null,
+          visceral_fat_level: scan.visceralFatLevel || null,
+          android_fat_percent: scan.androidFatPercent || null,
+          gynoid_fat_percent: scan.gynoidFatPercent || null,
+          ag_ratio: scan.agRatio || null,
+          notes: scan.notes || null
+        })
+        .eq("id", id)
+        .eq("auth_user_id", user?.id || "")
+        .select("id, athlete_id, scan_source, scanned_on, body_weight, body_fat_percent, fat_mass, lean_mass, skeletal_muscle_mass, bmi, bone_mineral_content, resting_metabolic_rate, visceral_adipose_tissue, visceral_fat_level, android_fat_percent, gynoid_fat_percent, ag_ratio, notes")
+        .single();
+      if (error) throw error;
+      return normalizeBodyScan(data);
+    },
+
     async saveResult(result) {
       const sb = client();
       if (!sb) {
@@ -1648,6 +1679,27 @@ function applyScanEdits(scan, container) {
   return edited;
 }
 
+function renderBodyScanInlineEdit(scan) {
+  return `
+    <div class="scan-inline-edit" data-scan-edit-form="${escapeHtml(scan.id || "")}">
+      <div class="scan-edit-grid">
+        <div class="field"><label>Scan date</label><input data-scan-field="scannedOn" type="date" value="${scanInputValue(scan.scannedOn)}" /></div>
+        <div class="field"><label>Weight lb</label><input data-scan-field="bodyWeight" type="number" step="0.1" value="${scanInputValue(scan.bodyWeight)}" /></div>
+        <div class="field"><label>Body fat %</label><input data-scan-field="bodyFatPercent" type="number" step="0.1" value="${scanInputValue(scan.bodyFatPercent)}" /></div>
+        <div class="field"><label>Fat mass lb</label><input data-scan-field="fatMass" type="number" step="0.1" value="${scanInputValue(scan.fatMass)}" /></div>
+        <div class="field"><label>Skeletal muscle lb</label><input data-scan-field="skeletalMuscleMass" type="number" step="0.1" value="${scanInputValue(scan.skeletalMuscleMass)}" /></div>
+        <div class="field"><label>BMI</label><input data-scan-field="bmi" type="number" step="0.1" value="${scanInputValue(scan.bmi)}" /></div>
+        <div class="field"><label>BMR / RMR</label><input data-scan-field="rmr" type="number" step="1" value="${scanInputValue(scan.rmr)}" /></div>
+        <div class="field"><label>Visceral fat level</label><input data-scan-field="visceralFatLevel" type="number" step="0.1" value="${scanInputValue(scan.visceralFatLevel)}" /></div>
+      </div>
+      <div class="actions scan-edit-actions">
+        <button type="button" class="primary" data-scan-save-edit="${escapeHtml(scan.id || "")}">Save changes</button>
+        <button type="button" data-scan-cancel-edit="${escapeHtml(scan.id || "")}">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderBodyScanPreview(scan) {
   return `
     <details class="item-card body-scan-preview-card scan-history-card">
@@ -1662,10 +1714,11 @@ function renderBodyScanPreview(scan) {
           </div>
         </div>
         <div class="scan-summary-actions">
-          ${scan.id ? `<button type="button" class="danger-link scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
+          ${scan.id ? `<button type="button" class="nav-link link-button scan-edit-btn" data-scan-edit="${escapeHtml(scan.id)}">Edit</button><button type="button" class="danger-link scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
           <span class="section-chevron" aria-hidden="true">⌄</span>
         </div>
       </summary>
+      <div class="scan-edit-slot"></div>
       <div class="scan-metric-grid scan-history-details">
         <div><span>Weight</span><strong>${scanMetric(scan.bodyWeight, " lb")}</strong></div>
         <div><span>Body fat</span><strong>${scanMetric(scan.bodyFatPercent, "%")}</strong></div>
@@ -2097,6 +2150,7 @@ function initBodyMetricsApp() {
   const bodyScanChart = document.getElementById("bodyScanChart");
   let parsedBodyScan = null;
   let justSavedScan = null;
+  let currentScans = [];
   if (!bodyScanList) return;
 
   async function renderScans() {
@@ -2109,6 +2163,7 @@ function initBodyMetricsApp() {
       }
       const storedScans = await MangoFitnessStore.bodyScans();
       const scans = justSavedScan && !storedScans.some((scan) => scan.id === justSavedScan.id) ? [justSavedScan, ...storedScans] : storedScans;
+      currentScans = scans;
       if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans);
       bodyScanList.innerHTML = scans.length ? scans.slice(0, 10).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
     } catch (error) {
@@ -2170,8 +2225,53 @@ function initBodyMetricsApp() {
   });
 
   bodyScanList.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-scan-edit]");
+    if (editButton) {
+      event.preventDefault();
+      const scan = currentScans.find((item) => item.id === editButton.dataset.scanEdit);
+      const card = editButton.closest(".scan-history-card");
+      const slot = card?.querySelector(".scan-edit-slot");
+      if (scan && slot) {
+        card.open = true;
+        slot.innerHTML = renderBodyScanInlineEdit(scan);
+        card.querySelector(".scan-history-details")?.classList.add("hidden");
+      }
+      return;
+    }
+
+    const cancelButton = event.target.closest("[data-scan-cancel-edit]");
+    if (cancelButton) {
+      event.preventDefault();
+      const card = cancelButton.closest(".scan-history-card");
+      card?.querySelector(".scan-edit-slot")?.replaceChildren();
+      card?.querySelector(".scan-history-details")?.classList.remove("hidden");
+      return;
+    }
+
+    const saveEditButton = event.target.closest("[data-scan-save-edit]");
+    if (saveEditButton) {
+      event.preventDefault();
+      const scan = currentScans.find((item) => item.id === saveEditButton.dataset.scanSaveEdit);
+      const form = saveEditButton.closest("[data-scan-edit-form]");
+      if (!scan || !form) return;
+      try {
+        saveEditButton.disabled = true;
+        saveEditButton.textContent = "Saving...";
+        const updated = applyScanEdits(scan, form);
+        if (!updated.scannedOn) throw new Error("Add a scan date before saving.");
+        justSavedScan = await MangoFitnessStore.updateBodyScan(scan.id, updated);
+        await renderScans();
+      } catch (error) {
+        form.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+        saveEditButton.disabled = false;
+        saveEditButton.textContent = "Save changes";
+      }
+      return;
+    }
+
     const button = event.target.closest("[data-scan-delete]");
     if (!button) return;
+    event.preventDefault();
     if (!confirm("Delete this body scan?")) return;
     try {
       button.disabled = true;
