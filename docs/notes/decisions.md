@@ -2,7 +2,7 @@
 
 ## UI/navigation
 
-- Home page should follow the Mango Loan style Lawrence likes: larger centered window, more mobile vertical spacing, and separate Coach/Athlete portal button cards.
+- Home page should follow the Mango Loan style Lawrence likes: larger centered window, more mobile vertical spacing, and separate Coach/Athlete portal button cards. Since the Mango Fitness logo already includes the branding, do not duplicate it with a large text heading in the hero.
 - Keep related pages visually consistent. Match markup/classes/CSS, not just approximate appearance.
 - Athlete navigation should stay fixed across athlete pages; highlight the current page with slightly bolder text only.
 - Do not use a bubble/pill around the active nav item.

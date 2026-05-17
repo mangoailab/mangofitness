@@ -137,7 +137,7 @@ h2 { margin:0 0 10px; font-size:22px; letter-spacing:-.02em; }
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 .home-logo {
   width: 174px;
@@ -147,14 +147,8 @@ h2 { margin:0 0 10px; font-size:22px; letter-spacing:-.02em; }
 }
 .home-logo img { width: 158px; }
 .home-kicker { font-weight: 700; color: rgba(255,255,255,.9); }
-.home-hero h1 {
-  margin: 0;
-  font-size: clamp(34px, 7vw, 58px);
-  line-height: 1;
-  letter-spacing: -0.05em;
-}
 .home-lead {
-  margin-top: 16px;
+  margin-top: 0;
   font-size: 17px;
   line-height: 1.55;
   max-width: 620px;
@@ -249,7 +243,6 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   .card { padding:16px; border-radius:18px; }
   .home-hero { border-radius:22px; padding:24px; }
   h1 { font-size:26px; }
-  .home-hero h1 { font-size: clamp(38px, 12vw, 52px); }
   .home-brand-row { align-items:flex-start; flex-direction:column; gap:12px; }
   .home-login-grid,
   .grid-2 { grid-template-columns:1fr; }
