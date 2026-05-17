@@ -1400,3 +1400,8 @@ body.is-reordering .exercise-row.dragging {
   color: #9a3412;
   font-weight: 800;
 }
+
+.success-text {
+  color: #166534;
+  font-weight: 800;
+}

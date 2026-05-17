@@ -439,7 +439,7 @@ const MangoFitnessStore = (() => {
       const sb = client();
       if (!sb) return;
       const user = await requireUser();
-      const { error } = await sb.from("athlete_body_scans").insert({
+      const { data, error } = await sb.from("athlete_body_scans").insert({
         athlete_id: scan.athleteId || null,
         auth_user_id: user?.id || null,
         scan_source: scan.source || "PDF upload",
@@ -458,8 +458,9 @@ const MangoFitnessStore = (() => {
         gynoid_fat_percent: scan.gynoidFatPercent || null,
         ag_ratio: scan.agRatio || null,
         notes: scan.notes || null
-      });
+      }).select("id, athlete_id, scan_source, scanned_on, body_weight, body_fat_percent, fat_mass, lean_mass, skeletal_muscle_mass, bmi, bone_mineral_content, resting_metabolic_rate, visceral_adipose_tissue, visceral_fat_level, android_fat_percent, gynoid_fat_percent, ag_ratio, notes").single();
       if (error) throw error;
+      return normalizeBodyScan(data);
     },
 
     async saveResult(result) {
@@ -2055,11 +2056,13 @@ function initBodyMetricsApp() {
   const bodyScanList = document.getElementById("bodyScanList");
   const bodyScanChart = document.getElementById("bodyScanChart");
   let parsedBodyScan = null;
+  let justSavedScan = null;
   if (!bodyScanList) return;
 
   async function renderScans() {
     try {
-      const scans = await MangoFitnessStore.bodyScans();
+      const storedScans = await MangoFitnessStore.bodyScans();
+      const scans = justSavedScan && !storedScans.some((scan) => scan.id === justSavedScan.id) ? [justSavedScan, ...storedScans] : storedScans;
       if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans);
       bodyScanList.innerHTML = scans.length ? scans.slice(0, 10).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
     } catch (error) {
@@ -2087,13 +2090,28 @@ function initBodyMetricsApp() {
         bodyScanPreview.innerHTML = renderBodyScanEditForm(parsedBodyScan);
         bodyScanPreview.classList.remove("hidden");
         document.getElementById("saveBodyScanBtn")?.addEventListener("click", async () => {
-          const scanToSave = applyScanEdits(parsedBodyScan, bodyScanPreview);
-          if (!scanToSave.scannedOn) throw new Error("Add a scan date before saving.");
-          await MangoFitnessStore.saveBodyScan(scanToSave);
-          parsedBodyScan = null;
-          bodyScanPdf.value = "";
-          bodyScanPreview.classList.add("hidden");
-          await renderScans();
+          const saveBtn = document.getElementById("saveBodyScanBtn");
+          try {
+            const scanToSave = applyScanEdits(parsedBodyScan, bodyScanPreview);
+            if (!scanToSave.scannedOn) throw new Error("Add a scan date before saving.");
+            if (saveBtn) {
+              saveBtn.disabled = true;
+              saveBtn.textContent = "Saving...";
+            }
+            justSavedScan = await MangoFitnessStore.saveBodyScan(scanToSave);
+            parsedBodyScan = null;
+            bodyScanPdf.value = "";
+            bodyScanPreview.innerHTML = `<p class="success-text">Scan saved.</p>`;
+            bodyScanPreview.classList.remove("hidden");
+            await renderScans();
+          } catch (saveError) {
+            if (bodyScanPreview) bodyScanPreview.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(saveError))}</p>`);
+          } finally {
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.textContent = "Save scan";
+            }
+          }
         });
       }
     } catch (error) {
