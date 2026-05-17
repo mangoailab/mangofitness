@@ -1629,3 +1629,36 @@ body.is-reordering .exercise-row.dragging {
     font-size: 11px;
   }
 }
+
+/* Match saved scan Edit/Delete button sizing. */
+.scan-summary-actions .scan-edit-btn,
+.scan-summary-actions .scan-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  box-sizing: border-box;
+}
+.scan-summary-actions .scan-edit-btn {
+  color: var(--green-dark);
+  background: #ffffff;
+  border: 1px solid var(--line);
+}
+.scan-summary-actions .scan-delete-btn {
+  color: #b91c1c;
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+}
+@media (max-width: 640px) {
+  .scan-summary-actions .scan-edit-btn,
+  .scan-summary-actions .scan-delete-btn {
+    min-width: 0;
+    width: 100%;
+  }
+}
