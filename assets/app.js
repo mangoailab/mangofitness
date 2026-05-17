@@ -81,9 +81,12 @@ const MangoFitnessStore = (() => {
       bodyFatPercent: row.body_fat_percent ?? "",
       fatMass: row.fat_mass ?? "",
       leanMass: row.lean_mass ?? "",
+      skeletalMuscleMass: row.skeletal_muscle_mass ?? "",
+      bmi: row.bmi ?? "",
       boneMineralContent: row.bone_mineral_content ?? "",
       rmr: row.resting_metabolic_rate ?? "",
       vat: row.visceral_adipose_tissue ?? "",
+      visceralFatLevel: row.visceral_fat_level ?? "",
       androidFatPercent: row.android_fat_percent ?? "",
       gynoidFatPercent: row.gynoid_fat_percent ?? "",
       agRatio: row.ag_ratio ?? "",
@@ -420,7 +423,7 @@ const MangoFitnessStore = (() => {
       if (!sb) return [];
       let query = sb
         .from("athlete_body_scans")
-        .select("id, athlete_id, scan_source, scanned_on, body_weight, body_fat_percent, fat_mass, lean_mass, bone_mineral_content, resting_metabolic_rate, visceral_adipose_tissue, android_fat_percent, gynoid_fat_percent, ag_ratio, notes")
+        .select("id, athlete_id, scan_source, scanned_on, body_weight, body_fat_percent, fat_mass, lean_mass, skeletal_muscle_mass, bmi, bone_mineral_content, resting_metabolic_rate, visceral_adipose_tissue, visceral_fat_level, android_fat_percent, gynoid_fat_percent, ag_ratio, notes")
         .order("scanned_on", { ascending: false })
         .order("created_at", { ascending: false });
       if (athleteId) query = query.eq("athlete_id", athleteId);
@@ -442,9 +445,12 @@ const MangoFitnessStore = (() => {
         body_fat_percent: scan.bodyFatPercent || null,
         fat_mass: scan.fatMass || null,
         lean_mass: scan.leanMass || null,
+        skeletal_muscle_mass: scan.skeletalMuscleMass || null,
+        bmi: scan.bmi || null,
         bone_mineral_content: scan.boneMineralContent || null,
         resting_metabolic_rate: scan.rmr || null,
         visceral_adipose_tissue: scan.vat || null,
+        visceral_fat_level: scan.visceralFatLevel || null,
         android_fat_percent: scan.androidFatPercent || null,
         gynoid_fat_percent: scan.gynoidFatPercent || null,
         ag_ratio: scan.agRatio || null,
@@ -1502,16 +1508,24 @@ function parseBodyScanText(text) {
   const compact = String(text || "").replace(/\s+/g, " ");
   const summary = compact.match(/SUMMARY RESULTS.*?(\d{1,2}\/\d{1,2}\/\d{4})\s+([0-9.]+)%\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/i);
   const regionalTotal = compact.match(/Total\s+([0-9.]+)%\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/i);
+  const inbody = /inbody|skeletal muscle mass|visceral fat level/i.test(compact);
+  const inbodyWeight = numberFromMatch(compact, /Weight\s*\(?lb\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /Weight\s+([0-9.]+)\s*lb/i);
+  const skeletalMuscleMass = numberFromMatch(compact, /Skeletal Muscle Mass\s*\(?lb\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /Skeletal Muscle Mass\s+([0-9.]+)/i);
+  const bodyFatMass = numberFromMatch(compact, /Body Fat Mass\s*\(?lb\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /Body Fat Mass\s+([0-9.]+)/i);
+  const percentBodyFat = numberFromMatch(compact, /Percent Body Fat\s*\(?%\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /PBF\s*\(?%\)?\s*([0-9.]+)/i);
   return {
-    source: /bodyspec/i.test(compact) ? "BodySpec DEXA PDF" : "PDF upload",
+    source: /bodyspec/i.test(compact) ? "BodySpec DEXA PDF" : inbody ? "InBody PDF" : "PDF upload",
     scannedOn: summary ? scanDateFromText(summary[1]) : scanDateFromText(compact),
-    bodyFatPercent: summary ? Number(summary[2]) : regionalTotal ? Number(regionalTotal[1]) : numberFromMatch(compact, /Total Body Fat %[^0-9]*([0-9.]+)/i),
-    bodyWeight: summary ? Number(summary[3]) : regionalTotal ? Number(regionalTotal[2]) : "",
-    fatMass: summary ? Number(summary[4]) : regionalTotal ? Number(regionalTotal[3]) : "",
+    bodyFatPercent: summary ? Number(summary[2]) : regionalTotal ? Number(regionalTotal[1]) : percentBodyFat || numberFromMatch(compact, /Total Body Fat %[^0-9]*([0-9.]+)/i),
+    bodyWeight: summary ? Number(summary[3]) : regionalTotal ? Number(regionalTotal[2]) : inbodyWeight,
+    fatMass: summary ? Number(summary[4]) : regionalTotal ? Number(regionalTotal[3]) : bodyFatMass,
     leanMass: summary ? Number(summary[5]) : regionalTotal ? Number(regionalTotal[4]) : "",
+    skeletalMuscleMass,
+    bmi: numberFromMatch(compact, /BMI\s*\(?kg\/m²?\)?\s*([0-9.]+)/i) || numberFromMatch(compact, /BMI\s+([0-9.]+)/i),
     boneMineralContent: summary ? Number(summary[6]) : regionalTotal ? Number(regionalTotal[5]) : "",
-    rmr: numberFromMatch(compact, /([0-9,]+)\s*cal\/day/i),
+    rmr: numberFromMatch(compact, /Basal Metabolic Rate\s*([0-9,]+)/i) || numberFromMatch(compact, /([0-9,]+)\s*(?:cal\/day|kcal)/i),
     vat: numberFromMatch(compact, /Mass \(lbs\)\s+([0-9.]+)/i),
+    visceralFatLevel: numberFromMatch(compact, /Visceral Fat Level\s*([0-9.]+)/i),
     androidFatPercent: numberFromMatch(compact, /Android \(A\).*?([0-9.]+)%/i) || numberFromMatch(compact, /Android\s+([0-9.]+)%/i),
     gynoidFatPercent: numberFromMatch(compact, /Gynoid \(G\).*?([0-9.]+)%/i) || numberFromMatch(compact, /Gynoid\s+([0-9.]+)%/i),
     agRatio: numberFromMatch(compact, /A\/G Ratio[^0-9]*([0-9.]+)/i),
@@ -1534,8 +1548,11 @@ function renderBodyScanPreview(scan) {
         <div><span>Body fat</span><strong>${scanMetric(scan.bodyFatPercent, "%")}</strong></div>
         <div><span>Fat mass</span><strong>${scanMetric(scan.fatMass, " lb")}</strong></div>
         <div><span>Lean mass</span><strong>${scanMetric(scan.leanMass, " lb")}</strong></div>
+        <div><span>Skeletal muscle</span><strong>${scanMetric(scan.skeletalMuscleMass, " lb")}</strong></div>
+        <div><span>BMI</span><strong>${scanMetric(scan.bmi)}</strong></div>
         <div><span>RMR</span><strong>${scanMetric(scan.rmr, " cal")}</strong></div>
         <div><span>VAT</span><strong>${scanMetric(scan.vat, " lb")}</strong></div>
+        <div><span>Visceral level</span><strong>${scanMetric(scan.visceralFatLevel)}</strong></div>
       </div>
     </article>
   `;
@@ -1552,7 +1569,21 @@ async function pdfTextFromFile(file) {
     const content = await page.getTextContent();
     pages.push(content.items.map((item) => item.str || "").join(" "));
   }
-  return pages.join("\n");
+  const text = pages.join("\n").trim();
+  if (text.replace(/\s+/g, " ").length > 80 || !window.Tesseract) return text;
+
+  const ocrPages = [];
+  for (let pageNumber = 1; pageNumber <= Math.min(pdf.numPages, 2); pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    const result = await window.Tesseract.recognize(canvas, "eng");
+    ocrPages.push(result?.data?.text || "");
+  }
+  return ocrPages.join("\n");
 }
 
 function renderSetLogFields(exercise) {
