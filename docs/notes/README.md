@@ -7,6 +7,7 @@ Use this folder to preserve important project context, decisions, and setup deta
 - `project-summary.md` — current app structure, URLs/files, database setup, and key behavior.
 - `decisions.md` — product/UI/security decisions Lawrence has made.
 - `todo.md` — safe list of follow-up work and open questions.
+- `yesterday-2026-05-16.md` — detailed notes from the previous day’s Mango Fitness work.
 
 ## Working rule
 

@@ -11,3 +11,4 @@
 - Add clearer coach/admin management flow for assigning coach users.
 - Consider a dedicated athlete management page for linking athlete profiles to Auth users.
 - Add lightweight browser/manual test checklist before every push.
+- Improve InBody PDF parsing further using actual PDF text/layout, especially scan date, weight, SMM, and PBF.
