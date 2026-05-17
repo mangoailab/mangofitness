@@ -1350,6 +1350,17 @@ function initCoachApp() {
     }
   });
 
+  document.querySelectorAll("[data-toggle-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const section = button.closest(".workout-section");
+      if (!section) return;
+      const collapsed = section.classList.toggle("is-collapsed");
+      button.textContent = collapsed ? "Expand" : "Collapse";
+      button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    });
+    button.setAttribute("aria-expanded", "true");
+  });
+
   document.querySelectorAll("[data-add-section]").forEach((button) => {
     button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
   });

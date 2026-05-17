@@ -1127,3 +1127,31 @@ body.is-reordering .exercise-row.dragging {
     line-height: 1.25;
   }
 }
+
+.section-toggle {
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: white;
+  color: var(--accent-dark);
+}
+.workout-section.is-collapsed > :not(.section-head) {
+  display: none !important;
+}
+.workout-section.is-collapsed {
+  padding-bottom: 12px;
+}
+
+@media (max-width: 640px) {
+  .section-toggle {
+    flex: 0 0 auto;
+    width: auto;
+  }
+  .workout-section .section-head.compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
