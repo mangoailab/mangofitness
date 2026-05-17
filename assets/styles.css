@@ -1001,3 +1001,14 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
+
+/* iPhone portrait: make native date input size like the text field, not its own wider bubble. */
+@media (max-width: 760px) {
+  #workoutDate {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
