@@ -55,6 +55,7 @@ const MangoFitnessStore = (() => {
     return {
       id: row.id,
       workoutId: exercise.workout_id || "",
+      athleteId: row.athlete_id || "",
       exerciseId: row.workout_exercise_id,
       exerciseName: exercise.benchmark_name || exercise.movement_name || exercise.exercise_name || "Exercise",
       benchmarkKey: exercise.benchmark_key || "",
@@ -314,7 +315,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athlete_workout_results")
-        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, set_number, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
+        .select("id, athlete_id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, set_number, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
         .order("completed_on", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -1131,8 +1132,6 @@ function initCoachApp() {
   async function renderCoach() {
     try {
       const workouts = await MangoFitnessStore.workouts();
-      const results = await MangoFitnessStore.results();
-      const scans = await MangoFitnessStore.bodyScans(selectedAthleteId);
       const searchQuery = workoutSearch?.value.trim().toLowerCase() || "";
       const selectedScheduleAthleteId = savedWorkoutAthleteFilter?.value || "";
       const selectedScheduleAthlete = athleteProfiles.find((athlete) => athlete.id === selectedScheduleAthleteId);
@@ -1626,7 +1625,6 @@ function initAthleteTabs() {
 }
 
 function initAthleteApp() {
-  initAthleteTabs();
   const date = document.getElementById("athleteWorkoutDate");
   const view = document.getElementById("athleteWorkoutView");
   const scheduleView = document.getElementById("athleteScheduleView");
@@ -1636,13 +1634,7 @@ function initAthleteApp() {
   const prevWeekBtn = document.getElementById("athletePrevWeekBtn");
   const thisWeekBtn = document.getElementById("athleteThisWeekBtn");
   const nextWeekBtn = document.getElementById("athleteNextWeekBtn");
-  const history = document.getElementById("athleteHistoryList");
-  const bodyScanPdf = document.getElementById("bodyScanPdf");
-  const parseBodyScanBtn = document.getElementById("parseBodyScanBtn");
-  const bodyScanPreview = document.getElementById("bodyScanPreview");
-  const bodyScanList = document.getElementById("bodyScanList");
-  let parsedBodyScan = null;
-  if (!date || !view || !history) return;
+  if (!date || !view) return;
 
   date.value = todayISO();
   let selectedWeekStart = startOfWeek(new Date());
@@ -1669,8 +1661,6 @@ function initAthleteApp() {
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
       const workout = visibleWorkouts.find((item) => item.date === date.value) || weekWorkouts[0] || visibleWorkouts[visibleWorkouts.length - 1];
-      const results = await MangoFitnessStore.results();
-      const scans = await MangoFitnessStore.bodyScans(selectedAthleteId);
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       if (workoutCount) workoutCount.textContent = `${weekWorkouts.length} workout${weekWorkouts.length === 1 ? "" : "s"}`;
@@ -1763,18 +1753,6 @@ function initAthleteApp() {
         `;
       }
 
-      history.innerHTML = results.length ? results.map((result) => `
-        <article class="item-card">
-          <strong>${escapeHtml(result.exerciseName)}</strong>
-          <p class="muted">${escapeHtml(result.completedOn)}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
-          ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
-        </article>
-      `).join("") : `<p class="muted empty-state">No results logged yet.</p>`;
-
-      if (bodyScanList) {
-        bodyScanList.innerHTML = scans.length ? scans.slice(0, 5).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
-      }
-
       view.querySelectorAll(".result-form").forEach((form) => {
         form.addEventListener("submit", async (event) => {
           event.preventDefault();
@@ -1828,7 +1806,84 @@ function initAthleteApp() {
       });
     } catch (error) {
       view.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
-      history.innerHTML = `<p class="muted empty-state">Progress history unavailable until Supabase is ready.</p>`;
+
+    }
+  }
+
+  date.addEventListener("change", () => {
+    selectedWeekStart = startOfWeek(parseLocalDate(date.value));
+    renderAthlete();
+  });
+  profileSelect?.addEventListener("change", renderAthlete);
+  prevWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = addDays(selectedWeekStart, -7);
+    renderAthlete();
+  });
+  thisWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = startOfWeek(new Date());
+    date.value = todayISO();
+    renderAthlete();
+  });
+  nextWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = addDays(selectedWeekStart, 7);
+    renderAthlete();
+  });
+  loadAthleteProfiles().then(renderAthlete);
+
+}
+
+async function loadAthleteOptionsForSelect(select, emptyLabel = "Select athlete") {
+  if (!select) return;
+  try {
+    athleteProfiles = await MangoFitnessStore.athletes();
+    select.innerHTML = `<option value="">${escapeHtml(emptyLabel)}</option>${athleteOptions(select.value)}`;
+  } catch {
+    athleteProfiles = [];
+    select.innerHTML = `<option value="">${escapeHtml(emptyLabel)}</option>`;
+  }
+}
+
+function initAthleteHistoryApp() {
+  const profileSelect = document.getElementById("historyProfileSelect");
+  const history = document.getElementById("athleteHistoryList");
+  if (!history) return;
+
+  async function renderHistory() {
+    try {
+      const allResults = await MangoFitnessStore.results();
+      const selectedAthleteId = profileSelect?.value || "";
+      const results = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : allResults;
+      history.innerHTML = results.length ? results.map((result) => `
+        <article class="item-card">
+          <strong>${escapeHtml(result.exerciseName)}</strong>
+          <p class="muted">${escapeHtml(result.completedOn)}${result.setNumber ? ` · Set ${escapeHtml(result.setNumber)}` : ""}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
+          ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
+        </article>
+      `).join("") : `<p class="muted empty-state">No results logged yet.</p>`;
+    } catch (error) {
+      history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
+    }
+  }
+
+  loadAthleteOptionsForSelect(profileSelect, "All athletes").then(renderHistory);
+  profileSelect?.addEventListener("change", renderHistory);
+}
+
+function initBodyMetricsApp() {
+  const profileSelect = document.getElementById("metricsProfileSelect");
+  const bodyScanPdf = document.getElementById("bodyScanPdf");
+  const parseBodyScanBtn = document.getElementById("parseBodyScanBtn");
+  const bodyScanPreview = document.getElementById("bodyScanPreview");
+  const bodyScanList = document.getElementById("bodyScanList");
+  let parsedBodyScan = null;
+  if (!bodyScanList) return;
+
+  async function renderScans() {
+    try {
+      const scans = await MangoFitnessStore.bodyScans(profileSelect?.value || "");
+      bodyScanList.innerHTML = scans.length ? scans.slice(0, 10).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
+    } catch (error) {
+      bodyScanList.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
     }
   }
 
@@ -1856,7 +1911,7 @@ function initAthleteApp() {
           parsedBodyScan = null;
           bodyScanPdf.value = "";
           bodyScanPreview.classList.add("hidden");
-          await renderAthlete();
+          await renderScans();
         });
       }
     } catch (error) {
@@ -1868,24 +1923,6 @@ function initAthleteApp() {
     }
   });
 
-  date.addEventListener("change", () => {
-    selectedWeekStart = startOfWeek(parseLocalDate(date.value));
-    renderAthlete();
-  });
-  profileSelect?.addEventListener("change", renderAthlete);
-  prevWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = addDays(selectedWeekStart, -7);
-    renderAthlete();
-  });
-  thisWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = startOfWeek(new Date());
-    date.value = todayISO();
-    renderAthlete();
-  });
-  nextWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = addDays(selectedWeekStart, 7);
-    renderAthlete();
-  });
-  loadAthleteProfiles().then(renderAthlete);
-
+  profileSelect?.addEventListener("change", renderScans);
+  loadAthleteOptionsForSelect(profileSelect).then(renderScans);
 }

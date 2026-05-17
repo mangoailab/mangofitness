@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Body Metrics — Mango Fitness</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="assets/supabase-config.js"></script>
+</head>
+<body>
+  <main class="container">
+    <section class="card hero topbar">
+      <div class="hero-main">
+        <div class="brand-heading"><div class="brand-mark"><img src="assets/mango-fitness-logo.png" alt="Mango Fitness" /></div><h1>Body Metrics</h1></div>
+        <nav class="actions top-actions">
+          <a href="index.html" class="nav-link">Home</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete.html" class="nav-link">Athlete portal</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete-history.html" class="nav-link">Progress history</a>
+          <span id="metricsSignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="metricsSignOutBtn" class="nav-link link-button hidden">Sign out</button>
+        </nav>
+        <div id="metricsHeaderAuth" class="header-auth hidden"><p id="metricsDashboardMessage" class="muted"></p></div>
+      </div>
+      <p class="muted hero-description">Upload body composition scans and track changes over time.</p>
+    </section>
+
+    <section id="metricsAuthCard" class="card auth-card">
+      <h2>Athlete Sign In</h2>
+      <div class="field"><label for="metricsEmail">Email</label><input id="metricsEmail" type="email" placeholder="Email" /></div>
+      <div class="field"><label for="metricsPassword">Password</label><input id="metricsPassword" type="password" placeholder="Password" /></div>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="metricsSignInBtn" class="primary">Sign In</button><button type="button" id="metricsForgotBtn">Forgot Password</button></div>
+      <p id="metricsAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
+    </section>
+
+    <section id="metricsDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="section-head compact"><div><h2>Body Metrics</h2><p class="muted">Upload a BodySpec or InBody PDF scan.</p></div></div>
+        <div class="field narrow-field"><label for="metricsProfileSelect">Athlete</label><select id="metricsProfileSelect"><option value="">Select athlete</option></select></div>
+        <div class="scan-upload-grid">
+          <div class="field"><label for="bodyScanPdf">Scan PDF</label><input id="bodyScanPdf" type="file" accept="application/pdf" /></div>
+          <button type="button" id="parseBodyScanBtn">Parse PDF</button>
+        </div>
+        <div id="bodyScanPreview" class="hidden"></div>
+        <div id="bodyScanList" class="list-stack"></div>
+      </div>
+    </section>
+  </main>
+  <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    initLoginPage({ emailId:"metricsEmail", passwordId:"metricsPassword", signInBtnId:"metricsSignInBtn", forgotBtnId:"metricsForgotBtn", signOutBtnId:"metricsSignOutBtn", authCardId:"metricsAuthCard", dashboardId:"metricsDashboard", messageId:"metricsAuthMessage", dashboardMessageId:"metricsDashboardMessage" });
+    initBodyMetricsApp();
+  </script>
+</body>
+</html>

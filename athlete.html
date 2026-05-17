@@ -6,7 +6,6 @@
   <title>Athlete Portal — Mango Fitness</title>
   <link rel="stylesheet" href="assets/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="assets/supabase-config.js"></script>
 </head>
 <body>
@@ -18,6 +17,10 @@
           <a href="index.html" class="nav-link">Home</a>
           <span class="nav-separator">|</span>
           <a href="admin.html" class="nav-link">Coach dashboard</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete-metrics.html" class="nav-link">Body metrics</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete-history.html" class="nav-link">Progress history</a>
           <span id="athleteSignOutSeparator" class="nav-separator hidden">|</span>
           <button type="button" id="athleteSignOutBtn" class="nav-link link-button hidden">Sign out</button>
         </nav>
@@ -41,13 +44,7 @@
     </section>
 
     <section id="athleteDashboard" class="dashboard-stack hidden">
-      <div class="athlete-tabs actions">
-        <button type="button" class="athlete-tab active" data-athlete-tab="training">Training</button>
-        <button type="button" class="athlete-tab" data-athlete-tab="metrics">Body Metrics</button>
-        <button type="button" class="athlete-tab" data-athlete-tab="history">Progress History</button>
-      </div>
-
-      <div class="card dashboard-card athlete-tab-panel active" data-athlete-panel="training">
+      <div class="card dashboard-card">
         <div class="section-head compact">
           <div>
             <h2>Training Schedule</h2>
@@ -70,25 +67,6 @@
         <div id="athleteWorkoutView" class="list-stack athlete-detail-stack"></div>
       </div>
 
-      <div class="card dashboard-card athlete-tab-panel" data-athlete-panel="metrics">
-        <div class="section-head compact">
-          <div>
-            <h2>Body Metrics</h2>
-            <p class="muted">Upload a BodySpec or InBody PDF scan.</p>
-          </div>
-        </div>
-        <div class="scan-upload-grid">
-          <div class="field"><label for="bodyScanPdf">Scan PDF</label><input id="bodyScanPdf" type="file" accept="application/pdf" /></div>
-          <button type="button" id="parseBodyScanBtn">Parse PDF</button>
-        </div>
-        <div id="bodyScanPreview" class="hidden"></div>
-        <div id="bodyScanList" class="list-stack"></div>
-      </div>
-
-      <div class="card dashboard-card athlete-tab-panel" data-athlete-panel="history">
-        <h2>Progress History</h2>
-        <div id="athleteHistoryList" class="list-stack"></div>
-      </div>
     </section>
   </main>
   <script src="assets/auth.js"></script>
