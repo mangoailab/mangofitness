@@ -993,3 +993,11 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
+
+/* Portrait: match Workout date width to Day title. */
+@media (max-width: 760px) {
+  #workoutDate {
+    width: 100%;
+    max-width: none;
+  }
+}
