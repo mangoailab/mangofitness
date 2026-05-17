@@ -32,6 +32,10 @@
 - Athlete pages must not link to the coach portal.
 - Coach pages do not need an Athlete portal link.
 
+## Home page behavior
+
+- Home page uses a Mango Loan-inspired layout with a larger hero/window, more mobile spacing, and separate Coach Portal / Athlete Portal button cards.
+
 ## Current navigation behavior
 
 Athlete pages use fixed nav links:
