@@ -1012,3 +1012,27 @@ body.is-reordering .exercise-row.dragging {
     max-width: 100%;
   }
 }
+
+/* Phone landscape: stack top workout fields to prevent right-edge overflow. */
+@media (max-width: 900px) and (orientation: landscape) {
+  .form-grid,
+  .assignment-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+  .form-grid > .field,
+  .assignment-grid > .field,
+  #workoutDate,
+  #workoutTitle,
+  #assignmentType,
+  #assignmentAthlete {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  #workoutDate {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
