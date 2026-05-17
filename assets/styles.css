@@ -1775,3 +1775,25 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 1fr;
   }
 }
+
+.chart-metric-field {
+  min-width: 150px;
+  margin-bottom: 0;
+}
+.chart-metric-field label {
+  font-size: 12px;
+}
+.single-metric-chart .scan-chart-wrap svg {
+  min-width: 0;
+}
+.chart-date-row {
+  padding: 0 4px;
+}
+@media (max-width: 640px) {
+  .scan-history-head {
+    align-items: stretch;
+  }
+  .chart-metric-field {
+    width: 100%;
+  }
+}

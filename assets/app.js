@@ -2082,63 +2082,55 @@ function metricNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
-function renderBodyScanChart(scans) {
+function renderBodyScanChart(scans, selectedMetricKey = "bodyWeight") {
   const ordered = [...(scans || [])].filter((scan) => scan.scannedOn).sort((a, b) => a.scannedOn.localeCompare(b.scannedOn));
   if (ordered.length < 2) {
     return `<p class="muted empty-state">Upload at least 2 scans to see a progress chart.</p>`;
   }
-  const metrics = [
-    { key: "bodyWeight", label: "Weight", color: "#0f7a3b", suffix: " lb" },
-    { key: "skeletalMuscleMass", label: "SMM", color: "#ffb703", suffix: " lb" },
-    { key: "bodyFatPercent", label: "PBF", color: "#fb7185", suffix: "%" }
-  ];
-
-  function miniChart(metric) {
-    const points = ordered
-      .map((scan, index) => ({ scan, index, value: metricNumber(scan[metric.key]) }))
-      .filter((point) => point.value != null);
-    if (points.length < 2) {
-      return `
-        <div class="metric-mini-chart empty">
-          <div class="metric-mini-head"><strong>${metric.label}</strong><span>-</span></div>
-          <p class="muted">Not enough ${metric.label} data.</p>
-        </div>`;
-    }
-    const width = 260;
-    const height = 120;
-    const pad = 16;
-    const values = points.map((point) => point.value);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = Math.max(0.1, max - min);
-    const x = (orderIndex) => pad + (ordered.length === 1 ? 0 : orderIndex * ((width - pad * 2) / (ordered.length - 1)));
-    const y = (value) => height - pad - ((value - min) / range) * (height - pad * 2);
-    const polyPoints = points.map((point) => `${x(point.index)},${y(point.value)}`);
-    const first = points[0].value;
-    const latest = points[points.length - 1].value;
-    const delta = latest - first;
-    const deltaText = `${delta >= 0 ? "+" : ""}${Number(delta.toFixed(1))}${metric.suffix}`;
-    return `
-      <div class="metric-mini-chart">
-        <div class="metric-mini-head"><strong>${metric.label}</strong><span>${scanMetric(latest, metric.suffix)}</span></div>
-        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} trend">
+  const metricMap = {
+    bodyWeight: { key: "bodyWeight", label: "Weight", color: "#0f7a3b", suffix: " lb" },
+    skeletalMuscleMass: { key: "skeletalMuscleMass", label: "SMM", color: "#ffb703", suffix: " lb" },
+    bodyFatPercent: { key: "bodyFatPercent", label: "PBF", color: "#fb7185", suffix: "%" }
+  };
+  const metric = metricMap[selectedMetricKey] || metricMap.bodyWeight;
+  const points = ordered
+    .map((scan, index) => ({ scan, index, value: metricNumber(scan[metric.key]) }))
+    .filter((point) => point.value != null);
+  if (points.length < 2) {
+    return `<p class="muted empty-state">Not enough ${escapeHtml(metric.label)} data to chart yet.</p>`;
+  }
+  const width = 680;
+  const height = 260;
+  const pad = 34;
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const padding = Math.max(0.5, (max - min) * 0.15);
+  const chartMin = min - padding;
+  const chartMax = max + padding;
+  const range = Math.max(0.1, chartMax - chartMin);
+  const x = (orderIndex) => pad + (ordered.length === 1 ? 0 : orderIndex * ((width - pad * 2) / (ordered.length - 1)));
+  const y = (value) => height - pad - ((value - chartMin) / range) * (height - pad * 2);
+  const polyPoints = points.map((point) => `${x(point.index)},${y(point.value)}`);
+  const first = points[0].value;
+  const latest = points[points.length - 1].value;
+  const delta = latest - first;
+  const deltaText = `${delta >= 0 ? "+" : ""}${Number(delta.toFixed(1))}${metric.suffix}`;
+  return `
+    <article class="item-card body-chart-card single-metric-chart">
+      <div class="item-head">
+        <div><strong>${escapeHtml(metric.label)} trend</strong><p class="muted">${escapeHtml(points[0].scan.scannedOn)} to ${escapeHtml(points[points.length - 1].scan.scannedOn)} · Change: ${escapeHtml(deltaText)}</p></div>
+        <span class="pill">${scanMetric(latest, metric.suffix)}</span>
+      </div>
+      <div class="scan-chart-wrap">
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(metric.label)} trend chart">
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
           <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
           <polyline points="${polyPoints.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
           ${points.map((point) => `<circle cx="${x(point.index)}" cy="${y(point.value)}" r="5" fill="${metric.color}" />`).join("")}
         </svg>
-        <div class="metric-mini-foot"><span>${escapeHtml(points[0].scan.scannedOn)}</span><span>${escapeHtml(points[points.length - 1].scan.scannedOn)}</span></div>
-        <p class="muted metric-delta">Change: ${escapeHtml(deltaText)}</p>
-      </div>`;
-  }
-
-  return `
-    <article class="item-card body-chart-card">
-      <div class="item-head">
-        <div><strong>Body metrics trend</strong><p class="muted">Each metric uses its own scale for accuracy.</p></div>
       </div>
-      <div class="metric-chart-grid">
-        ${metrics.map(miniChart).join("")}
-      </div>
+      <div class="metric-mini-foot chart-date-row"><span>${escapeHtml(points[0].scan.scannedOn)}</span><span>${escapeHtml(points[points.length - 1].scan.scannedOn)}</span></div>
     </article>
   `;
 }
@@ -2149,6 +2141,7 @@ function initBodyMetricsApp() {
   const bodyScanPreview = document.getElementById("bodyScanPreview");
   const bodyScanList = document.getElementById("bodyScanList");
   const bodyScanChart = document.getElementById("bodyScanChart");
+  const bodyScanChartMetric = document.getElementById("bodyScanChartMetric");
   let parsedBodyScan = null;
   let justSavedScan = null;
   let currentScans = [];
@@ -2159,7 +2152,7 @@ function initBodyMetricsApp() {
       const storedScans = await MangoFitnessStore.bodyScans();
       const scans = justSavedScan && !storedScans.some((scan) => scan.id === justSavedScan.id) ? [justSavedScan, ...storedScans] : storedScans;
       currentScans = scans;
-      if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans);
+      if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans, bodyScanChartMetric?.value || "bodyWeight");
       bodyScanList.innerHTML = scans.length ? scans.slice(0, 10).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
     } catch (error) {
       bodyScanList.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
@@ -2281,5 +2274,6 @@ function initBodyMetricsApp() {
     }
   });
 
+  bodyScanChartMetric?.addEventListener("change", renderScans);
   renderScans();
 }
