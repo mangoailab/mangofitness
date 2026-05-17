@@ -1855,3 +1855,20 @@ body.is-reordering .exercise-row.dragging {
 .chart-unit-low {
   margin-top: -4px;
 }
+
+/* Match saved scan summary metric colors to chart line colors. */
+.scan-summary-metrics .scan-metric-weight {
+  border-color: #0f7a3b;
+  background: #ecfdf3;
+  color: #0f7a3b;
+}
+.scan-summary-metrics .scan-metric-smm {
+  border-color: #ffb703;
+  background: #fff7d6;
+  color: #8a5a00;
+}
+.scan-summary-metrics .scan-metric-pbf {
+  border-color: #fb7185;
+  background: #fff1f2;
+  color: #be123c;
+}

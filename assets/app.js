@@ -1708,9 +1708,9 @@ function renderBodyScanPreview(scan) {
           <strong>${escapeHtml(scan.scannedOn || "Unknown date")}</strong>
           <p class="muted">${escapeHtml(scan.source || "PDF upload")}</p>
           <div class="scan-summary-metrics">
-            <span>Weight: ${scanMetric(scan.bodyWeight, " lb")}</span>
-            <span>SMM: ${scanMetric(scan.skeletalMuscleMass, " lb")}</span>
-            <span>PBF: ${scanMetric(scan.bodyFatPercent, "%")}</span>
+            <span class="scan-metric-weight">Weight: ${scanMetric(scan.bodyWeight, " lb")}</span>
+            <span class="scan-metric-smm">SMM: ${scanMetric(scan.skeletalMuscleMass, " lb")}</span>
+            <span class="scan-metric-pbf">PBF: ${scanMetric(scan.bodyFatPercent, "%")}</span>
           </div>
         </div>
         <span class="section-chevron scan-summary-chevron" aria-hidden="true">⌄</span>
