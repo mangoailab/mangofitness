@@ -1948,16 +1948,11 @@ function initBodyMetricsApp() {
       bodyScanPreview?.classList.remove("hidden");
       return;
     }
-    if (!profileSelect?.value) {
-      if (bodyScanPreview) bodyScanPreview.innerHTML = `<p class="error-text">Choose an athlete before saving a scan.</p>`;
-      bodyScanPreview?.classList.remove("hidden");
-      return;
-    }
     try {
       parseBodyScanBtn.disabled = true;
       parseBodyScanBtn.textContent = "Parsing...";
       const text = await pdfTextFromFile(bodyScanPdf.files[0]);
-      parsedBodyScan = { ...parseBodyScanText(text), athleteId: profileSelect.value };
+      parsedBodyScan = { ...parseBodyScanText(text), athleteId: profileSelect?.value || "" };
       if (bodyScanPreview) {
         bodyScanPreview.innerHTML = `${renderBodyScanPreview(parsedBodyScan)}<div class="actions scan-preview-actions"><button type="button" class="primary" id="saveBodyScanBtn">Save scan</button></div>`;
         bodyScanPreview.classList.remove("hidden");
@@ -1979,5 +1974,5 @@ function initBodyMetricsApp() {
   });
 
   profileSelect?.addEventListener("change", renderScans);
-  loadAthleteOptionsForSelect(profileSelect).then(renderScans);
+  loadAthleteOptionsForSelect(profileSelect, "My account").then(renderScans);
 }
