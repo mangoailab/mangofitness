@@ -1535,39 +1535,36 @@ function scanDateFromText(text, filename = "") {
 
 function parseInBodyCoreMetrics(compact) {
   const values = {
-    bodyWeight: firstNumberNearLabel(compact, /\bWeight\b|Wt\.?\s*\(?lb/i, 70, 400, 360),
-    skeletalMuscleMass: firstNumberNearLabel(compact, /Skeletal\s+Muscle\s+Mass|\bSMM\b/i, 35, 180, 360),
-    bodyFatPercent: firstNumberNearLabel(compact, /Percent\s+Body\s+Fat|\bPBF\b/i, 3, 60, 360)
+    bodyWeight: firstNumberNearLabel(compact, /\bWeight\b|Wt\.?\s*\(?lb/i, 70, 400, 220),
+    skeletalMuscleMass: firstNumberNearLabel(compact, /Skeletal\s+Muscle\s+Mass|\bSMM\b/i, 35, 180, 220),
+    bodyFatPercent: firstNumberNearLabel(compact, /Percent\s+Body\s+Fat|\bPBF\b/i, 3, 60, 220)
   };
 
-  const bodyFatMass = firstNumberNearLabel(compact, /Body\s+Fat\s+Mass|\bBFM\b/i, 3, 160, 360);
+  const bodyFatMass = firstNumberNearLabel(compact, /Body\s+Fat\s+Mass|\bBFM\b/i, 3, 160, 220);
   if (bodyFatMass) values.fatMass = bodyFatMass;
 
-  const bmi = firstNumberNearLabel(compact, /\bBMI\b/i, 10, 60, 260);
+  const bmi = firstNumberNearLabel(compact, /\bBMI\b/i, 10, 45, 180);
   if (bmi) values.bmi = bmi;
 
-  const rmr = firstNumberNearLabel(compact, /Basal\s+Metabolic\s+Rate|\bBMR\b|\bRMR\b/i, 900, 3500, 260);
+  const rmr = firstNumberNearLabel(compact, /Basal\s+Metabolic\s+Rate|\bBMR\b|\bRMR\b/i, 900, 3500, 220);
   if (rmr) values.rmr = rmr;
 
-  const visceral = firstNumberNearLabel(compact, /Visceral\s+Fat\s+Level/i, 1, 30, 220);
+  const visceral = firstNumberNearLabel(compact, /Visceral\s+Fat\s+Level/i, 1, 30, 180);
   if (visceral) values.visceralFatLevel = visceral;
 
-  // InBody OCR often preserves the summary values as a compact sequence:
-  // weight, skeletal muscle mass, body fat mass, BMI, PBF.
-  // Use this only when it fits realistic InBody ranges.
-  if (!values.bodyWeight || !values.skeletalMuscleMass || !values.bodyFatPercent) {
-    const nums = [...compact.matchAll(/\b\d{2,3}\.\d\b/g)].map((match) => Number(match[0]));
-    for (let i = 0; i <= nums.length - 5; i += 1) {
-      const [weight, smm, fatMass, bmiValue, pbf] = nums.slice(i, i + 5);
-      if (weight >= 70 && weight <= 400 && smm >= 35 && smm <= 180 && fatMass >= 3 && fatMass <= 160 && bmiValue >= 10 && bmiValue <= 60 && pbf >= 3 && pbf <= 60) {
-        values.bodyWeight = values.bodyWeight || weight;
-        values.skeletalMuscleMass = values.skeletalMuscleMass || smm;
-        values.fatMass = values.fatMass || fatMass;
-        values.bmi = values.bmi || bmiValue;
-        values.bodyFatPercent = values.bodyFatPercent || pbf;
-        break;
-      }
+  // Safety checks. InBody OCR may jump into segmental tables, which creates
+  // plausible-looking but wrong values. Do not keep values that contradict each other.
+  if (values.bodyWeight && values.skeletalMuscleMass && values.skeletalMuscleMass > values.bodyWeight * 0.65) {
+    values.skeletalMuscleMass = "";
+  }
+  if (values.bodyWeight && values.bodyFatPercent && values.fatMass) {
+    const expectedFatMass = values.bodyWeight * values.bodyFatPercent / 100;
+    if (Math.abs(values.fatMass - expectedFatMass) > Math.max(8, values.bodyWeight * 0.08)) {
+      values.fatMass = "";
     }
+  }
+  if (values.bodyWeight && values.bodyFatPercent && !values.fatMass) {
+    values.fatMass = Number((values.bodyWeight * values.bodyFatPercent / 100).toFixed(1));
   }
 
   return values;
