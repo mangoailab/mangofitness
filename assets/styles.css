@@ -1001,12 +1001,3 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
-
-/* Portrait: keep Workout date and Day title aligned, but not full-card wide. */
-@media (max-width: 760px) {
-  #workoutDate,
-  #workoutTitle {
-    width: min(320px, 100%);
-    max-width: 320px;
-  }
-}
