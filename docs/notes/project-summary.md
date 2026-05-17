@@ -36,6 +36,11 @@
 
 - Home page uses a Mango Loan-inspired layout with a larger hero/window, more mobile spacing, and separate Coach Portal / Athlete Portal button cards.
 
+## Coach client management
+
+- Coach portal now has a separate Clients page for creating/updating athlete/client profiles, storing login email, phone, notes, and optional Supabase Auth user ID link.
+- Static frontend cannot safely create Supabase Auth password users by itself because that requires privileged server-side access. Coaches should create/invite the auth user in Supabase Authentication, then link the profile with the Auth user ID until a secure backend/Edge Function is added.
+
 ## Current navigation behavior
 
 Athlete pages use fixed nav links:

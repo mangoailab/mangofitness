@@ -118,10 +118,57 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athletes")
-        .select("id, auth_user_id, name, email")
+        .select("id, auth_user_id, name, email, phone, notes")
         .order("name", { ascending: true });
       if (error) throw error;
       return data || [];
+    },
+
+    async saveAthlete(athlete) {
+      const sb = client();
+      const payload = {
+        name: athlete.name,
+        email: athlete.email || null,
+        phone: athlete.phone || null,
+        notes: athlete.notes || null,
+        auth_user_id: isUuid(athlete.authUserId) ? athlete.authUserId : null
+      };
+      if (!sb) {
+        const athletes = readLocal(localAthleteKey).filter((item) => item.id !== athlete.id);
+        const saved = { ...payload, id: athlete.id || uid("athlete"), auth_user_id: payload.auth_user_id };
+        athletes.push(saved);
+        writeLocal(localAthleteKey, athletes.sort((a, b) => a.name.localeCompare(b.name)));
+        return saved;
+      }
+
+      if (athlete.id) {
+        const { data, error } = await sb
+          .from("athletes")
+          .update(payload)
+          .eq("id", athlete.id)
+          .select("id, auth_user_id, name, email, phone, notes")
+          .single();
+        if (error) throw error;
+        return data;
+      }
+
+      const { data, error } = await sb
+        .from("athletes")
+        .insert(payload)
+        .select("id, auth_user_id, name, email, phone, notes")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async deleteAthlete(id) {
+      const sb = client();
+      if (!sb) {
+        writeLocal(localAthleteKey, readLocal(localAthleteKey).filter((item) => item.id !== id));
+        return;
+      }
+      const { error } = await sb.from("athletes").delete().eq("id", id);
+      if (error) throw error;
     },
 
     async cardioBenchmarks() {
@@ -759,6 +806,141 @@ function workoutSearchText(workout) {
     workout.cardioNotes,
     ...workout.exercises.flatMap((exercise) => [exercise.name, exercise.notes, exercise.target, exercise.benchmarkName, exercise.movementName])
   ].join(" ").toLowerCase();
+}
+
+function initCoachClientsApp() {
+  const form = document.getElementById("clientProfileForm");
+  if (!form) return;
+
+  const clientId = document.getElementById("clientId");
+  const clientName = document.getElementById("clientName");
+  const clientEmail = document.getElementById("clientEmail");
+  const clientPhone = document.getElementById("clientPhone");
+  const clientAuthUserId = document.getElementById("clientAuthUserId");
+  const clientNotes = document.getElementById("clientNotes");
+  const saveBtn = document.getElementById("saveClientBtn");
+  const clearBtn = document.getElementById("clearClientBtn");
+  const message = document.getElementById("clientProfileMessage");
+  const list = document.getElementById("clientProfileList");
+  const count = document.getElementById("clientProfileCount");
+
+  function setClientMessage(text, isError = false) {
+    if (!message) return;
+    message.textContent = text || "";
+    message.classList.toggle("hidden", !text);
+    message.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function clearForm() {
+    clientId.value = "";
+    form.reset();
+    saveBtn.textContent = "Save client profile";
+    setClientMessage("");
+  }
+
+  function fillForm(athlete) {
+    clientId.value = athlete.id || "";
+    clientName.value = athlete.name || "";
+    clientEmail.value = athlete.email || "";
+    clientPhone.value = athlete.phone || "";
+    clientAuthUserId.value = athlete.auth_user_id || athlete.authUserId || "";
+    clientNotes.value = athlete.notes || "";
+    saveBtn.textContent = "Update client profile";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setClientMessage("Editing client profile.");
+  }
+
+  function renderClients() {
+    if (!list) return;
+    count.textContent = `${athleteProfiles.length} client${athleteProfiles.length === 1 ? "" : "s"}`;
+    if (!athleteProfiles.length) {
+      list.innerHTML = `<p class="muted">No client profiles yet.</p>`;
+      return;
+    }
+    list.innerHTML = athleteProfiles.map((athlete) => `
+      <article class="item-card client-profile-card" data-client-id="${escapeHtml(athlete.id)}">
+        <div>
+          <h3>${escapeHtml(athlete.name)}</h3>
+          <p class="muted">${escapeHtml(athlete.email || "No login email yet")}${athlete.phone ? ` · ${escapeHtml(athlete.phone)}` : ""}</p>
+          <p class="muted">Login link: ${athlete.auth_user_id ? "Auth user linked" : "Profile only — create/link Supabase Auth user"}</p>
+          ${athlete.notes ? `<p>${escapeHtml(athlete.notes)}</p>` : ""}
+        </div>
+        <div class="actions client-profile-actions">
+          <button type="button" data-edit-client="${escapeHtml(athlete.id)}">Edit</button>
+          <button type="button" class="danger-button" data-delete-client="${escapeHtml(athlete.id)}">Delete</button>
+        </div>
+      </article>
+    `).join("");
+  }
+
+  async function loadClients() {
+    try {
+      athleteProfiles = await MangoFitnessStore.athletes();
+      renderClients();
+    } catch (error) {
+      athleteProfiles = [];
+      renderClients();
+      setClientMessage(friendlyError(error), true);
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setClientMessage("");
+    const name = clientName.value.trim();
+    const email = clientEmail.value.trim();
+    const authUserId = clientAuthUserId.value.trim();
+    if (!name) return setClientMessage("Enter the client name.", true);
+    if (!email) return setClientMessage("Enter the client login email.", true);
+    if (authUserId && !isUuid(authUserId)) return setClientMessage("Auth user ID must be a valid UUID, or leave it blank until the login exists.", true);
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = clientId.value ? "Updating..." : "Saving...";
+    try {
+      await MangoFitnessStore.saveAthlete({
+        id: clientId.value,
+        name,
+        email,
+        phone: clientPhone.value.trim(),
+        authUserId,
+        notes: clientNotes.value.trim()
+      });
+      clearForm();
+      await loadClients();
+      setClientMessage("Client profile saved.");
+    } catch (error) {
+      setClientMessage(friendlyError(error), true);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = clientId.value ? "Update client profile" : "Save client profile";
+    }
+  });
+
+  clearBtn?.addEventListener("click", clearForm);
+
+  list?.addEventListener("click", async (event) => {
+    const editId = event.target.closest("[data-edit-client]")?.dataset.editClient;
+    const deleteId = event.target.closest("[data-delete-client]")?.dataset.deleteClient;
+    if (editId) {
+      const athlete = athleteProfiles.find((item) => item.id === editId);
+      if (athlete) fillForm(athlete);
+      return;
+    }
+    if (!deleteId) return;
+    const athlete = athleteProfiles.find((item) => item.id === deleteId);
+    if (!athlete) return;
+    if (!confirm(`Delete ${athlete.name}'s client profile? This can also remove related assignments/results if the database cascades them.`)) return;
+    try {
+      await MangoFitnessStore.deleteAthlete(deleteId);
+      if (clientId.value === deleteId) clearForm();
+      await loadClients();
+      setClientMessage("Client profile deleted.");
+    } catch (error) {
+      setClientMessage(friendlyError(error), true);
+    }
+  });
+
+  loadClients();
 }
 
 function initCoachApp() {

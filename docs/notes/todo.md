@@ -9,6 +9,6 @@
 ## Future improvements
 
 - Add clearer coach/admin management flow for assigning coach users.
-- Consider a dedicated athlete management page for linking athlete profiles to Auth users.
+- Add a secure Supabase Edge Function or backend endpoint for coaches to create/invite athlete Auth users from the Clients page without exposing a service-role key in the browser.
 - Add lightweight browser/manual test checklist before every push.
 - Improve InBody PDF parsing further using actual PDF text/layout, especially scan date, weight, SMM, and PBF.

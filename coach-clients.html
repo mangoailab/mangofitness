@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Coach Clients — Mango Fitness</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+</head>
+<body>
+  <main class="container">
+    <section class="card hero topbar">
+      <div class="hero-main">
+        <div class="brand-heading"><div class="brand-mark"><img src="assets/mango-fitness-logo.png" alt="Mango Fitness" /></div><h1>Coach Clients</h1></div>
+        <nav class="actions top-actions coach-nav">
+          <a href="index.html" class="nav-link">Home</a>
+          <span class="nav-separator">|</span>
+          <a href="admin.html" class="nav-link">Coach portal</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-clients.html" class="nav-link active" aria-current="page">Clients</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-history.html" class="nav-link">Progress history</a>
+          <span id="coachClientsSignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="coachClientsSignOutBtn" class="nav-link link-button hidden">Sign out</button>
+        </nav>
+        <div id="coachClientsHeaderAuth" class="header-auth hidden"><p id="coachClientsDashboardMessage" class="muted"></p></div>
+      </div>
+      <p class="muted hero-description">Create client profiles and connect them to athlete login information.</p>
+    </section>
+
+    <section id="coachClientsAuthCard" class="card auth-card">
+      <h2>Coach Sign In</h2>
+      <div class="field"><label for="coachClientsEmail">Email</label><input id="coachClientsEmail" type="email" placeholder="Email" /></div>
+      <div class="field"><label for="coachClientsPassword">Password</label><input id="coachClientsPassword" type="password" placeholder="Password" /></div>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="coachClientsSignInBtn" class="primary">Sign In</button><button type="button" id="coachClientsForgotBtn">Forgot Password</button></div>
+      <p id="coachClientsAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
+    </section>
+
+    <section id="coachClientsDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="section-head compact">
+          <div>
+            <h2>Client Profile</h2>
+            <p class="muted">Use this to add or update athlete/client records for programming and progress tracking.</p>
+          </div>
+        </div>
+
+        <form id="clientProfileForm" class="builder-form">
+          <input id="clientId" type="hidden" />
+          <div class="grid-2 form-grid">
+            <div class="field"><label for="clientName">Client name</label><input id="clientName" type="text" placeholder="Alex Rivera" required /></div>
+            <div class="field"><label for="clientEmail">Login email</label><input id="clientEmail" type="email" placeholder="client@example.com" required /></div>
+          </div>
+          <div class="grid-2 form-grid">
+            <div class="field"><label for="clientPhone">Phone</label><input id="clientPhone" type="tel" placeholder="Optional" /></div>
+            <div class="field"><label for="clientAuthUserId">Supabase Auth user ID</label><input id="clientAuthUserId" type="text" placeholder="Paste auth.users ID after login is created" /></div>
+          </div>
+          <div class="field"><label for="clientNotes">Coach notes</label><textarea id="clientNotes" rows="3" placeholder="Goals, injuries, preferences, onboarding notes"></textarea></div>
+          <div class="info-panel">
+            <strong>Login setup note:</strong> this page safely stores the client profile and login email. To create the actual password login, create/invite the user in Supabase Authentication, then paste that Auth user ID here to link the profile.
+          </div>
+          <div class="actions form-actions">
+            <button type="submit" id="saveClientBtn" class="primary">Save client profile</button>
+            <button type="button" id="clearClientBtn">Clear form</button>
+          </div>
+          <p id="clientProfileMessage" class="muted hidden"></p>
+        </form>
+      </div>
+
+      <div class="card dashboard-card">
+        <div class="section-head compact">
+          <div>
+            <h2>Client Profiles</h2>
+            <p class="muted">Manage athlete profiles used across coach assignments and athlete progress pages.</p>
+          </div>
+          <span id="clientProfileCount" class="pill">0 clients</span>
+        </div>
+        <div id="clientProfileList" class="list-stack"></div>
+      </div>
+    </section>
+  </main>
+  <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    initLoginPage({ emailId:"coachClientsEmail", passwordId:"coachClientsPassword", signInBtnId:"coachClientsSignInBtn", forgotBtnId:"coachClientsForgotBtn", signOutBtnId:"coachClientsSignOutBtn", authCardId:"coachClientsAuthCard", dashboardId:"coachClientsDashboard", messageId:"coachClientsAuthMessage", dashboardMessageId:"coachClientsDashboardMessage" });
+    initCoachClientsApp();
+  </script>
+</body>
+</html>
