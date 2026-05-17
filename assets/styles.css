@@ -146,7 +146,7 @@ h2 { margin:0 0 10px; font-size:22px; letter-spacing:-.02em; }
   box-shadow: 0 8px 20px rgba(120, 53, 15, 0.16);
 }
 .home-logo img { width: 158px; }
-.home-kicker { font-weight: 700; color: rgba(255,255,255,.9); }
+.home-kicker { font-size:18px; font-weight:700; line-height:1.25; color: rgba(255,255,255,.9); }
 .home-lead {
   margin-top: 0;
   font-size: 17px;
@@ -246,7 +246,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   .home-brand-row { align-items:center; gap:12px; }
   .home-logo { width:150px; height:70px; border-radius:20px; }
   .home-logo img { width:136px; }
-  .home-kicker { font-size:14px; line-height:1.25; }
+  .home-kicker { font-size:16px; line-height:1.25; }
   .home-login-grid,
   .grid-2 { grid-template-columns:1fr; }
   .home-login-card { padding:22px; }
