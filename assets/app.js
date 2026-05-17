@@ -1429,12 +1429,12 @@ function prescribedSetCount(exercise) {
 function renderSetLogFields(exercise) {
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
+    const scoreLabel = exercise.target || benchmarkScoreType(benchmarkByKey(exercise.benchmarkKey || "")) || "Score";
+    const placeholder = /round/i.test(scoreLabel) ? "7+12" : /time/i.test(scoreLabel) ? "18:42" : scoreLabel;
     return `
-      <div class="mini-grid">
-        <div class="field"><label>Time / score</label><input name="score" type="text" placeholder="18:42 or 7+12" /></div>
-        <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
-        <div class="field"><label>Reps done</label><input name="reps" type="text" placeholder="6,6,5,5" /></div>
-        <label class="check-field"><input name="isPr" type="checkbox" /> PR</label>
+      <div class="field cardio-score-field">
+        <label>${escapeHtml(scoreLabel)}</label>
+        <input name="score" type="text" placeholder="${escapeHtml(placeholder)}" />
       </div>
     `;
   }
