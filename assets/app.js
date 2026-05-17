@@ -1182,6 +1182,7 @@ function initCoachApp() {
   async function renderCoach() {
     try {
       const workouts = await MangoFitnessStore.workouts();
+      const results = await MangoFitnessStore.results();
       const searchQuery = workoutSearch?.value.trim().toLowerCase() || "";
       const selectedScheduleAthleteId = savedWorkoutAthleteFilter?.value || "";
       const selectedScheduleAthlete = athleteProfiles.find((athlete) => athlete.id === selectedScheduleAthleteId);
@@ -1850,21 +1851,35 @@ function initAthleteApp() {
 
   date.value = todayISO();
   let selectedWeekStart = startOfWeek(new Date());
+  let signedInAthleteId = "";
 
   async function loadAthleteProfiles() {
     try {
+      const user = await MangoFitnessStore.currentUser();
       athleteProfiles = await MangoFitnessStore.athletes();
-      if (profileSelect) profileSelect.innerHTML = `<option value="">Everyone / class workouts</option>${athleteOptions(profileSelect.value)}`;
+      const userEmail = String(user?.email || "").toLowerCase();
+      const athlete = athleteProfiles.find((item) => item.auth_user_id === user?.id || String(item.email || "").toLowerCase() === userEmail);
+      signedInAthleteId = athlete?.id || "";
+      if (profileSelect) {
+        profileSelect.closest(".field")?.classList.add("hidden");
+        profileSelect.innerHTML = signedInAthleteId
+          ? `<option value="${escapeHtml(signedInAthleteId)}">${escapeHtml(athlete.name)}</option>`
+          : `<option value="">Everyone / class workouts</option>`;
+      }
     } catch {
       athleteProfiles = [];
-      if (profileSelect) profileSelect.innerHTML = `<option value="">Everyone / class workouts</option>`;
+      signedInAthleteId = "";
+      if (profileSelect) {
+        profileSelect.closest(".field")?.classList.add("hidden");
+        profileSelect.innerHTML = `<option value="">Everyone / class workouts</option>`;
+      }
     }
   }
 
   async function renderAthlete() {
     try {
       const workouts = await MangoFitnessStore.workouts();
-      const selectedAthleteId = profileSelect?.value || "";
+      const selectedAthleteId = signedInAthleteId;
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
       const visibleWorkouts = workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
@@ -1982,7 +1997,7 @@ function initAthleteApp() {
                 await MangoFitnessStore.saveResult({
                   id: uid("result"),
                   workoutId: form.dataset.workoutId,
-                  athleteId: profileSelect?.value || "",
+                  athleteId: signedInAthleteId,
                   exerciseId: form.dataset.exerciseId,
                   exerciseName: form.dataset.exerciseName,
                   completedOn: date.value || todayISO(),
@@ -1998,7 +2013,7 @@ function initAthleteApp() {
               await MangoFitnessStore.saveResult({
                 id: uid("result"),
                 workoutId: form.dataset.workoutId,
-                athleteId: profileSelect?.value || "",
+                athleteId: signedInAthleteId,
                 exerciseId: form.dataset.exerciseId,
                 exerciseName: form.dataset.exerciseName,
                 completedOn: date.value || todayISO(),
@@ -2026,7 +2041,9 @@ function initAthleteApp() {
     selectedWeekStart = startOfWeek(parseLocalDate(date.value));
     renderAthlete();
   });
-  profileSelect?.addEventListener("change", renderAthlete);
+  MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
+    if (session?.user) loadAthleteProfiles().then(renderAthlete);
+  });
   prevWeekBtn?.addEventListener("click", () => {
     selectedWeekStart = addDays(selectedWeekStart, -7);
     renderAthlete();

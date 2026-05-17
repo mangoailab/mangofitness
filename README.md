@@ -43,7 +43,15 @@ Main tables:
 - `athlete_workout_results`
 - `athlete_prs`
 
-Current MVP behavior:
+Current behavior:
 - Coach dashboard saves workouts and exercises to Supabase.
-- Athlete portal reads workouts from Supabase and writes results to Supabase.
-- RLS policies are intentionally permissive for signed-in users while the prototype is being built. Tighten these before production.
+- Athlete portal reads visible workouts and writes results for the signed-in athlete.
+- RLS is scoped by role: coaches are listed in `coach_profiles`; athletes can only access their own profile/results/scans plus visible workouts.
+
+To harden an existing Supabase project, apply:
+
+```sql
+supabase/harden-rls.sql
+```
+
+Before applying, create/link the coach Auth user and add that user to `coach_profiles`, otherwise the coach portal will be locked out by design.
