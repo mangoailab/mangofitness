@@ -20,13 +20,6 @@ function resetRedirectUrl() {
   return new URL("reset-password.html", window.location.href).href.replace(/[#?].*$/, "");
 }
 
-function withTimeout(promise, ms, fallback) {
-  return Promise.race([
-    promise,
-    new Promise((resolve) => setTimeout(() => resolve(fallback), ms))
-  ]);
-}
-
 async function initLoginPage(options) {
   const email = document.getElementById(options.emailId);
   const password = document.getElementById(options.passwordId);
@@ -76,17 +69,9 @@ async function initLoginPage(options) {
   }
 
   showLoading();
-  const sessionResult = await withTimeout(
-    supabaseClient.auth.getSession(),
-    2500,
-    { data: { session: null }, timedOut: true }
-  );
-  const session = sessionResult?.data?.session;
-  if (session?.user) showSignedIn(session.user.email);
-  else {
-    showSignedOut();
-    if (sessionResult?.timedOut) setMessage(options.messageId, "Sign-in check timed out. Please refresh or sign in again.");
-  }
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  if (sessionData.session?.user) showSignedIn(sessionData.session.user.email);
+  else showSignedOut();
 
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     if (session?.user) showSignedIn(session.user.email);
