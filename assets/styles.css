@@ -1797,3 +1797,13 @@ body.is-reordering .exercise-row.dragging {
     width: 100%;
   }
 }
+
+.chart-metric-below {
+  max-width: 220px;
+  margin: 10px 0 16px;
+}
+@media (max-width: 640px) {
+  .chart-metric-below {
+    max-width: none;
+  }
+}
