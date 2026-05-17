@@ -1405,3 +1405,17 @@ body.is-reordering .exercise-row.dragging {
   color: #166534;
   font-weight: 800;
 }
+
+.danger-link {
+  border: 0;
+  background: transparent;
+  color: #b91c1c;
+  font-weight: 900;
+  padding: 6px 0;
+  box-shadow: none;
+}
+.danger-link:hover {
+  text-decoration: underline;
+  transform: none;
+  box-shadow: none;
+}

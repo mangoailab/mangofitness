@@ -463,6 +463,18 @@ const MangoFitnessStore = (() => {
       return normalizeBodyScan(data);
     },
 
+    async deleteBodyScan(id) {
+      const sb = client();
+      if (!sb) return;
+      const user = await requireUser();
+      const { error } = await sb
+        .from("athlete_body_scans")
+        .delete()
+        .eq("id", id)
+        .eq("auth_user_id", user?.id || "");
+      if (error) throw error;
+    },
+
     async saveResult(result) {
       const sb = client();
       if (!sb) {
@@ -1641,6 +1653,7 @@ function renderBodyScanPreview(scan) {
     <article class="item-card body-scan-preview-card">
       <div class="item-head">
         <div><strong>${escapeHtml(scan.source || "PDF upload")}</strong><p class="muted">${escapeHtml(scan.scannedOn || "Unknown date")}</p></div>
+        ${scan.id ? `<button type="button" class="danger-link scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
       </div>
       <div class="scan-metric-grid">
         <div><span>Weight</span><strong>${scanMetric(scan.bodyWeight, " lb")}</strong></div>
@@ -2142,6 +2155,23 @@ function initBodyMetricsApp() {
     } finally {
       parseBodyScanBtn.disabled = false;
       parseBodyScanBtn.textContent = "Parse PDF";
+    }
+  });
+
+  bodyScanList.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-scan-delete]");
+    if (!button) return;
+    if (!confirm("Delete this body scan?")) return;
+    try {
+      button.disabled = true;
+      button.textContent = "Deleting...";
+      await MangoFitnessStore.deleteBodyScan(button.dataset.scanDelete);
+      if (justSavedScan?.id === button.dataset.scanDelete) justSavedScan = null;
+      await renderScans();
+    } catch (error) {
+      bodyScanList.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+      button.disabled = false;
+      button.textContent = "Delete";
     }
   });
 
