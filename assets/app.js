@@ -823,6 +823,7 @@ function initCoachClientsApp() {
   const message = document.getElementById("clientProfileMessage");
   const list = document.getElementById("clientProfileList");
   const count = document.getElementById("clientProfileCount");
+  const search = document.getElementById("clientSearch");
 
   function setClientMessage(text, isError = false) {
     if (!message) return;
@@ -850,27 +851,50 @@ function initCoachClientsApp() {
     setClientMessage("Editing client profile.");
   }
 
+  function clientSearchText(athlete) {
+    return [athlete.name, athlete.email, athlete.phone, athlete.notes, athlete.auth_user_id || athlete.authUserId]
+      .join(" ")
+      .toLowerCase();
+  }
+
   function renderClients() {
     if (!list) return;
-    count.textContent = `${athleteProfiles.length} client${athleteProfiles.length === 1 ? "" : "s"}`;
+    const term = (search?.value || "").trim().toLowerCase();
+    const visibleClients = term ? athleteProfiles.filter((athlete) => clientSearchText(athlete).includes(term)) : athleteProfiles;
+    count.textContent = term
+      ? `${visibleClients.length} of ${athleteProfiles.length} client${athleteProfiles.length === 1 ? "" : "s"}`
+      : `${athleteProfiles.length} client${athleteProfiles.length === 1 ? "" : "s"}`;
     if (!athleteProfiles.length) {
       list.innerHTML = `<p class="muted">No client profiles yet.</p>`;
       return;
     }
-    list.innerHTML = athleteProfiles.map((athlete) => `
-      <article class="item-card client-profile-card" data-client-id="${escapeHtml(athlete.id)}">
-        <div>
-          <h3>${escapeHtml(athlete.name)}</h3>
-          <p class="muted">${escapeHtml(athlete.email || "No login email yet")}${athlete.phone ? ` · ${escapeHtml(athlete.phone)}` : ""}</p>
-          <p class="muted">Login link: ${athlete.auth_user_id ? "Auth user linked" : "Profile only — create/link Supabase Auth user"}</p>
-          ${athlete.notes ? `<p>${escapeHtml(athlete.notes)}</p>` : ""}
-        </div>
-        <div class="actions client-profile-actions">
-          <button type="button" data-edit-client="${escapeHtml(athlete.id)}">Edit</button>
-          <button type="button" class="danger-button" data-delete-client="${escapeHtml(athlete.id)}">Delete</button>
-        </div>
-      </article>
-    `).join("");
+    if (!visibleClients.length) {
+      list.innerHTML = `<p class="muted">No clients match that search.</p>`;
+      return;
+    }
+    list.innerHTML = visibleClients.map((athlete) => {
+      const authUserId = athlete.auth_user_id || athlete.authUserId || "";
+      return `
+        <details class="item-card client-profile-card" data-client-id="${escapeHtml(athlete.id)}">
+          <summary class="client-profile-summary">
+            <span>
+              <strong>${escapeHtml(athlete.name)}</strong>
+              <span class="muted">${escapeHtml(athlete.email || "No login email yet")}</span>
+            </span>
+            <span class="pill">${authUserId ? "Login linked" : "Profile only"}</span>
+          </summary>
+          <div class="client-profile-details">
+            <p class="muted">${escapeHtml(athlete.email || "No login email yet")}${athlete.phone ? ` · ${escapeHtml(athlete.phone)}` : ""}</p>
+            <p class="muted">Login link: ${authUserId ? "Auth user linked" : "Profile only — create/link Supabase Auth user"}</p>
+            ${athlete.notes ? `<p>${escapeHtml(athlete.notes)}</p>` : ""}
+            <div class="actions client-profile-actions">
+              <button type="button" data-edit-client="${escapeHtml(athlete.id)}">Edit</button>
+              <button type="button" class="danger-button" data-delete-client="${escapeHtml(athlete.id)}">Delete</button>
+            </div>
+          </div>
+        </details>
+      `;
+    }).join("");
   }
 
   async function loadClients() {
@@ -917,6 +941,7 @@ function initCoachClientsApp() {
   });
 
   clearBtn?.addEventListener("click", clearForm);
+  search?.addEventListener("input", renderClients);
 
   list?.addEventListener("click", async (event) => {
     const editId = event.target.closest("[data-edit-client]")?.dataset.editClient;
