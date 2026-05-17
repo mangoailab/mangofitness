@@ -1193,3 +1193,59 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
+
+.set-log-table {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+.set-log-head,
+.set-log-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr) 56px;
+  gap: 8px;
+  align-items: center;
+}
+.set-log-head {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.set-log-row strong {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--accent-dark);
+}
+.set-log-row input {
+  min-height: 42px;
+  padding: 9px 10px;
+}
+.set-pr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 42px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.set-pr input {
+  width: auto;
+  min-height: 0;
+}
+
+@media (max-width: 420px) {
+  .set-log-head,
+  .set-log-row {
+    grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 48px;
+    gap: 6px;
+  }
+  .set-pr span {
+    display: none;
+  }
+}

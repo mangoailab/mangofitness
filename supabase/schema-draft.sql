@@ -120,6 +120,7 @@ create table if not exists athlete_workout_results (
   reps_completed text,
   notes text,
   score_result text,
+  set_number integer,
   is_pr boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -211,9 +212,11 @@ create index if not exists workout_exercises_workout_id_idx on workout_exercises
 create index if not exists workout_assignments_workout_id_idx on workout_assignments(workout_id);
 create index if not exists workout_assignments_athlete_id_idx on workout_assignments(athlete_id);
 alter table athlete_workout_results add column if not exists score_result text;
+alter table athlete_workout_results add column if not exists set_number integer;
 
 create index if not exists athlete_workout_results_exercise_idx on athlete_workout_results(workout_exercise_id);
 create index if not exists athlete_workout_results_auth_user_idx on athlete_workout_results(auth_user_id);
+create index if not exists athlete_workout_results_set_idx on athlete_workout_results(workout_exercise_id, auth_user_id, athlete_id, completed_on, set_number);
 
 create or replace function set_updated_at()
 returns trigger as $$

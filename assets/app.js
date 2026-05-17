@@ -66,6 +66,7 @@ const MangoFitnessStore = (() => {
       reps: row.reps_completed || "",
       notes: row.notes || "",
       score: row.score_result || "",
+      setNumber: row.set_number || null,
       isPr: Boolean(row.is_pr)
     };
   }
@@ -290,7 +291,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athlete_workout_results")
-        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
+        .select("id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, set_number, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
         .order("completed_on", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -413,6 +414,7 @@ const MangoFitnessStore = (() => {
         reps_completed: result.reps || null,
         notes: result.notes || null,
         score_result: result.score || null,
+        set_number: result.setNumber || null,
         is_pr: result.isPr
       });
       if (error) throw error;
@@ -1418,6 +1420,39 @@ function workoutSectionGroups(exercises) {
   })).filter((group) => group.exercises.length);
 }
 
+function prescribedSetCount(exercise) {
+  const match = String(exercise.sets || "").match(/\d+/);
+  const count = match ? Number(match[0]) : 1;
+  return Math.max(1, Math.min(count || 1, 12));
+}
+
+function renderSetLogFields(exercise) {
+  const isStrength = (exercise.section || "cardio") === "lifting";
+  if (!isStrength) {
+    return `
+      <div class="mini-grid">
+        <div class="field"><label>Time / score</label><input name="score" type="text" placeholder="18:42 or 7+12" /></div>
+        <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
+        <div class="field"><label>Reps done</label><input name="reps" type="text" placeholder="6,6,5,5" /></div>
+        <label class="check-field"><input name="isPr" type="checkbox" /> PR</label>
+      </div>
+    `;
+  }
+  return `
+    <div class="set-log-table">
+      <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span><span>PR</span></div>
+      ${Array.from({ length: prescribedSetCount(exercise) }, (_, index) => `
+        <div class="set-log-row">
+          <strong>${index + 1}</strong>
+          <input name="set_${index + 1}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" />
+          <input name="set_${index + 1}_weight" type="number" min="0" step="0.5" placeholder="lb" />
+          <label class="set-pr"><input name="set_${index + 1}_pr" type="checkbox" /><span>PR</span></label>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
 function initAthleteApp() {
   const date = document.getElementById("athleteWorkoutDate");
   const view = document.getElementById("athleteWorkoutView");
@@ -1517,12 +1552,7 @@ function initAthleteApp() {
                           ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
                           ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
-                        <div class="mini-grid">
-                          <div class="field"><label>Time / score</label><input name="score" type="text" placeholder="18:42 or 7+12" /></div>
-                          <div class="field"><label>Weight</label><input name="weight" type="number" min="0" step="0.5" placeholder="lb" /></div>
-                          <div class="field"><label>Reps done</label><input name="reps" type="text" placeholder="6,6,5,5" /></div>
-                          <label class="check-field"><input name="isPr" type="checkbox" /> PR</label>
-                        </div>
+                        ${renderSetLogFields(exercise)}
                         <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
                         <button type="submit" class="primary">Log result</button>
                       </form>
@@ -1548,19 +1578,46 @@ function initAthleteApp() {
           event.preventDefault();
           const data = new FormData(form);
           try {
-            await MangoFitnessStore.saveResult({
-              id: uid("result"),
-              workoutId: form.dataset.workoutId,
-              athleteId: profileSelect?.value || "",
-              exerciseId: form.dataset.exerciseId,
-              exerciseName: form.dataset.exerciseName,
-              completedOn: date.value || todayISO(),
-              score: data.get("score"),
-              weight: data.get("weight"),
-              reps: data.get("reps"),
-              notes: data.get("notes"),
-              isPr: data.get("isPr") === "on"
-            });
+            const setRows = [...form.querySelectorAll(".set-log-row")];
+            if (setRows.length) {
+              let savedAnySet = false;
+              for (const [index] of setRows.entries()) {
+                const setNumber = index + 1;
+                const reps = data.get(`set_${setNumber}_reps`);
+                const weight = data.get(`set_${setNumber}_weight`);
+                const isPr = data.get(`set_${setNumber}_pr`) === "on";
+                if (!reps && !weight && !isPr) continue;
+                savedAnySet = true;
+                await MangoFitnessStore.saveResult({
+                  id: uid("result"),
+                  workoutId: form.dataset.workoutId,
+                  athleteId: profileSelect?.value || "",
+                  exerciseId: form.dataset.exerciseId,
+                  exerciseName: form.dataset.exerciseName,
+                  completedOn: date.value || todayISO(),
+                  setNumber,
+                  weight,
+                  reps,
+                  notes: data.get("notes"),
+                  isPr
+                });
+              }
+              if (!savedAnySet) throw new Error("Enter reps or weight for at least one set.");
+            } else {
+              await MangoFitnessStore.saveResult({
+                id: uid("result"),
+                workoutId: form.dataset.workoutId,
+                athleteId: profileSelect?.value || "",
+                exerciseId: form.dataset.exerciseId,
+                exerciseName: form.dataset.exerciseName,
+                completedOn: date.value || todayISO(),
+                score: data.get("score"),
+                weight: data.get("weight"),
+                reps: data.get("reps"),
+                notes: data.get("notes"),
+                isPr: data.get("isPr") === "on"
+              });
+            }
             form.reset();
             await renderAthlete();
           } catch (error) {
