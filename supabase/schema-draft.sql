@@ -102,6 +102,14 @@ create table if not exists athlete_programs (
   unique (athlete_id, program_id)
 );
 
+create table if not exists workout_assignments (
+  id uuid primary key default gen_random_uuid(),
+  workout_id uuid not null references workouts(id) on delete cascade,
+  athlete_id uuid not null references athletes(id) on delete cascade,
+  assigned_at timestamptz not null default now(),
+  unique (workout_id, athlete_id)
+);
+
 create table if not exists athlete_workout_results (
   id uuid primary key default gen_random_uuid(),
   athlete_id uuid references athletes(id) on delete cascade,
@@ -133,6 +141,7 @@ alter table workouts add column if not exists cardio_notes text;
 alter table workouts add column if not exists workout_format text not null default 'Strength';
 alter table workouts add column if not exists rounds text;
 alter table workouts add column if not exists score_type text;
+alter table workouts add column if not exists assignment_type text not null default 'everyone';
 
 alter table warmup_templates add column if not exists template_key text unique;
 alter table warmup_templates add column if not exists is_builtin boolean not null default false;
@@ -183,6 +192,13 @@ values
   ('barbell-prep', 'Barbell Prep', 'With empty bar: 2 rounds of 5 good mornings, 5 front squats, 5 strict press, 5 RDL, 5 hang power cleans.', true)
 on conflict (template_key) do nothing;
 
+insert into athletes (name, email, notes)
+values
+  ('Alex Rivera', 'alex.demo@mangofitness.local', 'Demo athlete for individual programming'),
+  ('Jamie Chen', 'jamie.demo@mangofitness.local', 'Demo athlete for individual programming'),
+  ('Taylor Brooks', 'taylor.demo@mangofitness.local', 'Demo athlete for individual programming')
+on conflict (email) do update set name = excluded.name, notes = excluded.notes;
+
 create index if not exists workouts_workout_date_idx on workouts(workout_date);
 alter table workout_exercises add column if not exists target_weight text;
 alter table workout_exercises add column if not exists benchmark_key text;
@@ -192,6 +208,8 @@ alter table workout_exercises add column if not exists movement_name text;
 alter table workout_exercises add column if not exists section_type text not null default 'cardio';
 
 create index if not exists workout_exercises_workout_id_idx on workout_exercises(workout_id);
+create index if not exists workout_assignments_workout_id_idx on workout_assignments(workout_id);
+create index if not exists workout_assignments_athlete_id_idx on workout_assignments(athlete_id);
 alter table athlete_workout_results add column if not exists score_result text;
 
 create index if not exists athlete_workout_results_exercise_idx on athlete_workout_results(workout_exercise_id);
@@ -233,6 +251,7 @@ alter table programs enable row level security;
 alter table workouts enable row level security;
 alter table workout_exercises enable row level security;
 alter table athlete_programs enable row level security;
+alter table workout_assignments enable row level security;
 alter table athlete_workout_results enable row level security;
 alter table athlete_prs enable row level security;
 
@@ -279,6 +298,11 @@ drop policy if exists "authenticated read athlete programs" on athlete_programs;
 create policy "authenticated read athlete programs" on athlete_programs for select to authenticated using (true);
 drop policy if exists "authenticated manage athlete programs" on athlete_programs;
 create policy "authenticated manage athlete programs" on athlete_programs for all to authenticated using (true) with check (true);
+
+drop policy if exists "authenticated read workout assignments" on workout_assignments;
+create policy "authenticated read workout assignments" on workout_assignments for select to authenticated using (true);
+drop policy if exists "authenticated manage workout assignments" on workout_assignments;
+create policy "authenticated manage workout assignments" on workout_assignments for all to authenticated using (true) with check (true);
 
 drop policy if exists "authenticated read athlete results" on athlete_workout_results;
 create policy "authenticated read athlete results" on athlete_workout_results for select to authenticated using (true);

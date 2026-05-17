@@ -53,6 +53,11 @@
             <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Partner Cardio" required /></div>
           </div>
 
+          <div class="assignment-grid">
+            <div class="field"><label for="assignmentType">Assign to</label><select id="assignmentType"><option value="everyone">Everyone</option><option value="individual">Individual athlete</option></select></div>
+            <div class="field hidden" id="assignmentAthleteField"><label for="assignmentAthlete">Athlete</label><select id="assignmentAthlete"><option value="">Select athlete</option></select></div>
+          </div>
+
           <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Overall focus, pacing, scaling, or coaching notes"></textarea></div>
 
           <div class="workout-sections">

@@ -904,3 +904,18 @@ body.is-reordering .exercise-row.dragging {
     gap: 8px;
   }
 }
+
+.assignment-grid,
+.athlete-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .assignment-grid,
+  .athlete-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

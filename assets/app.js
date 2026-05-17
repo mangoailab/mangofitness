@@ -4,6 +4,7 @@ const MangoFitnessStore = (() => {
   const localWarmupTemplateKey = "mangoFitness.warmupTemplates.v1";
   const localStrengthMovementKey = "mangoFitness.strengthMovements.v1";
   const localCardioBenchmarkKey = "mangoFitness.cardioBenchmarks.v1";
+  const localAthleteKey = "mangoFitness.athletes.v1";
 
   function client() {
     return window.mangoSupabaseClient || (typeof supabaseClient !== "undefined" ? supabaseClient : null);
@@ -29,6 +30,9 @@ const MangoFitnessStore = (() => {
       format: row.workout_format || row.format || "Strength",
       rounds: row.rounds || "",
       scoreType: row.score_type || "",
+      assignmentType: row.assignment_type || row.assignmentType || "everyone",
+      assignedAthleteIds: (row.workout_assignments || row.assignedAthleteIds || []).map((assignment) => assignment.athlete_id || assignment.athleteId || assignment).filter(Boolean),
+      assignedAthleteNames: (row.workout_assignments || []).map((assignment) => assignment.athletes?.name).filter(Boolean),
       exercises: (row.workout_exercises || []).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((exercise) => ({
         id: exercise.id,
         name: exercise.exercise_name,
@@ -78,6 +82,18 @@ const MangoFitnessStore = (() => {
   }
 
   return {
+    async athletes() {
+      const sb = client();
+      if (!sb) return readLocal(localAthleteKey);
+
+      const { data, error } = await sb
+        .from("athletes")
+        .select("id, name, email")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+
     async cardioBenchmarks() {
       const sb = client();
       if (!sb) return readLocal(localCardioBenchmarkKey);
@@ -261,7 +277,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, movement_key, movement_name, section_type, notes, sort_order)")
+        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, assignment_type, workout_assignments (athlete_id, athletes (name, email)), workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, movement_key, movement_name, section_type, notes, sort_order)")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;
@@ -301,6 +317,7 @@ const MangoFitnessStore = (() => {
         workout_format: workout.format || "Strength",
         rounds: workout.rounds || null,
         score_type: workout.scoreType || null,
+        assignment_type: workout.assignmentType || "everyone",
         created_by: user?.id || null
       };
 
@@ -357,6 +374,13 @@ const MangoFitnessStore = (() => {
         const { error } = await sb.from("workout_exercises").delete().in("id", removedExerciseIds);
         if (error) throw error;
       }
+
+      const { error: assignmentDeleteError } = await sb.from("workout_assignments").delete().eq("workout_id", workoutId);
+      if (assignmentDeleteError) throw assignmentDeleteError;
+      if (workout.assignmentType === "individual" && workout.assignedAthleteId) {
+        const { error: assignmentError } = await sb.from("workout_assignments").insert({ workout_id: workoutId, athlete_id: workout.assignedAthleteId });
+        if (assignmentError) throw assignmentError;
+      }
       return workoutId;
     },
 
@@ -381,6 +405,7 @@ const MangoFitnessStore = (() => {
 
       const user = await requireUser();
       const { error } = await sb.from("athlete_workout_results").insert({
+        athlete_id: result.athleteId || null,
         auth_user_id: user?.id || null,
         workout_exercise_id: result.exerciseId,
         completed_on: result.completedOn,
@@ -433,6 +458,23 @@ const defaultWarmupTemplates = [
 ];
 
 let warmupTemplates = [...defaultWarmupTemplates];
+let athleteProfiles = [];
+
+function athleteOptions(selectedId = "") {
+  return athleteProfiles.map((athlete) => `<option value="${escapeHtml(athlete.id)}"${athlete.id === selectedId ? " selected" : ""}>${escapeHtml(athlete.name)}${athlete.email ? ` · ${escapeHtml(athlete.email)}` : ""}</option>`).join("");
+}
+
+function workoutAssignmentLabel(workout) {
+  if ((workout.assignmentType || "everyone") === "individual") {
+    return `Individual${workout.assignedAthleteNames?.length ? ` · ${workout.assignedAthleteNames.map(escapeHtml).join(", ")}` : ""}`;
+  }
+  return "Everyone";
+}
+
+function isWorkoutVisibleToAthlete(workout, athleteId = "") {
+  if ((workout.assignmentType || "everyone") === "everyone") return true;
+  return Boolean(athleteId && (workout.assignedAthleteIds || []).includes(athleteId));
+}
 
 function warmupTemplateOptions(selectedId = "") {
   return warmupTemplates.map((template) => `<option value="${escapeHtml(template.id || template.key)}"${(template.id || template.key) === selectedId ? " selected" : ""}>${escapeHtml(template.name)}</option>`).join("");
@@ -609,6 +651,9 @@ function initCoachApp() {
   const date = document.getElementById("workoutDate");
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
+  const assignmentType = document.getElementById("assignmentType");
+  const assignmentAthlete = document.getElementById("assignmentAthlete");
+  const assignmentAthleteField = document.getElementById("assignmentAthleteField");
   const warmupTemplate = document.getElementById("warmupTemplate");
   const warmupTemplateName = document.getElementById("warmupTemplateName");
   const saveWarmupTemplateBtn = document.getElementById("saveWarmupTemplateBtn");
@@ -646,6 +691,27 @@ function initCoachApp() {
     message.textContent = text || "";
     message.classList.toggle("hidden", !text);
     message.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function renderAthleteOptions(selectedId = "") {
+    if (!assignmentAthlete) return;
+    assignmentAthlete.innerHTML = `<option value="">Select athlete</option>${athleteOptions(selectedId)}`;
+  }
+
+  function updateAssignmentVisibility() {
+    const isIndividual = assignmentType?.value === "individual";
+    assignmentAthleteField?.classList.toggle("hidden", !isIndividual);
+  }
+
+  async function loadAthletes() {
+    try {
+      athleteProfiles = await MangoFitnessStore.athletes();
+      renderAthleteOptions();
+    } catch (error) {
+      athleteProfiles = [];
+      renderAthleteOptions();
+      setAppMessage(friendlyError(error), true);
+    }
   }
 
   function renderWarmupTemplateOptions(selectedId = "") {
@@ -930,6 +996,9 @@ function initCoachApp() {
     date.value = todayISO();
     title.value = "";
     notes.value = "";
+    if (assignmentType) assignmentType.value = "everyone";
+    if (assignmentAthlete) assignmentAthlete.value = "";
+    updateAssignmentVisibility();
     if (warmupTemplate) warmupTemplate.value = "";
     if (warmupTemplateName) warmupTemplateName.value = "";
     warmupNotes.value = "";
@@ -964,6 +1033,9 @@ function initCoachApp() {
     date.value = workout.date;
     title.value = workout.title;
     notes.value = workout.notes || "";
+    if (assignmentType) assignmentType.value = workout.assignmentType || "everyone";
+    if (assignmentAthlete) assignmentAthlete.value = workout.assignedAthleteIds?.[0] || "";
+    updateAssignmentVisibility();
     warmupNotes.value = workout.warmupNotes || "";
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
@@ -978,6 +1050,9 @@ function initCoachApp() {
     date.value = todayISO();
     title.value = `${workout.title} copy`;
     notes.value = workout.notes || "";
+    if (assignmentType) assignmentType.value = workout.assignmentType || "everyone";
+    if (assignmentAthlete) assignmentAthlete.value = workout.assignedAthleteIds?.[0] || "";
+    updateAssignmentVisibility();
     warmupNotes.value = workout.warmupNotes || "";
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
@@ -1013,7 +1088,7 @@ function initCoachApp() {
         list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => `
           <article class="item-card">
             <div class="item-head">
-              <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items</p></div>
+              <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}</p></div>
               <div class="actions item-actions">
                 <button type="button" data-edit="${workout.id}">Edit</button>
                 <button type="button" data-copy="${workout.id}">Copy</button>
@@ -1047,7 +1122,7 @@ function initCoachApp() {
                 ${dayWorkouts.length ? dayWorkouts.map((workout) => `
                   <article class="calendar-workout-card">
                     <strong>${escapeHtml(workout.title)}</strong>
-                    <p class="muted">${workout.exercises.length} items${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>
+                    <p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>
                     <div class="actions calendar-card-actions">
                       <button type="button" data-edit="${workout.id}">Edit</button>
                       <button type="button" data-copy="${workout.id}">Copy</button>
@@ -1087,6 +1162,8 @@ function initCoachApp() {
       resultsList.innerHTML = `<p class="muted empty-state">Results unavailable until Supabase is ready.</p>`;
     }
   }
+
+  assignmentType?.addEventListener("change", updateAssignmentVisibility);
 
   prevWeekBtn?.addEventListener("click", () => {
     selectedWeekStart = addDays(selectedWeekStart, -7);
@@ -1272,6 +1349,7 @@ function initCoachApp() {
     event.preventDefault();
     const exercises = collectExercises();
     if (!date.value || !title.value.trim()) return setAppMessage("Add a workout date and title.");
+    if (assignmentType?.value === "individual" && !assignmentAthlete?.value) return setAppMessage("Choose an athlete for this individual workout.", true);
     if (!exercises.length) return setAppMessage("Add at least one exercise.");
 
     try {
@@ -1282,7 +1360,9 @@ function initCoachApp() {
         notes: notes.value.trim(),
         warmupNotes: warmupNotes.value.trim(),
         cardioNotes: cardioNotes.value.trim(),
-        format: "Class workout",
+        assignmentType: assignmentType?.value || "everyone",
+        assignedAthleteId: assignmentType?.value === "individual" ? assignmentAthlete?.value || "" : "",
+        format: assignmentType?.value === "individual" ? "Individual workout" : "Class workout",
         rounds: "",
         scoreType: "",
         exercises
@@ -1295,6 +1375,7 @@ function initCoachApp() {
     }
   });
 
+  loadAthletes();
   loadWarmupTemplates();
   loadStrengthMovements();
   loadCardioBenchmarks();
@@ -1314,24 +1395,37 @@ function workoutSectionGroups(exercises) {
 function initAthleteApp() {
   const date = document.getElementById("athleteWorkoutDate");
   const view = document.getElementById("athleteWorkoutView");
+  const profileSelect = document.getElementById("athleteProfileSelect");
   const history = document.getElementById("athleteHistoryList");
   if (!date || !view || !history) return;
 
   date.value = todayISO();
 
+  async function loadAthleteProfiles() {
+    try {
+      athleteProfiles = await MangoFitnessStore.athletes();
+      if (profileSelect) profileSelect.innerHTML = `<option value="">Everyone / class workouts</option>${athleteOptions(profileSelect.value)}`;
+    } catch {
+      athleteProfiles = [];
+      if (profileSelect) profileSelect.innerHTML = `<option value="">Everyone / class workouts</option>`;
+    }
+  }
+
   async function renderAthlete() {
     try {
       const workouts = await MangoFitnessStore.workouts();
-      const workout = workouts.find((item) => item.date === date.value) || workouts[workouts.length - 1];
+      const selectedAthleteId = profileSelect?.value || "";
+      const visibleWorkouts = workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
+      const workout = visibleWorkouts.find((item) => item.date === date.value) || visibleWorkouts[visibleWorkouts.length - 1];
       const results = await MangoFitnessStore.results();
 
       if (!workout) {
-        view.innerHTML = `<p class="muted empty-state">No workout has been assigned yet.</p>`;
+        view.innerHTML = `<p class="muted empty-state">No workout has been assigned for this view yet.</p>`;
       } else {
         view.innerHTML = `
           <article class="item-card workout-detail">
             <h3>${escapeHtml(workout.title)}</h3>
-            <p class="muted">${escapeHtml(workout.date)}</p>
+            <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}</p>
             ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
             ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
             ${workout.cardioNotes ? `<section class="athlete-workout-section"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></section>` : ""}
@@ -1381,6 +1475,7 @@ function initAthleteApp() {
             await MangoFitnessStore.saveResult({
               id: uid("result"),
               workoutId: form.dataset.workoutId,
+              athleteId: profileSelect?.value || "",
               exerciseId: form.dataset.exerciseId,
               exerciseName: form.dataset.exerciseName,
               completedOn: date.value || todayISO(),
@@ -1404,5 +1499,7 @@ function initAthleteApp() {
   }
 
   date.addEventListener("change", renderAthlete);
-  renderAthlete();
+  profileSelect?.addEventListener("change", renderAthlete);
+  loadAthleteProfiles().then(renderAthlete);
+
 }
