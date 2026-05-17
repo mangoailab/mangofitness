@@ -1232,3 +1232,10 @@ body.is-reordering .exercise-row.dragging {
     gap: 6px;
   }
 }
+
+.partner-instruction-card {
+  background: white;
+}
+.partner-instruction-card strong {
+  display: block;
+}

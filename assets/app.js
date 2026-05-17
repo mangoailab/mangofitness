@@ -1544,7 +1544,15 @@ function initAthleteApp() {
                 <section class="athlete-workout-section">
                   <h4>${escapeHtml(group.label)}</h4>
                   <div class="list-stack">
-                    ${group.exercises.map((exercise) => `
+                    ${group.exercises.map((exercise) => (exercise.section || "cardio") === "partner" ? `
+                      <div class="result-form partner-instruction-card">
+                        <div>
+                          <strong>${escapeHtml(exercise.name)}</strong>
+                          ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
+                          ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
+                        </div>
+                      </div>
+                    ` : `
                       <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}">
                         <div>
                           <strong>${escapeHtml(exercise.name)}</strong>
