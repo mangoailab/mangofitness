@@ -2116,20 +2116,24 @@ function renderBodyScanChart(scans, selectedMetricKey = "bodyWeight") {
   const latest = points[points.length - 1].value;
   const delta = latest - first;
   const deltaText = `${delta >= 0 ? "+" : ""}${Number(delta.toFixed(1))}${metric.suffix}`;
+  const highLabel = `${Number(chartMax.toFixed(1))}${metric.suffix}`;
+  const lowLabel = `${Number(chartMin.toFixed(1))}${metric.suffix}`;
   return `
     <article class="item-card body-chart-card single-metric-chart">
       <div class="item-head">
         <div><strong>${escapeHtml(metric.label)} trend</strong><p class="muted">${escapeHtml(points[0].scan.scannedOn)} to ${escapeHtml(points[points.length - 1].scan.scannedOn)} · Change: ${escapeHtml(deltaText)}</p></div>
         <span class="pill">${scanMetric(latest, metric.suffix)}</span>
       </div>
+      <div class="chart-unit-row"><span>${escapeHtml(highLabel)}</span><span>${escapeHtml(metric.suffix.trim() || "units")}</span></div>
       <div class="scan-chart-wrap">
-        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(metric.label)} trend chart">
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(metric.label)} trend chart in ${escapeHtml(metric.suffix.trim() || "units")}">
           <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
           <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
           <polyline points="${polyPoints.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
           ${points.map((point) => `<circle cx="${x(point.index)}" cy="${y(point.value)}" r="5" fill="${metric.color}" />`).join("")}
         </svg>
       </div>
+      <div class="chart-unit-row chart-unit-low"><span>${escapeHtml(lowLabel)}</span></div>
       <div class="metric-mini-foot chart-date-row"><span>${escapeHtml(points[0].scan.scannedOn)}</span><span>${escapeHtml(points[points.length - 1].scan.scannedOn)}</span></div>
     </article>
   `;
