@@ -71,6 +71,26 @@ const MangoFitnessStore = (() => {
     };
   }
 
+  function normalizeBodyScan(row) {
+    return {
+      id: row.id,
+      athleteId: row.athlete_id || "",
+      source: row.scan_source || "",
+      scannedOn: row.scanned_on,
+      bodyWeight: row.body_weight ?? "",
+      bodyFatPercent: row.body_fat_percent ?? "",
+      fatMass: row.fat_mass ?? "",
+      leanMass: row.lean_mass ?? "",
+      boneMineralContent: row.bone_mineral_content ?? "",
+      rmr: row.resting_metabolic_rate ?? "",
+      vat: row.visceral_adipose_tissue ?? "",
+      androidFatPercent: row.android_fat_percent ?? "",
+      gynoidFatPercent: row.gynoid_fat_percent ?? "",
+      agRatio: row.ag_ratio ?? "",
+      notes: row.notes || ""
+    };
+  }
+
   function isUuid(value) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value || "");
   }
@@ -392,6 +412,44 @@ const MangoFitnessStore = (() => {
         return;
       }
       const { error } = await sb.from("workouts").delete().eq("id", id);
+      if (error) throw error;
+    },
+
+    async bodyScans(athleteId = "") {
+      const sb = client();
+      if (!sb) return [];
+      let query = sb
+        .from("athlete_body_scans")
+        .select("id, athlete_id, scan_source, scanned_on, body_weight, body_fat_percent, fat_mass, lean_mass, bone_mineral_content, resting_metabolic_rate, visceral_adipose_tissue, android_fat_percent, gynoid_fat_percent, ag_ratio, notes")
+        .order("scanned_on", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (athleteId) query = query.eq("athlete_id", athleteId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []).map(normalizeBodyScan);
+    },
+
+    async saveBodyScan(scan) {
+      const sb = client();
+      if (!sb) return;
+      const user = await requireUser();
+      const { error } = await sb.from("athlete_body_scans").insert({
+        athlete_id: scan.athleteId || null,
+        auth_user_id: user?.id || null,
+        scan_source: scan.source || "PDF upload",
+        scanned_on: scan.scannedOn,
+        body_weight: scan.bodyWeight || null,
+        body_fat_percent: scan.bodyFatPercent || null,
+        fat_mass: scan.fatMass || null,
+        lean_mass: scan.leanMass || null,
+        bone_mineral_content: scan.boneMineralContent || null,
+        resting_metabolic_rate: scan.rmr || null,
+        visceral_adipose_tissue: scan.vat || null,
+        android_fat_percent: scan.androidFatPercent || null,
+        gynoid_fat_percent: scan.gynoidFatPercent || null,
+        ag_ratio: scan.agRatio || null,
+        notes: scan.notes || null
+      });
       if (error) throw error;
     },
 
@@ -1068,6 +1126,7 @@ function initCoachApp() {
     try {
       const workouts = await MangoFitnessStore.workouts();
       const results = await MangoFitnessStore.results();
+      const scans = await MangoFitnessStore.bodyScans(selectedAthleteId);
       const searchQuery = workoutSearch?.value.trim().toLowerCase() || "";
       const selectedScheduleAthleteId = savedWorkoutAthleteFilter?.value || "";
       const selectedScheduleAthlete = athleteProfiles.find((athlete) => athlete.id === selectedScheduleAthleteId);
@@ -1426,6 +1485,76 @@ function prescribedSetCount(exercise) {
   return Math.max(1, Math.min(count || 1, 12));
 }
 
+function numberFromMatch(text, regex) {
+  const match = String(text || "").match(regex);
+  if (!match) return "";
+  return Number(String(match[1]).replace(/,/g, ""));
+}
+
+function scanDateFromText(text) {
+  const match = String(text || "").match(/Measured Date\s+.*?(\d{1,2}\/\d{1,2}\/\d{4})/i) || String(text || "").match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (!match) return todayISO();
+  const [month, day, year] = match[1].split("/").map(Number);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function parseBodyScanText(text) {
+  const compact = String(text || "").replace(/\s+/g, " ");
+  const summary = compact.match(/SUMMARY RESULTS.*?(\d{1,2}\/\d{1,2}\/\d{4})\s+([0-9.]+)%\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/i);
+  const regionalTotal = compact.match(/Total\s+([0-9.]+)%\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)/i);
+  return {
+    source: /bodyspec/i.test(compact) ? "BodySpec DEXA PDF" : "PDF upload",
+    scannedOn: summary ? scanDateFromText(summary[1]) : scanDateFromText(compact),
+    bodyFatPercent: summary ? Number(summary[2]) : regionalTotal ? Number(regionalTotal[1]) : numberFromMatch(compact, /Total Body Fat %[^0-9]*([0-9.]+)/i),
+    bodyWeight: summary ? Number(summary[3]) : regionalTotal ? Number(regionalTotal[2]) : "",
+    fatMass: summary ? Number(summary[4]) : regionalTotal ? Number(regionalTotal[3]) : "",
+    leanMass: summary ? Number(summary[5]) : regionalTotal ? Number(regionalTotal[4]) : "",
+    boneMineralContent: summary ? Number(summary[6]) : regionalTotal ? Number(regionalTotal[5]) : "",
+    rmr: numberFromMatch(compact, /([0-9,]+)\s*cal\/day/i),
+    vat: numberFromMatch(compact, /Mass \(lbs\)\s+([0-9.]+)/i),
+    androidFatPercent: numberFromMatch(compact, /Android \(A\).*?([0-9.]+)%/i) || numberFromMatch(compact, /Android\s+([0-9.]+)%/i),
+    gynoidFatPercent: numberFromMatch(compact, /Gynoid \(G\).*?([0-9.]+)%/i) || numberFromMatch(compact, /Gynoid\s+([0-9.]+)%/i),
+    agRatio: numberFromMatch(compact, /A\/G Ratio[^0-9]*([0-9.]+)/i),
+    notes: "Imported from uploaded PDF."
+  };
+}
+
+function scanMetric(value, suffix = "") {
+  return value === "" || value == null ? "-" : `${escapeHtml(value)}${suffix}`;
+}
+
+function renderBodyScanPreview(scan) {
+  return `
+    <article class="item-card body-scan-preview-card">
+      <div class="item-head">
+        <div><strong>${escapeHtml(scan.source || "PDF upload")}</strong><p class="muted">${escapeHtml(scan.scannedOn || "Unknown date")}</p></div>
+      </div>
+      <div class="scan-metric-grid">
+        <div><span>Weight</span><strong>${scanMetric(scan.bodyWeight, " lb")}</strong></div>
+        <div><span>Body fat</span><strong>${scanMetric(scan.bodyFatPercent, "%")}</strong></div>
+        <div><span>Fat mass</span><strong>${scanMetric(scan.fatMass, " lb")}</strong></div>
+        <div><span>Lean mass</span><strong>${scanMetric(scan.leanMass, " lb")}</strong></div>
+        <div><span>RMR</span><strong>${scanMetric(scan.rmr, " cal")}</strong></div>
+        <div><span>VAT</span><strong>${scanMetric(scan.vat, " lb")}</strong></div>
+      </div>
+    </article>
+  `;
+}
+
+async function pdfTextFromFile(file) {
+  const pdfjs = window.pdfjsLib || await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs");
+  if (pdfjs.GlobalWorkerOptions) pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+  const pages = [];
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    pages.push(content.items.map((item) => item.str || "").join(" "));
+  }
+  return pages.join("\n");
+}
+
 function renderSetLogFields(exercise) {
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
@@ -1463,6 +1592,11 @@ function initAthleteApp() {
   const thisWeekBtn = document.getElementById("athleteThisWeekBtn");
   const nextWeekBtn = document.getElementById("athleteNextWeekBtn");
   const history = document.getElementById("athleteHistoryList");
+  const bodyScanPdf = document.getElementById("bodyScanPdf");
+  const parseBodyScanBtn = document.getElementById("parseBodyScanBtn");
+  const bodyScanPreview = document.getElementById("bodyScanPreview");
+  const bodyScanList = document.getElementById("bodyScanList");
+  let parsedBodyScan = null;
   if (!date || !view || !history) return;
 
   date.value = todayISO();
@@ -1491,6 +1625,7 @@ function initAthleteApp() {
       });
       const workout = visibleWorkouts.find((item) => item.date === date.value) || weekWorkouts[0] || visibleWorkouts[visibleWorkouts.length - 1];
       const results = await MangoFitnessStore.results();
+      const scans = await MangoFitnessStore.bodyScans(selectedAthleteId);
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       if (workoutCount) workoutCount.textContent = `${weekWorkouts.length} workout${weekWorkouts.length === 1 ? "" : "s"}`;
@@ -1591,6 +1726,10 @@ function initAthleteApp() {
         </article>
       `).join("") : `<p class="muted empty-state">No results logged yet.</p>`;
 
+      if (bodyScanList) {
+        bodyScanList.innerHTML = scans.length ? scans.slice(0, 5).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
+      }
+
       view.querySelectorAll(".result-form").forEach((form) => {
         form.addEventListener("submit", async (event) => {
           event.preventDefault();
@@ -1647,6 +1786,42 @@ function initAthleteApp() {
       history.innerHTML = `<p class="muted empty-state">Progress history unavailable until Supabase is ready.</p>`;
     }
   }
+
+  parseBodyScanBtn?.addEventListener("click", async () => {
+    if (!bodyScanPdf?.files?.[0]) {
+      if (bodyScanPreview) bodyScanPreview.innerHTML = `<p class="error-text">Choose a PDF first.</p>`;
+      bodyScanPreview?.classList.remove("hidden");
+      return;
+    }
+    if (!profileSelect?.value) {
+      if (bodyScanPreview) bodyScanPreview.innerHTML = `<p class="error-text">Choose an athlete before saving a scan.</p>`;
+      bodyScanPreview?.classList.remove("hidden");
+      return;
+    }
+    try {
+      parseBodyScanBtn.disabled = true;
+      parseBodyScanBtn.textContent = "Parsing...";
+      const text = await pdfTextFromFile(bodyScanPdf.files[0]);
+      parsedBodyScan = { ...parseBodyScanText(text), athleteId: profileSelect.value };
+      if (bodyScanPreview) {
+        bodyScanPreview.innerHTML = `${renderBodyScanPreview(parsedBodyScan)}<div class="actions scan-preview-actions"><button type="button" class="primary" id="saveBodyScanBtn">Save scan</button></div>`;
+        bodyScanPreview.classList.remove("hidden");
+        document.getElementById("saveBodyScanBtn")?.addEventListener("click", async () => {
+          await MangoFitnessStore.saveBodyScan(parsedBodyScan);
+          parsedBodyScan = null;
+          bodyScanPdf.value = "";
+          bodyScanPreview.classList.add("hidden");
+          await renderAthlete();
+        });
+      }
+    } catch (error) {
+      if (bodyScanPreview) bodyScanPreview.innerHTML = `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`;
+      bodyScanPreview?.classList.remove("hidden");
+    } finally {
+      parseBodyScanBtn.disabled = false;
+      parseBodyScanBtn.textContent = "Parse PDF";
+    }
+  });
 
   date.addEventListener("change", () => {
     selectedWeekStart = startOfWeek(parseLocalDate(date.value));

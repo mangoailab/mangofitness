@@ -64,6 +64,21 @@
       </div>
 
       <div class="card dashboard-card">
+        <div class="section-head compact">
+          <div>
+            <h2>Body Metrics</h2>
+            <p class="muted">Upload a BodySpec or InBody PDF scan.</p>
+          </div>
+        </div>
+        <div class="scan-upload-grid">
+          <div class="field"><label for="bodyScanPdf">Scan PDF</label><input id="bodyScanPdf" type="file" accept="application/pdf" /></div>
+          <button type="button" id="parseBodyScanBtn">Parse PDF</button>
+        </div>
+        <div id="bodyScanPreview" class="hidden"></div>
+        <div id="bodyScanList" class="list-stack"></div>
+      </div>
+
+      <div class="card dashboard-card">
         <h2>Progress History</h2>
         <div id="athleteHistoryList" class="list-stack"></div>
       </div>

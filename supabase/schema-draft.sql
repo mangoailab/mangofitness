@@ -137,6 +137,26 @@ create table if not exists athlete_prs (
   created_at timestamptz not null default now()
 );
 
+create table if not exists athlete_body_scans (
+  id uuid primary key default gen_random_uuid(),
+  athlete_id uuid references athletes(id) on delete cascade,
+  auth_user_id uuid references auth.users(id) on delete set null,
+  scan_source text,
+  scanned_on date not null,
+  body_weight numeric,
+  body_fat_percent numeric,
+  fat_mass numeric,
+  lean_mass numeric,
+  bone_mineral_content numeric,
+  resting_metabolic_rate numeric,
+  visceral_adipose_tissue numeric,
+  android_fat_percent numeric,
+  gynoid_fat_percent numeric,
+  ag_ratio numeric,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 alter table workouts add column if not exists warmup_notes text;
 alter table workouts add column if not exists cardio_notes text;
 alter table workouts add column if not exists workout_format text not null default 'Strength';
@@ -217,6 +237,8 @@ alter table athlete_workout_results add column if not exists set_number integer;
 create index if not exists athlete_workout_results_exercise_idx on athlete_workout_results(workout_exercise_id);
 create index if not exists athlete_workout_results_auth_user_idx on athlete_workout_results(auth_user_id);
 create index if not exists athlete_workout_results_set_idx on athlete_workout_results(workout_exercise_id, auth_user_id, athlete_id, completed_on, set_number);
+create index if not exists athlete_body_scans_athlete_idx on athlete_body_scans(athlete_id, scanned_on desc);
+create index if not exists athlete_body_scans_auth_user_idx on athlete_body_scans(auth_user_id, scanned_on desc);
 
 create or replace function set_updated_at()
 returns trigger as $$
@@ -257,6 +279,7 @@ alter table athlete_programs enable row level security;
 alter table workout_assignments enable row level security;
 alter table athlete_workout_results enable row level security;
 alter table athlete_prs enable row level security;
+alter table athlete_body_scans enable row level security;
 
 -- MVP policies: simple signed-in access while the app is still being built.
 drop policy if exists "authenticated read athletes" on athletes;
@@ -316,3 +339,9 @@ drop policy if exists "authenticated read athlete prs" on athlete_prs;
 create policy "authenticated read athlete prs" on athlete_prs for select to authenticated using (true);
 drop policy if exists "authenticated manage athlete prs" on athlete_prs;
 create policy "authenticated manage athlete prs" on athlete_prs for all to authenticated using (true) with check (true);
+
+
+drop policy if exists "authenticated read body scans" on athlete_body_scans;
+create policy "authenticated read body scans" on athlete_body_scans for select to authenticated using (true);
+drop policy if exists "authenticated manage body scans" on athlete_body_scans;
+create policy "authenticated manage body scans" on athlete_body_scans for all to authenticated using (true) with check (true);
