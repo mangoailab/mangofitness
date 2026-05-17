@@ -422,12 +422,13 @@ const MangoFitnessStore = (() => {
     async bodyScans(athleteId = "") {
       const sb = client();
       if (!sb) return [];
+      const user = await requireUser();
       let query = sb
         .from("athlete_body_scans")
         .select("id, athlete_id, scan_source, scanned_on, body_weight, body_fat_percent, fat_mass, lean_mass, skeletal_muscle_mass, bmi, bone_mineral_content, resting_metabolic_rate, visceral_adipose_tissue, visceral_fat_level, android_fat_percent, gynoid_fat_percent, ag_ratio, notes")
         .order("scanned_on", { ascending: false })
         .order("created_at", { ascending: false });
-      if (athleteId) query = query.eq("athlete_id", athleteId);
+      query = athleteId ? query.eq("athlete_id", athleteId) : query.eq("auth_user_id", user?.id || "");
       const { data, error } = await query;
       if (error) throw error;
       return (data || []).map(normalizeBodyScan);
@@ -1923,7 +1924,6 @@ function renderBodyScanChart(scans) {
 }
 
 function initBodyMetricsApp() {
-  const profileSelect = document.getElementById("metricsProfileSelect");
   const bodyScanPdf = document.getElementById("bodyScanPdf");
   const parseBodyScanBtn = document.getElementById("parseBodyScanBtn");
   const bodyScanPreview = document.getElementById("bodyScanPreview");
@@ -1934,7 +1934,7 @@ function initBodyMetricsApp() {
 
   async function renderScans() {
     try {
-      const scans = await MangoFitnessStore.bodyScans(profileSelect?.value || "");
+      const scans = await MangoFitnessStore.bodyScans();
       if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans);
       bodyScanList.innerHTML = scans.length ? scans.slice(0, 10).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
     } catch (error) {
@@ -1952,7 +1952,7 @@ function initBodyMetricsApp() {
       parseBodyScanBtn.disabled = true;
       parseBodyScanBtn.textContent = "Parsing...";
       const text = await pdfTextFromFile(bodyScanPdf.files[0]);
-      parsedBodyScan = { ...parseBodyScanText(text), athleteId: profileSelect?.value || "" };
+      parsedBodyScan = { ...parseBodyScanText(text), athleteId: "" };
       if (bodyScanPreview) {
         bodyScanPreview.innerHTML = `${renderBodyScanPreview(parsedBodyScan)}<div class="actions scan-preview-actions"><button type="button" class="primary" id="saveBodyScanBtn">Save scan</button></div>`;
         bodyScanPreview.classList.remove("hidden");
@@ -1973,6 +1973,5 @@ function initBodyMetricsApp() {
     }
   });
 
-  profileSelect?.addEventListener("change", renderScans);
-  loadAthleteOptionsForSelect(profileSelect, "My account").then(renderScans);
+  renderScans();
 }
