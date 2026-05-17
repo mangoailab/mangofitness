@@ -979,3 +979,17 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
+
+/* Portrait: keep compact selector/date bubbles instead of stretching them. */
+@media (max-width: 760px) {
+  #workoutDate,
+  #assignmentType {
+    width: min(220px, 100%);
+    max-width: 220px;
+  }
+  #workoutTitle,
+  #assignmentAthlete {
+    width: 100%;
+    max-width: none;
+  }
+}
