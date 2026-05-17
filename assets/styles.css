@@ -1106,3 +1106,24 @@ body.is-reordering .exercise-row.dragging {
     appearance: none;
   }
 }
+
+/* Phone landscape: place signed-in status in the top-right of the header. */
+@media (max-width: 900px) and (orientation: landscape) {
+  .card.hero {
+    position: relative;
+  }
+  .header-auth {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: auto;
+    max-width: 45%;
+    justify-content: flex-end;
+    margin-top: 0;
+    text-align: right;
+  }
+  .header-auth p {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+}
