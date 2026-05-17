@@ -31,8 +31,26 @@ async function initLoginPage(options) {
   const headerAuth = dashboardMessage?.closest(".header-auth") || signOut?.closest(".header-auth");
   const authCard = document.getElementById(options.authCardId);
   const dashboard = document.getElementById(options.dashboardId);
+  const loadingCard = document.createElement("section");
+  loadingCard.className = "card auth-card auth-loading-card";
+  loadingCard.innerHTML = `<p class="muted">Checking sign in...</p>`;
+  authCard?.insertAdjacentElement("beforebegin", loadingCard);
+
+  function showLoading() {
+    loadingCard.classList.remove("hidden");
+    if (authCard) authCard.classList.add("hidden");
+    if (dashboard) dashboard.classList.add("hidden");
+    if (headerAuth) headerAuth.classList.add("hidden");
+    if (signOut) signOut.classList.add("hidden");
+    if (signOutSeparator) signOutSeparator.classList.add("hidden");
+  }
+
+  function hideLoading() {
+    loadingCard.classList.add("hidden");
+  }
 
   function showSignedIn(userEmail) {
+    hideLoading();
     if (authCard) authCard.classList.add("hidden");
     if (dashboard) dashboard.classList.remove("hidden");
     if (headerAuth) headerAuth.classList.remove("hidden");
@@ -42,6 +60,7 @@ async function initLoginPage(options) {
   }
 
   function showSignedOut() {
+    hideLoading();
     if (authCard) authCard.classList.remove("hidden");
     if (dashboard) dashboard.classList.add("hidden");
     if (headerAuth) headerAuth.classList.add("hidden");
@@ -49,6 +68,7 @@ async function initLoginPage(options) {
     if (signOutSeparator) signOutSeparator.classList.add("hidden");
   }
 
+  showLoading();
   const { data: sessionData } = await supabaseClient.auth.getSession();
   if (sessionData.session?.user) showSignedIn(sessionData.session.user.email);
   else showSignedOut();
