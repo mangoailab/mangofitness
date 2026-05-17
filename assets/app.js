@@ -696,7 +696,7 @@ function initCoachApp() {
 
   function renderAthleteOptions(selectedId = "") {
     if (assignmentAthlete) assignmentAthlete.innerHTML = `<option value="">Select athlete</option>${athleteOptions(selectedId)}`;
-    if (savedWorkoutAthleteFilter) savedWorkoutAthleteFilter.innerHTML = `<option value="">Everyone / class view</option>${athleteOptions(savedWorkoutAthleteFilter.value || selectedId)}`;
+    if (savedWorkoutAthleteFilter) savedWorkoutAthleteFilter.innerHTML = `<option value="">Everyone / class workouts</option>${athleteOptions(savedWorkoutAthleteFilter.value || selectedId)}`;
   }
 
   function updateAssignmentVisibility() {
@@ -1072,7 +1072,9 @@ function initCoachApp() {
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
       const visibleWorkouts = workouts.filter((workout) => {
-        const matchesAthlete = isWorkoutVisibleToAthlete(workout, selectedScheduleAthleteId);
+        const matchesAthlete = selectedScheduleAthleteId
+          ? (workout.assignmentType || "everyone") === "individual" && (workout.assignedAthleteIds || []).includes(selectedScheduleAthleteId)
+          : (workout.assignmentType || "everyone") === "everyone";
         const matchesSearch = !searchQuery || workoutSearchText(workout).includes(searchQuery);
         if (!matchesAthlete || !matchesSearch) return false;
         if (searchQuery) return true;
