@@ -1537,6 +1537,39 @@ function scanMetric(value, suffix = "") {
   return value === "" || value == null ? "-" : `${escapeHtml(value)}${suffix}`;
 }
 
+function scanInputValue(value) {
+  return value === "" || value == null ? "" : escapeHtml(value);
+}
+
+function renderBodyScanEditForm(scan) {
+  return `
+    <article class="item-card body-scan-preview-card">
+      <div class="item-head">
+        <div><strong>Review scan before saving</strong><p class="muted">OCR can miss InBody fields. Correct anything that looks wrong, then save.</p></div>
+        <button type="button" class="primary" id="saveBodyScanBtn">Save scan</button>
+      </div>
+      <div class="scan-edit-grid">
+        <div class="field"><label for="scanScannedOn">Scan date</label><input id="scanScannedOn" data-scan-field="scannedOn" type="date" value="${scanInputValue(scan.scannedOn)}" /></div>
+        <div class="field"><label for="scanBodyWeight">Weight lb</label><input id="scanBodyWeight" data-scan-field="bodyWeight" type="number" step="0.1" value="${scanInputValue(scan.bodyWeight)}" /></div>
+        <div class="field"><label for="scanBodyFatPercent">Body fat %</label><input id="scanBodyFatPercent" data-scan-field="bodyFatPercent" type="number" step="0.1" value="${scanInputValue(scan.bodyFatPercent)}" /></div>
+        <div class="field"><label for="scanFatMass">Fat mass lb</label><input id="scanFatMass" data-scan-field="fatMass" type="number" step="0.1" value="${scanInputValue(scan.fatMass)}" /></div>
+        <div class="field"><label for="scanSkeletalMuscleMass">Skeletal muscle lb</label><input id="scanSkeletalMuscleMass" data-scan-field="skeletalMuscleMass" type="number" step="0.1" value="${scanInputValue(scan.skeletalMuscleMass)}" /></div>
+        <div class="field"><label for="scanBmi">BMI</label><input id="scanBmi" data-scan-field="bmi" type="number" step="0.1" value="${scanInputValue(scan.bmi)}" /></div>
+        <div class="field"><label for="scanRmr">BMR / RMR</label><input id="scanRmr" data-scan-field="rmr" type="number" step="1" value="${scanInputValue(scan.rmr)}" /></div>
+        <div class="field"><label for="scanVisceralFatLevel">Visceral fat level</label><input id="scanVisceralFatLevel" data-scan-field="visceralFatLevel" type="number" step="0.1" value="${scanInputValue(scan.visceralFatLevel)}" /></div>
+      </div>
+    </article>
+  `;
+}
+
+function applyScanEdits(scan, container) {
+  const edited = { ...scan };
+  container?.querySelectorAll("[data-scan-field]").forEach((input) => {
+    edited[input.dataset.scanField] = input.value;
+  });
+  return edited;
+}
+
 function renderBodyScanPreview(scan) {
   return `
     <article class="item-card body-scan-preview-card">
@@ -1954,10 +1987,12 @@ function initBodyMetricsApp() {
       const text = await pdfTextFromFile(bodyScanPdf.files[0]);
       parsedBodyScan = { ...parseBodyScanText(text), athleteId: "" };
       if (bodyScanPreview) {
-        bodyScanPreview.innerHTML = `${renderBodyScanPreview(parsedBodyScan)}<div class="actions scan-preview-actions"><button type="button" class="primary" id="saveBodyScanBtn">Save scan</button></div>`;
+        bodyScanPreview.innerHTML = renderBodyScanEditForm(parsedBodyScan);
         bodyScanPreview.classList.remove("hidden");
         document.getElementById("saveBodyScanBtn")?.addEventListener("click", async () => {
-          await MangoFitnessStore.saveBodyScan(parsedBodyScan);
+          const scanToSave = applyScanEdits(parsedBodyScan, bodyScanPreview);
+          if (!scanToSave.scannedOn) throw new Error("Add a scan date before saving.");
+          await MangoFitnessStore.saveBodyScan(scanToSave);
           parsedBodyScan = null;
           bodyScanPdf.value = "";
           bodyScanPreview.classList.add("hidden");

@@ -1368,3 +1368,25 @@ body.is-reordering .exercise-row.dragging {
   border-radius: 999px;
   display: inline-block;
 }
+
+.scan-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.scan-edit-grid .field {
+  margin-bottom: 0;
+}
+.body-scan-preview-card .item-head {
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .scan-edit-grid {
+    grid-template-columns: 1fr;
+  }
+  .body-scan-preview-card .item-head {
+    display: grid;
+  }
+}
