@@ -1732,3 +1732,46 @@ body.is-reordering .exercise-row.dragging {
     max-width: none;
   }
 }
+
+/* Separate body scan trend scales so weight/SMM/PBF do not distort each other. */
+.metric-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.metric-mini-chart {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--soft);
+  padding: 12px;
+}
+.metric-mini-head,
+.metric-mini-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.metric-mini-head span {
+  font-weight: 900;
+  color: var(--green-dark);
+}
+.metric-mini-chart svg {
+  width: 100%;
+  display: block;
+  margin: 8px 0;
+}
+.metric-mini-foot,
+.metric-delta {
+  font-size: 12px;
+}
+.metric-delta {
+  margin: 6px 0 0;
+  font-weight: 800;
+}
+@media (max-width: 760px) {
+  .metric-chart-grid {
+    grid-template-columns: 1fr;
+  }
+}

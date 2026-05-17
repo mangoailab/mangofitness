@@ -2089,47 +2089,59 @@ function renderBodyScanChart(scans) {
   }
   const metrics = [
     { key: "bodyWeight", label: "Weight", color: "#0f7a3b", suffix: " lb" },
-    { key: "bodyFatPercent", label: "Body fat", color: "#fb7185", suffix: "%" },
-    { key: "skeletalMuscleMass", label: "Skeletal muscle", color: "#ffb703", suffix: " lb" }
+    { key: "skeletalMuscleMass", label: "SMM", color: "#ffb703", suffix: " lb" },
+    { key: "bodyFatPercent", label: "PBF", color: "#fb7185", suffix: "%" }
   ];
-  const width = 680;
-  const height = 260;
-  const pad = 34;
-  const allValues = metrics.flatMap((metric) => ordered.map((scan) => metricNumber(scan[metric.key])).filter((value) => value != null));
-  if (!allValues.length) return `<p class="muted empty-state">No chartable scan metrics found yet.</p>`;
-  const min = Math.min(...allValues);
-  const max = Math.max(...allValues);
-  const range = Math.max(1, max - min);
-  const x = (index) => pad + (ordered.length === 1 ? 0 : index * ((width - pad * 2) / (ordered.length - 1)));
-  const y = (value) => height - pad - ((value - min) / range) * (height - pad * 2);
-  const lines = metrics.map((metric) => {
-    const points = ordered.map((scan, index) => {
-      const value = metricNumber(scan[metric.key]);
-      return value == null ? null : `${x(index)},${y(value)}`;
-    }).filter(Boolean);
-    if (points.length < 2) return "";
-    return `<polyline points="${points.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />${points.map((point) => `<circle cx="${point.split(",")[0]}" cy="${point.split(",")[1]}" r="5" fill="${metric.color}" />`).join("")}`;
-  }).join("");
-  const latest = ordered[ordered.length - 1];
+
+  function miniChart(metric) {
+    const points = ordered
+      .map((scan, index) => ({ scan, index, value: metricNumber(scan[metric.key]) }))
+      .filter((point) => point.value != null);
+    if (points.length < 2) {
+      return `
+        <div class="metric-mini-chart empty">
+          <div class="metric-mini-head"><strong>${metric.label}</strong><span>-</span></div>
+          <p class="muted">Not enough ${metric.label} data.</p>
+        </div>`;
+    }
+    const width = 260;
+    const height = 120;
+    const pad = 16;
+    const values = points.map((point) => point.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = Math.max(0.1, max - min);
+    const x = (orderIndex) => pad + (ordered.length === 1 ? 0 : orderIndex * ((width - pad * 2) / (ordered.length - 1)));
+    const y = (value) => height - pad - ((value - min) / range) * (height - pad * 2);
+    const polyPoints = points.map((point) => `${x(point.index)},${y(point.value)}`);
+    const first = points[0].value;
+    const latest = points[points.length - 1].value;
+    const delta = latest - first;
+    const deltaText = `${delta >= 0 ? "+" : ""}${Number(delta.toFixed(1))}${metric.suffix}`;
+    return `
+      <div class="metric-mini-chart">
+        <div class="metric-mini-head"><strong>${metric.label}</strong><span>${scanMetric(latest, metric.suffix)}</span></div>
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${metric.label} trend">
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
+          <polyline points="${polyPoints.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          ${points.map((point) => `<circle cx="${x(point.index)}" cy="${y(point.value)}" r="5" fill="${metric.color}" />`).join("")}
+        </svg>
+        <div class="metric-mini-foot"><span>${escapeHtml(points[0].scan.scannedOn)}</span><span>${escapeHtml(points[points.length - 1].scan.scannedOn)}</span></div>
+        <p class="muted metric-delta">Change: ${escapeHtml(deltaText)}</p>
+      </div>`;
+  }
+
   return `
     <article class="item-card body-chart-card">
       <div class="item-head">
-        <div><strong>Body metrics trend</strong><p class="muted">${escapeHtml(ordered[0].scannedOn)} to ${escapeHtml(latest.scannedOn)}</p></div>
+        <div><strong>Body metrics trend</strong><p class="muted">Each metric uses its own scale for accuracy.</p></div>
       </div>
-      <div class="scan-chart-wrap">
-        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Body metrics progress chart">
-          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
-          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
-          ${lines}
-        </svg>
-      </div>
-      <div class="chart-legend">
-        ${metrics.map((metric) => `<span><i style="background:${metric.color}"></i>${metric.label}: ${scanMetric(latest[metric.key], metric.suffix)}</span>`).join("")}
+      <div class="metric-chart-grid">
+        ${metrics.map(miniChart).join("")}
       </div>
     </article>
   `;
 }
-
 
 function initBodyMetricsApp() {
   const bodyScanPdf = document.getElementById("bodyScanPdf");
