@@ -1529,3 +1529,45 @@ body.is-reordering .exercise-row.dragging {
     grid-column: 2;
   }
 }
+
+/* Make scan card actions obvious and usable on mobile. */
+.scan-edit-btn {
+  color: var(--green-dark);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 10px;
+  box-shadow: none;
+}
+.scan-edit-btn:hover {
+  text-decoration: none;
+}
+.scan-delete-btn {
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+  padding: 7px 10px;
+  margin-right: 0;
+}
+@media (max-width: 640px) {
+  .scan-history-summary {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+  }
+  .scan-summary-actions {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+    gap: 8px;
+    min-width: 78px;
+  }
+  .scan-summary-actions .scan-edit-btn,
+  .scan-summary-actions .scan-delete-btn {
+    width: 100%;
+    text-align: center;
+  }
+  .scan-history-card .section-chevron {
+    justify-self: center;
+    grid-column: 1;
+  }
+}
