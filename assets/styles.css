@@ -1571,3 +1571,61 @@ body.is-reordering .exercise-row.dragging {
     grid-column: 1;
   }
 }
+
+/* Clean alignment for collapsed body scan cards. */
+.scan-history-summary {
+  align-items: center;
+}
+.scan-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 430px;
+}
+.scan-summary-metrics span {
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+.scan-summary-actions {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  gap: 8px;
+}
+.scan-summary-actions .scan-edit-btn,
+.scan-summary-actions .scan-delete-btn {
+  min-width: 64px;
+  text-align: center;
+}
+.scan-history-card .section-chevron {
+  margin-left: 4px;
+}
+@media (max-width: 640px) {
+  .scan-history-summary {
+    grid-template-columns: 1fr;
+  }
+  .scan-summary-actions {
+    grid-template-columns: 1fr 1fr auto;
+    width: 100%;
+    justify-items: stretch;
+  }
+  .scan-summary-actions .scan-edit-btn,
+  .scan-summary-actions .scan-delete-btn {
+    width: 100%;
+  }
+  .scan-history-card .section-chevron {
+    grid-column: auto;
+    justify-self: end;
+    margin-left: 0;
+  }
+  .scan-summary-metrics {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: none;
+  }
+  .scan-summary-metrics span {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+}
