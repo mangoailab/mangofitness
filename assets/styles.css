@@ -957,3 +957,25 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 1fr;
   }
 }
+
+/* Portrait: force the top workout fields to use the same full-width edge. */
+@media (max-width: 760px) {
+  .form-grid,
+  .assignment-grid {
+    display: block;
+    width: 100%;
+  }
+  .form-grid > .field,
+  .assignment-grid > .field {
+    width: 100%;
+    max-width: none;
+  }
+  #workoutDate,
+  #workoutTitle,
+  #assignmentType,
+  #assignmentAthlete {
+    display: block;
+    width: 100%;
+    max-width: none;
+  }
+}
