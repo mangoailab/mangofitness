@@ -1421,11 +1421,18 @@ function workoutSectionGroups(exercises) {
 function initAthleteApp() {
   const date = document.getElementById("athleteWorkoutDate");
   const view = document.getElementById("athleteWorkoutView");
+  const scheduleView = document.getElementById("athleteScheduleView");
   const profileSelect = document.getElementById("athleteProfileSelect");
+  const weekLabel = document.getElementById("athleteWeekLabel");
+  const workoutCount = document.getElementById("athleteWorkoutCount");
+  const prevWeekBtn = document.getElementById("athletePrevWeekBtn");
+  const thisWeekBtn = document.getElementById("athleteThisWeekBtn");
+  const nextWeekBtn = document.getElementById("athleteNextWeekBtn");
   const history = document.getElementById("athleteHistoryList");
   if (!date || !view || !history) return;
 
   date.value = todayISO();
+  let selectedWeekStart = startOfWeek(new Date());
 
   async function loadAthleteProfiles() {
     try {
@@ -1441,9 +1448,52 @@ function initAthleteApp() {
     try {
       const workouts = await MangoFitnessStore.workouts();
       const selectedAthleteId = profileSelect?.value || "";
+      const weekStart = selectedWeekStart;
+      const weekEnd = addDays(weekStart, 6);
       const visibleWorkouts = workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
-      const workout = visibleWorkouts.find((item) => item.date === date.value) || visibleWorkouts[visibleWorkouts.length - 1];
+      const weekWorkouts = visibleWorkouts.filter((item) => {
+        const workoutDate = parseLocalDate(item.date);
+        return workoutDate >= weekStart && workoutDate <= weekEnd;
+      });
+      const workout = visibleWorkouts.find((item) => item.date === date.value) || weekWorkouts[0] || visibleWorkouts[visibleWorkouts.length - 1];
       const results = await MangoFitnessStore.results();
+
+      if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
+      if (workoutCount) workoutCount.textContent = `${weekWorkouts.length} workout${weekWorkouts.length === 1 ? "" : "s"}`;
+      if (scheduleView) {
+        const workoutsByDate = weekWorkouts.reduce((map, item) => {
+          if (!map.has(item.date)) map.set(item.date, []);
+          map.get(item.date).push(item);
+          return map;
+        }, new Map());
+        scheduleView.innerHTML = Array.from({ length: 7 }, (_, index) => {
+          const day = addDays(weekStart, index);
+          const dayIso = isoDate(day);
+          const dayWorkouts = workoutsByDate.get(dayIso) || [];
+          return `
+            <section class="calendar-day${dayIso === date.value ? " is-selected" : ""}">
+              <div class="calendar-day-head">
+                <strong>${escapeHtml(calendarDayLabel(day))}</strong>
+                <span class="muted">${dayWorkouts.length || ""}</span>
+              </div>
+              <div class="calendar-day-body">
+                ${dayWorkouts.length ? dayWorkouts.map((item) => `
+                  <button type="button" class="calendar-workout-card athlete-schedule-card" data-athlete-date="${escapeHtml(item.date)}">
+                    <strong>${escapeHtml(item.title)}</strong>
+                    <p class="muted">${item.exercises.length} items · ${workoutAssignmentLabel(item)}</p>
+                  </button>
+                `).join("") : `<p class="muted calendar-empty">No workout</p>`}
+              </div>
+            </section>
+          `;
+        }).join("");
+        scheduleView.querySelectorAll("[data-athlete-date]").forEach((button) => {
+          button.addEventListener("click", () => {
+            date.value = button.dataset.athleteDate;
+            renderAthlete();
+          });
+        });
+      }
 
       if (!workout) {
         view.innerHTML = `<p class="muted empty-state">No workout has been assigned for this view yet.</p>`;
@@ -1524,8 +1574,24 @@ function initAthleteApp() {
     }
   }
 
-  date.addEventListener("change", renderAthlete);
+  date.addEventListener("change", () => {
+    selectedWeekStart = startOfWeek(parseLocalDate(date.value));
+    renderAthlete();
+  });
   profileSelect?.addEventListener("change", renderAthlete);
+  prevWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = addDays(selectedWeekStart, -7);
+    renderAthlete();
+  });
+  thisWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = startOfWeek(new Date());
+    date.value = todayISO();
+    renderAthlete();
+  });
+  nextWeekBtn?.addEventListener("click", () => {
+    selectedWeekStart = addDays(selectedWeekStart, 7);
+    renderAthlete();
+  });
   loadAthleteProfiles().then(renderAthlete);
 
 }

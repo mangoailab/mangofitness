@@ -1166,3 +1166,30 @@ body.is-reordering .exercise-row.dragging {
   font-size: 16px;
   line-height: 1;
 }
+
+.athlete-detail-stack {
+  margin-top: 14px;
+}
+.athlete-schedule-card {
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  align-items: stretch;
+  justify-content: start;
+}
+.athlete-schedule-card:hover {
+  transform: translateY(-1px);
+}
+.calendar-day.is-selected {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, .16);
+}
+.calendar-day.is-selected .calendar-day-head {
+  color: var(--accent-dark);
+}
+
+@media (max-width: 760px) {
+  .athlete-filter-grid .narrow-field {
+    max-width: none;
+  }
+}

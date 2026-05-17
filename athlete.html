@@ -17,7 +17,12 @@
           <a href="index.html" class="nav-link">Home</a>
           <span class="nav-separator">|</span>
           <a href="admin.html" class="nav-link">Coach dashboard</a>
+          <span id="athleteSignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="athleteSignOutBtn" class="nav-link link-button hidden">Sign out</button>
         </nav>
+        <div id="athleteHeaderAuth" class="header-auth hidden">
+          <p id="athleteDashboardMessage" class="muted"></p>
+        </div>
       </div>
       <p class="muted hero-description">View today’s workout, enter working weights, log PRs, and track progress.</p>
     </section>
@@ -36,18 +41,26 @@
 
     <section id="athleteDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="section-head">
+        <div class="section-head compact">
           <div>
-            <h2>Today’s Training</h2>
-            <p id="athleteDashboardMessage" class="muted"></p>
+            <h2>Training Schedule</h2>
+            <p id="athleteWeekLabel" class="muted">This week</p>
           </div>
-          <button type="button" id="athleteSignOutBtn">Sign out</button>
+          <span id="athleteWorkoutCount" class="pill">0 workouts</span>
         </div>
-        <div class="athlete-filter-grid">
-          <div class="field narrow-field"><label for="athleteWorkoutDate">Workout date</label><input id="athleteWorkoutDate" type="date" /></div>
-          <div class="field narrow-field"><label for="athleteProfileSelect">View as athlete</label><select id="athleteProfileSelect"><option value="">Everyone / class workouts</option></select></div>
+        <div class="saved-workout-tools">
+          <div class="actions week-actions">
+            <button type="button" id="athletePrevWeekBtn">Previous week</button>
+            <button type="button" id="athleteThisWeekBtn">This week</button>
+            <button type="button" id="athleteNextWeekBtn">Next week</button>
+          </div>
+          <div class="athlete-filter-grid">
+            <div class="field narrow-field"><label for="athleteWorkoutDate">Workout date</label><input id="athleteWorkoutDate" type="date" /></div>
+            <div class="field narrow-field"><label for="athleteProfileSelect">View as athlete</label><select id="athleteProfileSelect"><option value="">Everyone / class workouts</option></select></div>
+          </div>
         </div>
-        <div id="athleteWorkoutView" class="list-stack"></div>
+        <div id="athleteScheduleView" class="workout-calendar"></div>
+        <div id="athleteWorkoutView" class="list-stack athlete-detail-stack"></div>
       </div>
 
       <div class="card dashboard-card">

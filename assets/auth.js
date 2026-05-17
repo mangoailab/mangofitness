@@ -20,7 +20,8 @@ async function initLoginPage(options) {
   const forgot = document.getElementById(options.forgotBtnId);
   const signOut = document.getElementById(options.signOutBtnId);
   const signOutSeparator = signOut ? document.getElementById(`${options.signOutBtnId.replace("Btn", "Separator")}`) : null;
-  const headerAuth = document.getElementById("coachHeaderAuth") || signOut?.closest(".header-auth");
+  const dashboardMessage = document.getElementById(options.dashboardMessageId);
+  const headerAuth = dashboardMessage?.closest(".header-auth") || signOut?.closest(".header-auth");
   const authCard = document.getElementById(options.authCardId);
   const dashboard = document.getElementById(options.dashboardId);
 
