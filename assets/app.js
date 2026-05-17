@@ -2049,6 +2049,18 @@ function renderBodyScanChart(scans) {
   `;
 }
 
+async function waitForSupabaseUser(timeoutMs = 3000) {
+  const sb = MangoFitnessStore.client?.() || window.mangoSupabaseClient || null;
+  if (!sb?.auth?.getUser) return null;
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const { data } = await sb.auth.getUser();
+    if (data?.user) return data.user;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  return null;
+}
+
 function initBodyMetricsApp() {
   const bodyScanPdf = document.getElementById("bodyScanPdf");
   const parseBodyScanBtn = document.getElementById("parseBodyScanBtn");
@@ -2061,6 +2073,12 @@ function initBodyMetricsApp() {
 
   async function renderScans() {
     try {
+      const user = await waitForSupabaseUser();
+      if (!user) {
+        if (bodyScanChart) bodyScanChart.innerHTML = "";
+        bodyScanList.innerHTML = `<p class="muted empty-state">Sign in to view your saved scans.</p>`;
+        return;
+      }
       const storedScans = await MangoFitnessStore.bodyScans();
       const scans = justSavedScan && !storedScans.some((scan) => scan.id === justSavedScan.id) ? [justSavedScan, ...storedScans] : storedScans;
       if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans);
@@ -2123,5 +2141,7 @@ function initBodyMetricsApp() {
     }
   });
 
+  const sb = MangoFitnessStore.client?.() || window.mangoSupabaseClient || null;
+  sb?.auth?.onAuthStateChange?.(() => renderScans());
   renderScans();
 }
