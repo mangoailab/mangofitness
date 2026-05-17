@@ -39,9 +39,14 @@
 
     <section id="historyDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="section-head compact"><div><h2>Progress History</h2><p class="muted">Your workout results logged over time.</p></div></div>
-        <div class="field narrow-field hidden"><label for="historyProfileSelect">Athlete</label><select id="historyProfileSelect"><option value="">Your account</option></select></div>
-        <div id="athleteHistoryList" class="list-stack"></div>
+        <div class="section-head compact"><div><h2>Progress History</h2><p class="muted">Your workout results grouped by date with quick filters.</p></div></div>
+        <div id="progressSummary" class="progress-summary-grid"></div>
+        <div class="progress-filter-grid athlete-progress-filter-grid">
+          <div class="field narrow-field hidden"><label for="historyProfileSelect">Athlete</label><select id="historyProfileSelect"><option value="">Your account</option></select></div>
+          <div class="field"><label for="progressSearch">Search progress</label><input id="progressSearch" type="search" placeholder="Search movement, notes, score" /></div>
+          <div class="field"><label for="progressTypeFilter">Type</label><select id="progressTypeFilter"><option value="all">All results</option><option value="pr">PRs only</option><option value="strength">Weights</option><option value="score">Scores</option></select></div>
+        </div>
+        <div id="athleteHistoryList" class="progress-timeline"></div>
       </div>
     </section>
   </main>

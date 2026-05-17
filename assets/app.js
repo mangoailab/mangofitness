@@ -2285,6 +2285,9 @@ function initAthleteHistoryApp(options = {}) {
   const profileSelect = document.getElementById("historyProfileSelect");
   const profileField = profileSelect?.closest(".field");
   const history = document.getElementById("athleteHistoryList");
+  const summary = document.getElementById("progressSummary");
+  const search = document.getElementById("progressSearch");
+  const typeFilter = document.getElementById("progressTypeFilter");
   if (!history) return;
 
   async function currentAthleteId() {
@@ -2296,19 +2299,106 @@ function initAthleteHistoryApp(options = {}) {
     return athlete?.id || "";
   }
 
+  function athleteName(athleteId) {
+    return athleteProfiles.find((athlete) => athlete.id === athleteId)?.name || "Athlete";
+  }
+
+  function resultType(result) {
+    if (result.score) return "score";
+    if (result.weight !== "" && result.weight != null) return "strength";
+    return "result";
+  }
+
+  function resultSearchText(result) {
+    return [
+      result.exerciseName,
+      result.completedOn,
+      result.score,
+      result.weight,
+      result.reps,
+      result.notes,
+      athleteName(result.athleteId),
+      result.isPr ? "pr personal record" : ""
+    ].join(" ").toLowerCase();
+  }
+
+  function renderProgressSummary(results) {
+    if (!summary) return;
+    if (!results.length) {
+      summary.innerHTML = "";
+      return;
+    }
+    const prs = results.filter((result) => result.isPr).length;
+    const scoreCount = results.filter((result) => result.score).length;
+    const latestDate = results.map((result) => result.completedOn).sort().at(-1) || "-";
+    const athleteCount = new Set(results.map((result) => result.athleteId).filter(Boolean)).size;
+    summary.innerHTML = `
+      <article class="progress-stat"><span>Total logs</span><strong>${results.length}</strong></article>
+      <article class="progress-stat"><span>PRs</span><strong>${prs}</strong></article>
+      <article class="progress-stat"><span>Scores</span><strong>${scoreCount}</strong></article>
+      <article class="progress-stat"><span>${coachMode ? "Athletes" : "Latest"}</span><strong>${coachMode ? athleteCount : escapeHtml(latestDate)}</strong></article>
+    `;
+  }
+
+  function renderResultCard(result) {
+    const primaryValue = result.score || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.reps || "Logged"));
+    const detailParts = [];
+    if (coachMode) detailParts.push(athleteName(result.athleteId));
+    if (result.setNumber) detailParts.push(`Set ${result.setNumber}`);
+    if (result.reps) detailParts.push(`${result.reps} reps`);
+    if (result.score) detailParts.push(`Score: ${result.score}`);
+    if (result.weight !== "" && result.weight != null) detailParts.push(`${result.weight} lb`);
+    return `
+      <article class="progress-result-card ${result.isPr ? "is-pr" : ""}">
+        <div class="progress-result-main">
+          <div>
+            <strong>${escapeHtml(result.exerciseName)}</strong>
+            <p class="muted">${detailParts.map(escapeHtml).join(" · ")}</p>
+          </div>
+          <div class="progress-result-value">
+            <strong>${escapeHtml(primaryValue)}</strong>
+            ${result.isPr ? `<span class="pr-badge">PR</span>` : ""}
+          </div>
+        </div>
+        ${result.notes ? `<p class="progress-note">${escapeHtml(result.notes)}</p>` : ""}
+      </article>
+    `;
+  }
+
   async function renderHistory() {
     try {
       const allResults = await MangoFitnessStore.results();
       const selectedAthleteId = coachMode ? (profileSelect?.value || "") : await currentAthleteId();
-      const results = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : (coachMode ? allResults : []);
-      history.innerHTML = results.length ? results.map((result) => `
-        <article class="item-card">
-          <strong>${escapeHtml(result.exerciseName)}</strong>
-          <p class="muted">${escapeHtml(result.completedOn)}${result.setNumber ? ` · Set ${escapeHtml(result.setNumber)}` : ""}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
-          ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
-        </article>
-      `).join("") : `<p class="muted empty-state">${coachMode ? "No results logged yet." : "No results logged for your athlete account yet."}</p>`;
+      const baseResults = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : (coachMode ? allResults : []);
+      const term = (search?.value || "").trim().toLowerCase();
+      const selectedType = typeFilter?.value || "all";
+      const results = baseResults.filter((result) => {
+        const matchesSearch = !term || resultSearchText(result).includes(term);
+        const matchesType = selectedType === "all" || (selectedType === "pr" ? result.isPr : resultType(result) === selectedType);
+        return matchesSearch && matchesType;
+      });
+      renderProgressSummary(results);
+      if (!results.length) {
+        history.innerHTML = `<p class="muted empty-state">${baseResults.length ? "No progress logs match those filters." : (coachMode ? "No results logged yet." : "No results logged for your athlete account yet.")}</p>`;
+        return;
+      }
+      const grouped = results.reduce((groups, result) => {
+        const date = result.completedOn || "Undated";
+        groups[date] = groups[date] || [];
+        groups[date].push(result);
+        return groups;
+      }, {});
+      history.innerHTML = Object.entries(grouped).map(([date, dayResults]) => `
+        <section class="progress-day-group">
+          <div class="progress-day-head">
+            <h3>${escapeHtml(date)}</h3>
+            <span class="pill">${dayResults.length} log${dayResults.length === 1 ? "" : "s"}</span>
+          </div>
+          <div class="progress-day-list">${dayResults.map(renderResultCard).join("")}</div>
+        </section>
+      `).join("");
     } catch (error) {
+      if (summary) summary.innerHTML = "";
       history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
     }
   }
@@ -2325,6 +2415,8 @@ function initAthleteHistoryApp(options = {}) {
 
   bootstrapHistory();
   profileSelect?.addEventListener("change", renderHistory);
+  search?.addEventListener("input", renderHistory);
+  typeFilter?.addEventListener("change", renderHistory);
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
     if (session?.user) bootstrapHistory();
   });

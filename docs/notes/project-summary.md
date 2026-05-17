@@ -41,6 +41,10 @@
 - Coach portal now has a separate Clients page for creating/updating athlete/client profiles, storing login email, phone, notes, and optional Supabase Auth user ID link. Client rows stay collapsed by default and include search to keep the page clean.
 - Static frontend cannot safely create Supabase Auth password users by itself because that requires privileged server-side access. Coaches should create/invite the auth user in Supabase Authentication, then link the profile with the Auth user ID until a secure backend/Edge Function is added.
 
+## Progress history behavior
+
+- Athlete and coach progress history should be scan-friendly: summary stats, search/type filters, logs grouped by date, clear score/weight values, and PR badges instead of one long flat list.
+
 ## Current navigation behavior
 
 Athlete pages use fixed nav links:

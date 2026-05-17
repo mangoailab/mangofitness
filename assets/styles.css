@@ -376,6 +376,104 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 }
 .empty-state { margin: 0; }
 .narrow-field { max-width: 240px; }
+.progress-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.progress-stat {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, var(--soft));
+  padding: 14px;
+}
+.progress-stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.progress-stat strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 24px;
+  color: var(--accent-dark);
+}
+.progress-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, .8fr) minmax(220px, 1.4fr) minmax(150px, .7fr);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.athlete-progress-filter-grid {
+  grid-template-columns: minmax(220px, 1fr) minmax(150px, .45fr);
+}
+.progress-timeline,
+.progress-day-list {
+  display: grid;
+  gap: 12px;
+}
+.progress-day-group {
+  display: grid;
+  gap: 10px;
+}
+.progress-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 2px;
+}
+.progress-day-head h3 {
+  margin: 0;
+  font-size: 18px;
+}
+.progress-result-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--soft);
+  padding: 14px;
+}
+.progress-result-card.is-pr {
+  border-color: rgba(255, 183, 3, .65);
+  background: linear-gradient(180deg, rgba(255, 247, 214, .9), var(--soft));
+}
+.progress-result-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.progress-result-value {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+.progress-result-value strong {
+  color: var(--accent-dark);
+}
+.pr-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #ffb703;
+  color: #3b2a00;
+  font-size: 12px;
+  font-weight: 900;
+}
+.progress-note {
+  border-top: 1px solid var(--line);
+  margin-top: 10px !important;
+  padding-top: 10px;
+}
 .workout-detail h3 { margin: 0; font-size: 20px; }
 .result-form {
   background: white;
@@ -401,7 +499,10 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
     display: grid;
   }
   .mini-grid,
-  .form-grid {
+  .form-grid,
+  .progress-summary-grid,
+  .progress-filter-grid,
+  .athlete-progress-filter-grid {
     grid-template-columns: 1fr;
   }
   .item-actions,
@@ -409,8 +510,16 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
     width: 100%;
     justify-content: flex-start;
   }
-  .client-profile-summary {
+  .client-profile-summary,
+  .progress-result-main {
     align-items: flex-start;
+  }
+  .progress-result-main {
+    display: grid;
+  }
+  .progress-result-value {
+    justify-items: start;
+    text-align: left;
   }
 }
 .error-text {
