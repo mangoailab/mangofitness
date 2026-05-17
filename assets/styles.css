@@ -946,3 +946,14 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 1fr;
   }
 }
+
+/* Align Workout date and Assign to right edges. */
+.assignment-grid {
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+}
+
+@media (max-width: 760px) {
+  .assignment-grid {
+    grid-template-columns: 1fr;
+  }
+}
