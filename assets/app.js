@@ -1564,6 +1564,17 @@ function initAthleteApp() {
                         <button type="submit" class="primary">Log result</button>
                       </form>
                     `).join("")}
+                    ${group.section === "partner" && group.exercises[0] ? `
+                      <form class="result-form partner-score-form" data-workout-id="${workout.id}" data-exercise-id="${group.exercises[0].id}" data-exercise-name="Partner WOD">
+                        <div>
+                          <strong>Team result</strong>
+                          <p class="muted">Log one final team time or score for the Partner WOD.</p>
+                        </div>
+                        <div class="field cardio-score-field"><label>Team time / score</label><input name="score" type="text" placeholder="18:42 or 6+14" /></div>
+                        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="Partner, scaling, or how it felt" /></div>
+                        <button type="submit" class="primary">Log team result</button>
+                      </form>
+                    ` : ""}
                   </div>
                 </section>
               `).join("")}

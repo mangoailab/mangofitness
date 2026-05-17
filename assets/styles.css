@@ -1239,3 +1239,8 @@ body.is-reordering .exercise-row.dragging {
 .partner-instruction-card strong {
   display: block;
 }
+
+.partner-score-form {
+  border-style: dashed;
+  background: #fff;
+}
