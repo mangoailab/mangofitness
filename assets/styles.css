@@ -1662,3 +1662,33 @@ body.is-reordering .exercise-row.dragging {
     width: 100%;
   }
 }
+
+/* Final match: saved scan Edit/Delete buttons use identical styling. */
+.scan-summary-actions .scan-edit-btn,
+.scan-summary-actions .scan-delete-btn,
+.scan-summary-actions .scan-delete-btn:hover,
+.scan-summary-actions .scan-edit-btn:hover {
+  color: var(--green-dark);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  width: 72px;
+  min-width: 72px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  text-decoration: none;
+}
+@media (max-width: 640px) {
+  .scan-summary-actions .scan-edit-btn,
+  .scan-summary-actions .scan-delete-btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
