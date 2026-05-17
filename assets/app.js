@@ -1598,6 +1598,10 @@ function parseBodyScanText(text, filename = "") {
   };
 }
 
+function scanMetric(value, suffix = "") {
+  return value === "" || value == null ? "-" : `${escapeHtml(value)}${suffix}`;
+}
+
 function scanInputValue(value) {
   return value === "" || value == null ? "" : escapeHtml(value);
 }
