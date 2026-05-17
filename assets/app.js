@@ -1869,18 +1869,73 @@ function initAthleteHistoryApp() {
   profileSelect?.addEventListener("change", renderHistory);
 }
 
+function metricNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function renderBodyScanChart(scans) {
+  const ordered = [...(scans || [])].filter((scan) => scan.scannedOn).sort((a, b) => a.scannedOn.localeCompare(b.scannedOn));
+  if (ordered.length < 2) {
+    return `<p class="muted empty-state">Upload at least 2 scans to see a progress chart.</p>`;
+  }
+  const metrics = [
+    { key: "bodyWeight", label: "Weight", color: "#0f7a3b", suffix: " lb" },
+    { key: "bodyFatPercent", label: "Body fat", color: "#fb7185", suffix: "%" },
+    { key: "skeletalMuscleMass", label: "Skeletal muscle", color: "#ffb703", suffix: " lb" }
+  ];
+  const width = 680;
+  const height = 260;
+  const pad = 34;
+  const allValues = metrics.flatMap((metric) => ordered.map((scan) => metricNumber(scan[metric.key])).filter((value) => value != null));
+  if (!allValues.length) return `<p class="muted empty-state">No chartable scan metrics found yet.</p>`;
+  const min = Math.min(...allValues);
+  const max = Math.max(...allValues);
+  const range = Math.max(1, max - min);
+  const x = (index) => pad + (ordered.length === 1 ? 0 : index * ((width - pad * 2) / (ordered.length - 1)));
+  const y = (value) => height - pad - ((value - min) / range) * (height - pad * 2);
+  const lines = metrics.map((metric) => {
+    const points = ordered.map((scan, index) => {
+      const value = metricNumber(scan[metric.key]);
+      return value == null ? null : `${x(index)},${y(value)}`;
+    }).filter(Boolean);
+    if (points.length < 2) return "";
+    return `<polyline points="${points.join(" ")}" fill="none" stroke="${metric.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />${points.map((point) => `<circle cx="${point.split(",")[0]}" cy="${point.split(",")[1]}" r="5" fill="${metric.color}" />`).join("")}`;
+  }).join("");
+  const latest = ordered[ordered.length - 1];
+  return `
+    <article class="item-card body-chart-card">
+      <div class="item-head">
+        <div><strong>Body metrics trend</strong><p class="muted">${escapeHtml(ordered[0].scannedOn)} to ${escapeHtml(latest.scannedOn)}</p></div>
+      </div>
+      <div class="scan-chart-wrap">
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Body metrics progress chart">
+          <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
+          ${lines}
+        </svg>
+      </div>
+      <div class="chart-legend">
+        ${metrics.map((metric) => `<span><i style="background:${metric.color}"></i>${metric.label}: ${scanMetric(latest[metric.key], metric.suffix)}</span>`).join("")}
+      </div>
+    </article>
+  `;
+}
+
 function initBodyMetricsApp() {
   const profileSelect = document.getElementById("metricsProfileSelect");
   const bodyScanPdf = document.getElementById("bodyScanPdf");
   const parseBodyScanBtn = document.getElementById("parseBodyScanBtn");
   const bodyScanPreview = document.getElementById("bodyScanPreview");
   const bodyScanList = document.getElementById("bodyScanList");
+  const bodyScanChart = document.getElementById("bodyScanChart");
   let parsedBodyScan = null;
   if (!bodyScanList) return;
 
   async function renderScans() {
     try {
       const scans = await MangoFitnessStore.bodyScans(profileSelect?.value || "");
+      if (bodyScanChart) bodyScanChart.innerHTML = renderBodyScanChart(scans);
       bodyScanList.innerHTML = scans.length ? scans.slice(0, 10).map(renderBodyScanPreview).join("") : `<p class="muted empty-state">No body scans uploaded yet.</p>`;
     } catch (error) {
       bodyScanList.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;

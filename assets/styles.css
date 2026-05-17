@@ -1327,3 +1327,44 @@ body.is-reordering .exercise-row.dragging {
     flex: 1 1 100%;
   }
 }
+
+.body-scan-chart {
+  margin: 12px 0;
+}
+.body-chart-card {
+  background: white;
+}
+.scan-chart-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 10px;
+}
+.scan-chart-wrap svg {
+  width: 100%;
+  min-width: 520px;
+  display: block;
+}
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+.chart-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
