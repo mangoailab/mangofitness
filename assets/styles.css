@@ -243,7 +243,10 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   .card { padding:16px; border-radius:18px; }
   .home-hero { border-radius:22px; padding:24px; }
   h1 { font-size:26px; }
-  .home-brand-row { align-items:flex-start; flex-direction:column; gap:12px; }
+  .home-brand-row { align-items:center; gap:12px; }
+  .home-logo { width:150px; height:70px; border-radius:20px; }
+  .home-logo img { width:136px; }
+  .home-kicker { font-size:14px; line-height:1.25; }
   .home-login-grid,
   .grid-2 { grid-template-columns:1fr; }
   .home-login-card { padding:22px; }
