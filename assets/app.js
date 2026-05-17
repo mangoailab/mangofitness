@@ -881,11 +881,11 @@ function initCoachClientsApp() {
               <strong>${escapeHtml(athlete.name)}</strong>
               <span class="muted">${escapeHtml(athlete.email || "No login email yet")}</span>
             </span>
-            <span class="pill">${authUserId ? "Login linked" : "Profile only"}</span>
+            <span class="pill">${authUserId ? "Login linked" : "Not linked"}</span>
           </summary>
           <div class="client-profile-details">
             <p class="muted">${escapeHtml(athlete.email || "No login email yet")}${athlete.phone ? ` · ${escapeHtml(athlete.phone)}` : ""}</p>
-            <p class="muted">Login link: ${authUserId ? "Auth user linked" : "Profile only — create/link Supabase Auth user"}</p>
+            <p class="muted">Login link: ${authUserId ? "Auth user linked" : "Not linked — create/link Supabase Auth user"}</p>
             ${athlete.notes ? `<p>${escapeHtml(athlete.notes)}</p>` : ""}
             <div class="actions client-profile-actions">
               <button type="button" data-edit-client="${escapeHtml(athlete.id)}">Edit</button>
