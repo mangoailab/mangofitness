@@ -17,6 +17,8 @@
           <a href="index.html" class="nav-link">Home</a>
           <span class="nav-separator">|</span>
           <a href="athlete.html" class="nav-link">Athlete portal</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-history.html" class="nav-link">Progress history</a>
           <span id="coachSignOutSeparator" class="nav-separator hidden">|</span>
           <button type="button" id="coachSignOutBtn" class="nav-link link-button hidden">Sign out</button>
         </nav>
@@ -193,7 +195,13 @@
       </div>
 
       <div class="card dashboard-card">
-        <h2>Athlete Results</h2>
+        <div class="section-head compact">
+          <div>
+            <h2>Athlete Results</h2>
+            <p class="muted">Review workout logs by athlete.</p>
+          </div>
+          <a href="coach-history.html" class="primary button-link">View progress history</a>
+        </div>
         <div id="coachResultsList" class="list-stack"></div>
       </div>
     </section>

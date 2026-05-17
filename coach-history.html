@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Coach Progress History — Mango Fitness</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+</head>
+<body>
+  <main class="container">
+    <section class="card hero topbar">
+      <div class="hero-main">
+        <div class="brand-heading"><div class="brand-mark"><img src="assets/mango-fitness-logo.png" alt="Mango Fitness" /></div><h1>Coach Progress History</h1></div>
+        <nav class="actions top-actions">
+          <a href="index.html" class="nav-link">Home</a>
+          <span class="nav-separator">|</span>
+          <a href="admin.html" class="nav-link">Coach portal</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete.html" class="nav-link">Athlete portal</a>
+          <span id="coachHistorySignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="coachHistorySignOutBtn" class="nav-link link-button hidden">Sign out</button>
+        </nav>
+        <div id="coachHistoryHeaderAuth" class="header-auth hidden"><p id="coachHistoryDashboardMessage" class="muted"></p></div>
+      </div>
+      <p class="muted hero-description">Coach view for reviewing all athlete workout results.</p>
+    </section>
+
+    <section id="coachHistoryAuthCard" class="card auth-card">
+      <h2>Coach Sign In</h2>
+      <div class="field"><label for="coachHistoryEmail">Email</label><input id="coachHistoryEmail" type="email" placeholder="Email" /></div>
+      <div class="field"><label for="coachHistoryPassword">Password</label><input id="coachHistoryPassword" type="password" placeholder="Password" /></div>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="coachHistorySignInBtn" class="primary">Sign In</button><button type="button" id="coachHistoryForgotBtn">Forgot Password</button></div>
+      <p id="coachHistoryAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
+    </section>
+
+    <section id="coachHistoryDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="section-head compact"><div><h2>All Athlete Progress History</h2><p class="muted">Filter by athlete or view everyone.</p></div></div>
+        <div class="field narrow-field"><label for="historyProfileSelect">Athlete</label><select id="historyProfileSelect"><option value="">All athletes</option></select></div>
+        <div id="athleteHistoryList" class="list-stack"></div>
+      </div>
+    </section>
+  </main>
+  <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    initLoginPage({ emailId:"coachHistoryEmail", passwordId:"coachHistoryPassword", signInBtnId:"coachHistorySignInBtn", forgotBtnId:"coachHistoryForgotBtn", signOutBtnId:"coachHistorySignOutBtn", authCardId:"coachHistoryAuthCard", dashboardId:"coachHistoryDashboard", messageId:"coachHistoryAuthMessage", dashboardMessageId:"coachHistoryDashboardMessage" });
+    initAthleteHistoryApp({ mode: "coach" });
+  </script>
+</body>
+</html>

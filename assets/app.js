@@ -108,13 +108,17 @@ const MangoFitnessStore = (() => {
 
   return {
     client,
+    async currentUser() {
+      return requireUser();
+    },
+
     async athletes() {
       const sb = client();
       if (!sb) return readLocal(localAthleteKey);
 
       const { data, error } = await sb
         .from("athletes")
-        .select("id, name, email")
+        .select("id, auth_user_id, name, email")
         .order("name", { ascending: true });
       if (error) throw error;
       return data || [];
@@ -2051,30 +2055,55 @@ async function loadAthleteOptionsForSelect(select, emptyLabel = "Select athlete"
   }
 }
 
-function initAthleteHistoryApp() {
+function initAthleteHistoryApp(options = {}) {
+  const mode = options.mode || "athlete";
+  const coachMode = mode === "coach";
   const profileSelect = document.getElementById("historyProfileSelect");
+  const profileField = profileSelect?.closest(".field");
   const history = document.getElementById("athleteHistoryList");
   if (!history) return;
+
+  async function currentAthleteId() {
+    const user = await MangoFitnessStore.currentUser();
+    const athletes = await MangoFitnessStore.athletes();
+    athleteProfiles = athletes;
+    const userEmail = String(user?.email || "").toLowerCase();
+    const athlete = athletes.find((item) => item.auth_user_id === user?.id || String(item.email || "").toLowerCase() === userEmail);
+    return athlete?.id || "";
+  }
 
   async function renderHistory() {
     try {
       const allResults = await MangoFitnessStore.results();
-      const selectedAthleteId = profileSelect?.value || "";
-      const results = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : allResults;
+      const selectedAthleteId = coachMode ? (profileSelect?.value || "") : await currentAthleteId();
+      const results = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : (coachMode ? allResults : []);
       history.innerHTML = results.length ? results.map((result) => `
         <article class="item-card">
           <strong>${escapeHtml(result.exerciseName)}</strong>
           <p class="muted">${escapeHtml(result.completedOn)}${result.setNumber ? ` · Set ${escapeHtml(result.setNumber)}` : ""}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
           ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
         </article>
-      `).join("") : `<p class="muted empty-state">No results logged yet.</p>`;
+      `).join("") : `<p class="muted empty-state">${coachMode ? "No results logged yet." : "No results logged for your athlete account yet."}</p>`;
     } catch (error) {
       history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
     }
   }
 
-  loadAthleteOptionsForSelect(profileSelect, "All athletes").then(renderHistory);
+  async function bootstrapHistory() {
+    if (coachMode) {
+      profileField?.classList.remove("hidden");
+      await loadAthleteOptionsForSelect(profileSelect, "All athletes");
+    } else {
+      profileField?.classList.add("hidden");
+    }
+    await renderHistory();
+  }
+
+  bootstrapHistory();
   profileSelect?.addEventListener("change", renderHistory);
+  MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
+    if (session?.user) bootstrapHistory();
+  });
 }
 
 function metricNumber(value) {
