@@ -107,6 +107,7 @@ const MangoFitnessStore = (() => {
   }
 
   return {
+    client,
     async athletes() {
       const sb = client();
       if (!sb) return readLocal(localAthleteKey);
@@ -1679,6 +1680,37 @@ async function pdfTextFromFile(file) {
   return ocrPages.join("\n");
 }
 
+async function pdfImagesFromFile(file) {
+  const pdfjs = window.pdfjsLib || await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs");
+  if (pdfjs.GlobalWorkerOptions) pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
+  const images = [];
+  for (let pageNumber = 1; pageNumber <= Math.min(pdf.numPages, 2); pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 2.4 });
+    const canvas = document.createElement("canvas");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+    images.push(canvas.toDataURL("image/jpeg", 0.88));
+  }
+  return images;
+}
+
+async function aiParseBodyScanFile(file) {
+  const sb = MangoFitnessStore.client?.() || window.mangoSupabaseClient || null;
+  if (!sb?.functions?.invoke) throw new Error("AI parser unavailable.");
+  const images = await pdfImagesFromFile(file);
+  const { data, error } = await sb.functions.invoke("parse-body-scan", {
+    body: { filename: file.name, images }
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data?.scan || null;
+}
+
+
 function renderSetLogFields(exercise) {
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
@@ -2043,9 +2075,14 @@ function initBodyMetricsApp() {
     }
     try {
       parseBodyScanBtn.disabled = true;
-      parseBodyScanBtn.textContent = "Parsing...";
-      const text = await pdfTextFromFile(bodyScanPdf.files[0]);
-      parsedBodyScan = { ...parseBodyScanText(text, bodyScanPdf.files[0].name), athleteId: "" };
+      parseBodyScanBtn.textContent = "Scanning with AI...";
+      try {
+        parsedBodyScan = { ...(await aiParseBodyScanFile(bodyScanPdf.files[0])), athleteId: "" };
+      } catch (aiError) {
+        parseBodyScanBtn.textContent = "Using backup parser...";
+        const text = await pdfTextFromFile(bodyScanPdf.files[0]);
+        parsedBodyScan = { ...parseBodyScanText(text, bodyScanPdf.files[0].name), athleteId: "", notes: `Backup parser used. AI parser note: ${friendlyError(aiError)}` };
+      }
       if (bodyScanPreview) {
         bodyScanPreview.innerHTML = renderBodyScanEditForm(parsedBodyScan);
         bodyScanPreview.classList.remove("hidden");
