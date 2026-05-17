@@ -1419,3 +1419,60 @@ body.is-reordering .exercise-row.dragging {
   transform: none;
   box-shadow: none;
 }
+
+.scan-history-card {
+  padding: 0;
+  overflow: hidden;
+}
+.scan-history-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.scan-history-summary::-webkit-details-marker {
+  display: none;
+}
+.scan-summary-main {
+  min-width: 0;
+}
+.scan-summary-main p {
+  margin: 3px 0 0;
+}
+.scan-summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.scan-summary-metrics span {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+}
+.scan-summary-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.scan-delete-btn {
+  white-space: nowrap;
+}
+.scan-history-details {
+  padding: 0 14px 14px;
+}
+.scan-history-card[open] .section-chevron {
+  transform: rotate(180deg);
+}
+.scan-history-card .section-chevron {
+  transition: transform .15s ease;
+}

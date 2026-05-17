@@ -1650,12 +1650,23 @@ function applyScanEdits(scan, container) {
 
 function renderBodyScanPreview(scan) {
   return `
-    <article class="item-card body-scan-preview-card">
-      <div class="item-head">
-        <div><strong>${escapeHtml(scan.source || "PDF upload")}</strong><p class="muted">${escapeHtml(scan.scannedOn || "Unknown date")}</p></div>
-        ${scan.id ? `<button type="button" class="danger-link scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
-      </div>
-      <div class="scan-metric-grid">
+    <details class="item-card body-scan-preview-card scan-history-card">
+      <summary class="scan-history-summary">
+        <div class="scan-summary-main">
+          <strong>${escapeHtml(scan.scannedOn || "Unknown date")}</strong>
+          <p class="muted">${escapeHtml(scan.source || "PDF upload")}</p>
+          <div class="scan-summary-metrics">
+            <span>Weight: ${scanMetric(scan.bodyWeight, " lb")}</span>
+            <span>SMM: ${scanMetric(scan.skeletalMuscleMass, " lb")}</span>
+            <span>PBF: ${scanMetric(scan.bodyFatPercent, "%")}</span>
+          </div>
+        </div>
+        <div class="scan-summary-actions">
+          ${scan.id ? `<button type="button" class="danger-link scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
+          <span class="section-chevron" aria-hidden="true">⌄</span>
+        </div>
+      </summary>
+      <div class="scan-metric-grid scan-history-details">
         <div><span>Weight</span><strong>${scanMetric(scan.bodyWeight, " lb")}</strong></div>
         <div><span>Body fat</span><strong>${scanMetric(scan.bodyFatPercent, "%")}</strong></div>
         <div><span>Fat mass</span><strong>${scanMetric(scan.fatMass, " lb")}</strong></div>
@@ -1666,7 +1677,7 @@ function renderBodyScanPreview(scan) {
         <div><span>VAT</span><strong>${scanMetric(scan.vat, " lb")}</strong></div>
         <div><span>Visceral level</span><strong>${scanMetric(scan.visceralFatLevel)}</strong></div>
       </div>
-    </article>
+    </details>
   `;
 }
 
