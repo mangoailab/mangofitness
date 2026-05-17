@@ -1476,3 +1476,29 @@ body.is-reordering .exercise-row.dragging {
 .scan-history-card .section-chevron {
   transition: transform .15s ease;
 }
+
+/* Keep destructive scan actions away from the expand control. */
+.scan-summary-actions {
+  gap: 18px;
+}
+.scan-delete-btn {
+  margin-right: 10px;
+  padding: 8px 4px;
+}
+.scan-history-card .section-chevron {
+  min-width: 28px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--soft);
+}
+@media (max-width: 640px) {
+  .scan-history-summary {
+    gap: 16px;
+  }
+  .scan-summary-actions {
+    gap: 16px;
+  }
+}
