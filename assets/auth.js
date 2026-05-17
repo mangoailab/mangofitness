@@ -1,5 +1,12 @@
 const supabaseConfig = window.MANGO_FITNESS_SUPABASE;
-const supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+const supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: window.localStorage
+  }
+});
 window.mangoSupabaseClient = supabaseClient;
 
 function setMessage(id, text) {
@@ -45,6 +52,11 @@ async function initLoginPage(options) {
   const { data: sessionData } = await supabaseClient.auth.getSession();
   if (sessionData.session?.user) showSignedIn(sessionData.session.user.email);
   else showSignedOut();
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    if (session?.user) showSignedIn(session.user.email);
+    else showSignedOut();
+  });
 
   signIn?.addEventListener("click", async () => {
     setMessage(options.messageId, "");
