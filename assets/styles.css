@@ -310,6 +310,12 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   padding: 12px 14px;
   line-height: 1.45;
 }
+.client-search-field {
+  margin-bottom: 16px;
+}
+.client-profile-list {
+  margin-top: 4px;
+}
 .client-profile-card {
   display: block;
 }
