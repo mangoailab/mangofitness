@@ -1036,3 +1036,30 @@ body.is-reordering .exercise-row.dragging {
     appearance: none;
   }
 }
+
+/* Phone landscape: use the full available screen width. */
+@media (max-width: 900px) and (orientation: landscape) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .container {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .card,
+  .dashboard-stack,
+  .dashboard-card,
+  .builder-form,
+  .workout-sections,
+  .workout-section {
+    width: 100%;
+    max-width: 100%;
+  }
+}
