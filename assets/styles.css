@@ -919,3 +919,18 @@ body.is-reordering .exercise-row.dragging {
     gap: 0;
   }
 }
+
+.saved-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(180px, .8fr);
+  gap: 12px;
+}
+.saved-filter-grid .field {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .saved-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

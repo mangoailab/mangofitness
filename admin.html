@@ -176,9 +176,17 @@
             <button type="button" id="thisWeekBtn">This week</button>
             <button type="button" id="nextWeekBtn">Next week</button>
           </div>
-          <div class="field search-field">
-            <label for="workoutSearch">Search all workouts</label>
-            <input id="workoutSearch" type="search" placeholder="Search title, notes, Cindy, Back Squat" />
+          <div class="saved-filter-grid">
+            <div class="field search-field">
+              <label for="workoutSearch">Search all workouts</label>
+              <input id="workoutSearch" type="search" placeholder="Search title, notes, Cindy, Back Squat" />
+            </div>
+            <div class="field">
+              <label for="savedWorkoutAthleteFilter">View schedule for</label>
+              <select id="savedWorkoutAthleteFilter">
+                <option value="">Everyone / class view</option>
+              </select>
+            </div>
           </div>
         </div>
         <div id="coachWorkoutList" class="list-stack"></div>

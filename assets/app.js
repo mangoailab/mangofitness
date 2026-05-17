@@ -679,6 +679,7 @@ function initCoachApp() {
   const count = document.getElementById("workoutCount");
   const weekLabel = document.getElementById("workoutWeekLabel");
   const workoutSearch = document.getElementById("workoutSearch");
+  const savedWorkoutAthleteFilter = document.getElementById("savedWorkoutAthleteFilter");
   const prevWeekBtn = document.getElementById("prevWeekBtn");
   const thisWeekBtn = document.getElementById("thisWeekBtn");
   const nextWeekBtn = document.getElementById("nextWeekBtn");
@@ -694,8 +695,8 @@ function initCoachApp() {
   }
 
   function renderAthleteOptions(selectedId = "") {
-    if (!assignmentAthlete) return;
-    assignmentAthlete.innerHTML = `<option value="">Select athlete</option>${athleteOptions(selectedId)}`;
+    if (assignmentAthlete) assignmentAthlete.innerHTML = `<option value="">Select athlete</option>${athleteOptions(selectedId)}`;
+    if (savedWorkoutAthleteFilter) savedWorkoutAthleteFilter.innerHTML = `<option value="">Everyone / class view</option>${athleteOptions(savedWorkoutAthleteFilter.value || selectedId)}`;
   }
 
   function updateAssignmentVisibility() {
@@ -1066,10 +1067,15 @@ function initCoachApp() {
       const workouts = await MangoFitnessStore.workouts();
       const results = await MangoFitnessStore.results();
       const searchQuery = workoutSearch?.value.trim().toLowerCase() || "";
+      const selectedScheduleAthleteId = savedWorkoutAthleteFilter?.value || "";
+      const selectedScheduleAthlete = athleteProfiles.find((athlete) => athlete.id === selectedScheduleAthleteId);
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
       const visibleWorkouts = workouts.filter((workout) => {
-        if (searchQuery) return workoutSearchText(workout).includes(searchQuery);
+        const matchesAthlete = isWorkoutVisibleToAthlete(workout, selectedScheduleAthleteId);
+        const matchesSearch = !searchQuery || workoutSearchText(workout).includes(searchQuery);
+        if (!matchesAthlete || !matchesSearch) return false;
+        if (searchQuery) return true;
         const workoutDate = parseLocalDate(workout.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
@@ -1079,8 +1085,8 @@ function initCoachApp() {
         : `${visibleWorkouts.length} this week`;
       if (weekLabel) {
         weekLabel.textContent = searchQuery
-          ? "Search results"
-          : `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
+          ? `Search results${selectedScheduleAthlete ? ` for ${selectedScheduleAthlete.name}` : ""}`
+          : `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       }
 
       if (searchQuery) {
@@ -1181,6 +1187,7 @@ function initCoachApp() {
     renderCoach();
   });
   workoutSearch?.addEventListener("input", renderCoach);
+  savedWorkoutAthleteFilter?.addEventListener("change", renderCoach);
 
   warmupTemplate?.addEventListener("change", () => {
     const template = warmupTemplateByKey(warmupTemplate.value);
