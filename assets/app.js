@@ -1351,14 +1351,20 @@ function initCoachApp() {
   });
 
   document.querySelectorAll("[data-toggle-section]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const section = button.closest(".workout-section");
-      if (!section) return;
-      const collapsed = section.classList.toggle("is-collapsed");
-      button.textContent = collapsed ? "Expand" : "Collapse";
+    const section = button.closest(".workout-section");
+    const label = section?.querySelector("h3")?.textContent?.trim() || "section";
+    function syncToggle() {
+      const collapsed = section?.classList.contains("is-collapsed");
+      button.textContent = collapsed ? "▾" : "▴";
       button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      button.setAttribute("aria-label", `${collapsed ? "Expand" : "Collapse"} ${label}`);
+    }
+    button.addEventListener("click", () => {
+      if (!section) return;
+      section.classList.toggle("is-collapsed");
+      syncToggle();
     });
-    button.setAttribute("aria-expanded", "true");
+    syncToggle();
   });
 
   document.querySelectorAll("[data-add-section]").forEach((button) => {

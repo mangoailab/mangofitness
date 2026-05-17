@@ -1155,3 +1155,14 @@ body.is-reordering .exercise-row.dragging {
     justify-content: space-between;
   }
 }
+
+/* Compact chevron section toggles. */
+.section-toggle {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 16px;
+  line-height: 1;
+}

@@ -61,8 +61,8 @@
           <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Overall focus, pacing, scaling, or coaching notes"></textarea></div>
 
           <div class="workout-sections">
-            <section class="workout-section" data-section="warmup">
-              <div class="section-head compact"><h3>Warm-up</h3><button type="button" class="section-toggle" data-toggle-section>Collapse</button></div>
+            <section class="workout-section is-collapsed" data-section="warmup">
+              <div class="section-head compact"><h3>Warm-up</h3><button type="button" class="section-toggle" data-toggle-section aria-label="Expand Warm-up" aria-expanded="false">▾</button></div>
               <div class="field warmup-template-field">
                 <label for="warmupTemplate">Warm-up template</label>
                 <select id="warmupTemplate">
@@ -87,8 +87,8 @@
               </details>
             </section>
 
-            <section class="workout-section" data-section="lifting">
-              <div class="section-head compact"><h3>Weightlifting / Strength</h3><button type="button" class="section-toggle" data-toggle-section>Collapse</button></div>
+            <section class="workout-section is-collapsed" data-section="lifting">
+              <div class="section-head compact"><h3>Weightlifting / Strength</h3><button type="button" class="section-toggle" data-toggle-section aria-label="Expand Weightlifting / Strength" aria-expanded="false">▾</button></div>
               <div class="exercise-rows" data-exercise-rows="lifting"></div>
               <div class="actions exercise-actions"><button type="button" data-add-section="lifting">Add lifting item</button></div>
               <details class="template-manager movement-manager">
@@ -111,8 +111,8 @@
               </details>
             </section>
 
-            <section class="workout-section" data-section="cardio">
-              <div class="section-head compact"><h3>Cardio / WOD</h3><button type="button" class="section-toggle" data-toggle-section>Collapse</button></div>
+            <section class="workout-section is-collapsed" data-section="cardio">
+              <div class="section-head compact"><h3>Cardio / WOD</h3><button type="button" class="section-toggle" data-toggle-section aria-label="Expand Cardio / WOD" aria-expanded="false">▾</button></div>
               <div class="field cardio-notes-field">
                 <label for="cardioNotes">Cardio / WOD notes</label>
                 <textarea id="cardioNotes" rows="4" placeholder="Example: For time — 4K row. Record finish time. Or 12 min AMRAP, record rounds + reps."></textarea>
