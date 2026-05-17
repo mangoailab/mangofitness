@@ -1692,3 +1692,43 @@ body.is-reordering .exercise-row.dragging {
     min-width: 0;
   }
 }
+
+/* Scan action buttons: same class, same rendered box. */
+.scan-summary-actions .scan-action-btn,
+.scan-summary-actions .scan-action-btn:hover,
+.scan-summary-actions .scan-action-btn:focus {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  min-width: 74px;
+  max-width: 74px;
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--green-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  box-sizing: border-box;
+  box-shadow: none;
+  text-decoration: none;
+  transform: none;
+}
+@media (max-width: 640px) {
+  .scan-summary-actions .scan-action-btn,
+  .scan-summary-actions .scan-action-btn:hover,
+  .scan-summary-actions .scan-action-btn:focus {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+}

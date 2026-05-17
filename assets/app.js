@@ -1714,7 +1714,7 @@ function renderBodyScanPreview(scan) {
           </div>
         </div>
         <div class="scan-summary-actions">
-          ${scan.id ? `<button type="button" class="nav-link link-button scan-edit-btn" data-scan-edit="${escapeHtml(scan.id)}">Edit</button><button type="button" class="danger-link scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
+          ${scan.id ? `<button type="button" class="scan-action-btn scan-edit-btn" data-scan-edit="${escapeHtml(scan.id)}">Edit</button><button type="button" class="scan-action-btn scan-delete-btn" data-scan-delete="${escapeHtml(scan.id)}">Delete</button>` : ""}
           <span class="section-chevron" aria-hidden="true">⌄</span>
         </div>
       </summary>
