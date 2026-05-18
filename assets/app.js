@@ -1427,7 +1427,7 @@ function initCoachApp() {
             <button type="button" data-delete="${workout.id}">Delete</button>
           </div>
         `}</${compact ? "strong" : "div"}>
-        ${compact ? `<p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>` : ""}
+        ${compact ? `<p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>` : `<div data-inline-workout-editor></div>`}
         <div class="field coach-program-athlete-field">
           <label for="coachProgramAthlete-${escapeHtml(workout.id)}">View athlete logs in this program</label>
           <select id="coachProgramAthlete-${escapeHtml(workout.id)}" data-program-athlete="${escapeHtml(workout.id)}">${workoutAthleteOptions(workout, selectedAthleteId)}</select>
@@ -1702,7 +1702,7 @@ function initCoachApp() {
         }
       }));
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => {
-        const inlineContainer = button.closest("[data-coach-horizontal-detail]")?.querySelector("[data-inline-workout-editor]");
+        const inlineContainer = button.closest("[data-program-card]")?.querySelector("[data-inline-workout-editor]") || button.closest("[data-coach-horizontal-detail]")?.querySelector("[data-inline-workout-editor]");
         editWorkout(button.dataset.edit, { inlineContainer }).catch((error) => setAppMessage(friendlyError(error), true));
       }));
       list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
