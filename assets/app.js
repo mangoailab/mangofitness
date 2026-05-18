@@ -2771,20 +2771,18 @@ function initAthleteHistoryApp(options = {}) {
   async function renderHistory() {
     try {
       const allResults = await MangoFitnessStore.results();
-      if (coachMode) renderCoachResultsSummary(allResults);
       const selectedAthleteId = coachMode ? (profileSelect?.value || "") : await currentAthleteId();
-      if (coachMode && !selectedAthleteId) {
-        history.innerHTML = `<p class="muted empty-state">Select an athlete to view progress history.</p>`;
-        return;
-      }
-      const baseResults = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : [];
       const term = (search?.value || "").trim().toLowerCase();
       const selectedType = typeFilter?.value || "all";
+      const baseResults = coachMode
+        ? (selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : allResults)
+        : allResults.filter((result) => result.athleteId === selectedAthleteId);
       const results = baseResults.filter((result) => {
         const matchesSearch = !term || resultSearchText(result).includes(term);
         const matchesType = selectedType === "all" || (selectedType === "pr" ? result.isPr : resultType(result) === selectedType);
         return matchesSearch && matchesType;
       });
+      if (coachMode) renderCoachResultsSummary(results);
       if (!results.length) {
         history.innerHTML = `<p class="muted empty-state">${baseResults.length ? "No progress logs match those filters." : (coachMode ? "No results logged yet." : "No results logged for your athlete account yet.")}</p>`;
         return;
