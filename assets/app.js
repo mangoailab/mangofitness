@@ -2383,20 +2383,35 @@ function initAthleteHistoryApp(options = {}) {
         return;
       }
       const grouped = results.reduce((groups, result) => {
-        const date = result.completedOn || "Undated";
-        groups[date] = groups[date] || [];
-        groups[date].push(result);
+        const key = `${coachMode ? result.athleteId : "athlete"}::${result.exerciseName}`;
+        groups[key] = groups[key] || [];
+        groups[key].push(result);
         return groups;
       }, {});
-      history.innerHTML = Object.entries(grouped).map(([date, dayResults]) => `
-        <section class="progress-day-group">
-          <div class="progress-day-head">
-            <h3>${escapeHtml(date)}</h3>
-            <span class="pill">${dayResults.length} log${dayResults.length === 1 ? "" : "s"}</span>
-          </div>
-          <div class="progress-day-list">${dayResults.map(renderResultCard).join("")}</div>
-        </section>
-      `).join("");
+      const groups = Object.values(grouped).sort((a, b) => String(b[0]?.completedOn || "").localeCompare(String(a[0]?.completedOn || "")));
+      history.innerHTML = groups.map((group) => {
+        const latest = group[0];
+        const prCount = group.filter((result) => result.isPr).length;
+        const latestValue = latest.score || (latest.weight !== "" && latest.weight != null ? `${latest.weight} lb` : (latest.reps || "Logged"));
+        const subtitle = [coachMode ? athleteName(latest.athleteId) : "", `Latest ${latest.completedOn || "-"}`, `${group.length} log${group.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ");
+        return `
+          <details class="progress-summary-card ${prCount ? "has-pr" : ""}">
+            <summary class="progress-summary-row">
+              <span>
+                <strong>${escapeHtml(latest.exerciseName)}</strong>
+                <span class="muted">${escapeHtml(subtitle)}</span>
+              </span>
+              <span class="progress-summary-value">
+                <strong>${escapeHtml(latestValue)}</strong>
+                ${prCount ? `<span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}
+              </span>
+            </summary>
+            <div class="progress-log-list">
+              ${group.map(renderResultCard).join("")}
+            </div>
+          </details>
+        `;
+      }).join("");
     } catch (error) {
       if (summary) summary.innerHTML = "";
       history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;

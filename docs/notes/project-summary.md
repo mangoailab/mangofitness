@@ -43,7 +43,7 @@
 
 ## Progress history behavior
 
-- Athlete and coach progress history should be scan-friendly: summary stats, search/type filters, logs grouped by date, clear score/weight values, and PR badges instead of one long flat list.
+- Athlete and coach progress history should stay clean by default: summary stats, search/type filters, and collapsed movement summary cards. Detailed logs should be hidden until a card is opened.
 
 ## Current navigation behavior
 

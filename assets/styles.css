@@ -413,30 +413,59 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   grid-template-columns: minmax(220px, 1fr) minmax(150px, .45fr);
 }
 .progress-timeline,
-.progress-day-list {
+.progress-log-list {
   display: grid;
   gap: 12px;
 }
-.progress-day-group {
-  display: grid;
-  gap: 10px;
-}
-.progress-day-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 0 2px;
-}
-.progress-day-head h3 {
-  margin: 0;
-  font-size: 18px;
-}
-.progress-result-card {
+.progress-summary-card {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--soft);
   padding: 14px;
+}
+.progress-summary-card.has-pr {
+  border-color: rgba(255, 183, 3, .55);
+}
+.progress-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.progress-summary-row::-webkit-details-marker { display: none; }
+.progress-summary-row::before {
+  content: "▸";
+  color: var(--accent-dark);
+  font-weight: 900;
+}
+.progress-summary-card[open] .progress-summary-row::before { content: "▾"; }
+.progress-summary-row > span:first-child {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+.progress-summary-value {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  text-align: right;
+  white-space: nowrap;
+}
+.progress-summary-value strong {
+  color: var(--accent-dark);
+}
+.progress-log-list {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.progress-result-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: white;
+  padding: 12px;
 }
 .progress-result-card.is-pr {
   border-color: rgba(255, 183, 3, .65);
@@ -511,12 +540,15 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
     justify-content: flex-start;
   }
   .client-profile-summary,
+  .progress-summary-row,
   .progress-result-main {
     align-items: flex-start;
   }
+  .progress-summary-row,
   .progress-result-main {
     display: grid;
   }
+  .progress-summary-value,
   .progress-result-value {
     justify-items: start;
     text-align: left;
