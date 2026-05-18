@@ -2280,29 +2280,29 @@ function initAthleteApp() {
 
       view.querySelectorAll(".result-form").forEach((form) => {
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
-        let lastAutoFilledWeight = "";
-        const fillWeightsFromFirst = () => {
-          const firstWeight = weightInputs[0]?.value;
-          weightInputs.slice(1).forEach((input) => {
-            if (!input.value || input.dataset.autoFilledWeight === lastAutoFilledWeight) {
-              input.value = firstWeight;
-              input.dataset.autoFilledWeight = firstWeight;
+        const fillWeightsDown = (sourceIndex) => {
+          const source = weightInputs[sourceIndex];
+          const sourceWeight = source?.value || "";
+          weightInputs.slice(sourceIndex + 1).forEach((input) => {
+            if (!input.value || input.dataset.autoFilled === "true") {
+              input.value = sourceWeight;
+              input.dataset.autoFilled = "true";
             }
           });
-          lastAutoFilledWeight = firstWeight;
         };
-        weightInputs[0]?.addEventListener("input", fillWeightsFromFirst);
-        weightInputs.slice(1).forEach((input) => {
-          input.addEventListener("input", () => { input.dataset.autoFilledWeight = ""; });
+        weightInputs.forEach((input, index) => {
+          input.addEventListener("input", () => {
+            input.dataset.autoFilled = "false";
+            fillWeightsDown(index);
+          });
         });
         form.addEventListener("click", (event) => {
           const button = event.target.closest("[data-apply-weight]");
           if (!button) return;
           weightInputs.forEach((input) => {
             input.value = button.dataset.applyWeight || "";
-            input.dataset.autoFilledWeight = input.value;
+            input.dataset.autoFilled = "true";
           });
-          lastAutoFilledWeight = button.dataset.applyWeight || "";
         });
         form.addEventListener("submit", async (event) => {
           event.preventDefault();
