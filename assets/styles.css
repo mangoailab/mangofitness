@@ -1568,6 +1568,45 @@ body.is-reordering .exercise-row.dragging {
   }
 }
 
+@media (min-width: 761px) and (max-width: 900px) and (orientation: landscape) {
+  .athlete-program-calendar {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .athlete-program-calendar .calendar-day {
+    display: block;
+    min-width: 0;
+    border-radius: 12px;
+  }
+  .athlete-program-calendar .calendar-day-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 7px 6px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 11px;
+  }
+  .athlete-program-calendar .calendar-day-body {
+    min-height: 92px;
+    padding: 6px;
+    gap: 6px;
+  }
+  .athlete-program-calendar .calendar-workout-card {
+    padding: 7px;
+    border-radius: 10px;
+  }
+  .athlete-program-calendar .calendar-workout-card strong {
+    font-size: 11px;
+  }
+  .athlete-program-calendar .calendar-workout-card p {
+    font-size: 10px;
+  }
+  .athlete-program-calendar .athlete-program-date {
+    font-size: 16px;
+  }
+}
+
 @media (min-width: 761px) {
   .athlete-program-dot {
     display: none;
