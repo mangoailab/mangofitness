@@ -2627,27 +2627,39 @@ function initAthleteHistoryApp(options = {}) {
     if (!resultsList) return;
     const rows = [...allResults]
       .sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")))
-      .slice(0, 30);
+      .slice(0, 60);
+    const groups = rows.reduce((map, result) => {
+      const movement = result.exerciseName || "Movement";
+      if (!map.has(movement)) map.set(movement, []);
+      map.get(movement).push(result);
+      return map;
+    }, new Map());
     resultsList.innerHTML = rows.length ? `
-      <div class="progress-table-wrap">
-        <table class="progress-table coach-results-table">
-          <thead><tr><th>Date</th><th>Athlete</th><th>Movement</th><th>Score</th><th>Weight</th><th>Reps</th><th>Set</th><th>PR</th><th>Notes</th></tr></thead>
-          <tbody>
-            ${rows.map((result) => `
-              <tr class="${result.isPr ? "is-pr" : ""}">
-                <td>${escapeHtml(result.completedOn || "-")}</td>
-                <td>${escapeHtml(athleteName(result.athleteId))}</td>
-                <td><strong>${escapeHtml(result.exerciseName)}</strong></td>
-                <td>${escapeHtml(result.score || "-")}</td>
-                <td>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</td>
-                <td>${escapeHtml(result.reps || "-")}</td>
-                <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
-                <td>${result.isPr ? `<span class="pr-badge">PR</span>` : "-"}</td>
-                <td>${escapeHtml(result.notes || "")}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
+      <div class="list-stack coach-results-groups">
+        ${[...groups.entries()].map(([movement, group]) => `
+          <section class="item-card coach-results-group">
+            <div class="item-head"><div><strong>${escapeHtml(movement)}</strong><p class="muted">${group.length} recent log${group.length === 1 ? "" : "s"}</p></div></div>
+            <div class="progress-table-wrap">
+              <table class="progress-table coach-results-table">
+                <thead><tr><th>Date</th><th>Athlete</th><th>Score</th><th>Weight</th><th>Reps</th><th>Set</th><th>PR</th><th>Notes</th></tr></thead>
+                <tbody>
+                  ${group.map((result) => `
+                    <tr class="${result.isPr ? "is-pr" : ""}">
+                      <td>${escapeHtml(result.completedOn || "-")}</td>
+                      <td>${escapeHtml(athleteName(result.athleteId))}</td>
+                      <td>${escapeHtml(result.score || "-")}</td>
+                      <td>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</td>
+                      <td>${escapeHtml(result.reps || "-")}</td>
+                      <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
+                      <td>${result.isPr ? `<span class="pr-badge">PR</span>` : "-"}</td>
+                      <td>${escapeHtml(result.notes || "")}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `).join("")}
       </div>
     ` : `<p class="muted empty-state">No athlete results logged yet.</p>`;
   }

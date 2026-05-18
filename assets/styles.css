@@ -510,7 +510,8 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .progress-table td:nth-child(4) { white-space: nowrap; }
 .coach-results-table th,
 .coach-results-table td { vertical-align: top; }
-.coach-results-table td:nth-child(9) { min-width: 180px; white-space: normal; }
+.coach-results-table td:nth-child(8) { min-width: 180px; white-space: normal; }
+.coach-results-group { background: var(--soft); }
 .progress-table tr:last-child td { border-bottom: 0; }
 .progress-table tr.is-pr td { background: rgba(255, 183, 3, .12); }
 .pr-badge {
