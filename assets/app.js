@@ -2321,28 +2321,85 @@ function initAthleteHistoryApp(options = {}) {
     ].join(" ").toLowerCase();
   }
 
-  function renderResultCard(result) {
-    const primaryValue = result.score || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.reps || "Logged"));
-    const detailParts = [];
-    if (coachMode) detailParts.push(athleteName(result.athleteId));
-    if (result.setNumber) detailParts.push(`Set ${result.setNumber}`);
-    if (result.reps) detailParts.push(`${result.reps} reps`);
-    if (result.score) detailParts.push(`Score: ${result.score}`);
-    if (result.weight !== "" && result.weight != null) detailParts.push(`${result.weight} lb`);
+  function progressDisplayValue(result) {
+    return result.score || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.reps || "Logged"));
+  }
+
+  function scoreToNumber(value) {
+    const text = String(value || "").trim();
+    if (!text) return null;
+    const timeMatch = text.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+    if (timeMatch) {
+      const first = Number(timeMatch[1]);
+      const second = Number(timeMatch[2]);
+      const third = timeMatch[3] == null ? null : Number(timeMatch[3]);
+      return third == null ? first * 60 + second : first * 3600 + second * 60 + third;
+    }
+    const numeric = Number(text.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  function chartLabel(secondsOrNumber, preferTime = false) {
+    if (!preferTime) return String(Number(secondsOrNumber.toFixed(1)).toString());
+    const total = Math.round(secondsOrNumber);
+    const minutes = Math.floor(total / 60);
+    const seconds = String(total % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  }
+
+  function renderProgressChart(group) {
+    const points = [...group]
+      .sort((a, b) => String(a.completedOn || "").localeCompare(String(b.completedOn || "")))
+      .map((result, index) => ({ result, index, value: scoreToNumber(result.score || result.weight) }))
+      .filter((point) => point.value != null);
+    if (points.length < 2) return "";
+    const preferTime = points.some((point) => String(point.result.score || "").includes(":"));
+    const width = 640;
+    const height = 220;
+    const pad = 34;
+    const values = points.map((point) => point.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const padding = Math.max(1, (max - min) * 0.15);
+    const chartMin = min - padding;
+    const chartMax = max + padding;
+    const range = Math.max(0.1, chartMax - chartMin);
+    const x = (index) => pad + (points.length === 1 ? 0 : index * ((width - pad * 2) / (points.length - 1)));
+    const y = (value) => height - pad - ((value - chartMin) / range) * (height - pad * 2);
+    const polyPoints = points.map((point, index) => `${x(index)},${y(point.value)}`);
     return `
-      <article class="progress-result-card ${result.isPr ? "is-pr" : ""}">
-        <div class="progress-result-main">
-          <div>
-            <strong>${escapeHtml(result.exerciseName)}</strong>
-            <p class="muted">${detailParts.map(escapeHtml).join(" · ")}</p>
-          </div>
-          <div class="progress-result-value">
-            <strong>${escapeHtml(primaryValue)}</strong>
-            ${result.isPr ? `<span class="pr-badge">PR</span>` : ""}
-          </div>
+      <div class="progress-chart-card">
+        <div class="progress-chart-head"><strong>Trend</strong><span class="muted">${escapeHtml(chartLabel(points[0].value, preferTime))} → ${escapeHtml(chartLabel(points.at(-1).value, preferTime))}</span></div>
+        <div class="progress-chart-wrap">
+          <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(group[0]?.exerciseName || "Progress")} trend chart">
+            <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
+            <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
+            <polyline points="${polyPoints.join(" ")}" fill="none" stroke="#0f7a3b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            ${points.map((point, index) => `<circle cx="${x(index)}" cy="${y(point.value)}" r="5" fill="#ffb703" />`).join("")}
+          </svg>
         </div>
-        ${result.notes ? `<p class="progress-note">${escapeHtml(result.notes)}</p>` : ""}
-      </article>
+        <div class="progress-chart-dates">${points.map((point) => `<span>${escapeHtml(point.result.completedOn || "-")}</span>`).join("")}</div>
+      </div>
+    `;
+  }
+
+  function renderProgressTable(group) {
+    const rows = [...group].sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")));
+    return `
+      <div class="progress-table-wrap">
+        <table class="progress-table">
+          <thead><tr><th>Date</th><th>Score</th><th>Notes</th></tr></thead>
+          <tbody>
+            ${rows.map((result) => `
+              <tr class="${result.isPr ? "is-pr" : ""}">
+                <td>${escapeHtml(result.completedOn || "-")}</td>
+                <td><strong>${escapeHtml(progressDisplayValue(result))}</strong>${result.isPr ? ` <span class="pr-badge">PR</span>` : ""}</td>
+                <td>${escapeHtml(result.notes || "")}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 
@@ -2372,7 +2429,7 @@ function initAthleteHistoryApp(options = {}) {
       history.innerHTML = groups.map((group) => {
         const latest = group[0];
         const prCount = group.filter((result) => result.isPr).length;
-        const latestValue = latest.score || (latest.weight !== "" && latest.weight != null ? `${latest.weight} lb` : (latest.reps || "Logged"));
+        const latestValue = progressDisplayValue(latest);
         const subtitle = [coachMode ? athleteName(latest.athleteId) : "", `Latest ${latest.completedOn || "-"}`].filter(Boolean).join(" · ");
         return `
           <details class="progress-summary-card ${prCount ? "has-pr" : ""}">
@@ -2388,7 +2445,8 @@ function initAthleteHistoryApp(options = {}) {
               </span>
             </summary>
             <div class="progress-log-list">
-              ${group.map(renderResultCard).join("")}
+              ${renderProgressChart(group)}
+              ${renderProgressTable(group)}
             </div>
           </details>
         `;
