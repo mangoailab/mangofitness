@@ -2285,7 +2285,6 @@ function initAthleteHistoryApp(options = {}) {
   const profileSelect = document.getElementById("historyProfileSelect");
   const profileField = profileSelect?.closest(".field");
   const history = document.getElementById("athleteHistoryList");
-  const summary = document.getElementById("progressSummary");
   const search = document.getElementById("progressSearch");
   const typeFilter = document.getElementById("progressTypeFilter");
   if (!history) return;
@@ -2320,24 +2319,6 @@ function initAthleteHistoryApp(options = {}) {
       athleteName(result.athleteId),
       result.isPr ? "pr personal record" : ""
     ].join(" ").toLowerCase();
-  }
-
-  function renderProgressSummary(results) {
-    if (!summary) return;
-    if (!results.length) {
-      summary.innerHTML = "";
-      return;
-    }
-    const prs = results.filter((result) => result.isPr).length;
-    const scoreCount = results.filter((result) => result.score).length;
-    const latestDate = results.map((result) => result.completedOn).sort().at(-1) || "-";
-    const athleteCount = new Set(results.map((result) => result.athleteId).filter(Boolean)).size;
-    summary.innerHTML = `
-      <article class="progress-stat"><span>Total logs</span><strong>${results.length}</strong></article>
-      <article class="progress-stat"><span>PRs</span><strong>${prs}</strong></article>
-      <article class="progress-stat"><span>Scores</span><strong>${scoreCount}</strong></article>
-      <article class="progress-stat"><span>${coachMode ? "Athletes" : "Latest"}</span><strong>${coachMode ? athleteCount : escapeHtml(latestDate)}</strong></article>
-    `;
   }
 
   function renderResultCard(result) {
@@ -2377,7 +2358,6 @@ function initAthleteHistoryApp(options = {}) {
         const matchesType = selectedType === "all" || (selectedType === "pr" ? result.isPr : resultType(result) === selectedType);
         return matchesSearch && matchesType;
       });
-      renderProgressSummary(results);
       if (!results.length) {
         history.innerHTML = `<p class="muted empty-state">${baseResults.length ? "No progress logs match those filters." : (coachMode ? "No results logged yet." : "No results logged for your athlete account yet.")}</p>`;
         return;
@@ -2413,7 +2393,6 @@ function initAthleteHistoryApp(options = {}) {
         `;
       }).join("");
     } catch (error) {
-      if (summary) summary.innerHTML = "";
       history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
     }
   }

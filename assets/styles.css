@@ -376,32 +376,6 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 }
 .empty-state { margin: 0; }
 .narrow-field { max-width: 240px; }
-.progress-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.progress-stat {
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff, var(--soft));
-  padding: 14px;
-}
-.progress-stat span {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-.progress-stat strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 24px;
-  color: var(--accent-dark);
-}
 .progress-filter-grid {
   display: grid;
   grid-template-columns: minmax(180px, .8fr) minmax(220px, 1.4fr) minmax(150px, .7fr);
@@ -529,7 +503,6 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   }
   .mini-grid,
   .form-grid,
-  .progress-summary-grid,
   .progress-filter-grid,
   .athlete-progress-filter-grid {
     grid-template-columns: 1fr;

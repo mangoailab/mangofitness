@@ -43,7 +43,7 @@
 
 ## Progress history behavior
 
-- Athlete and coach progress history should stay clean by default: summary stats, search/type filters, and collapsed movement summary cards. Detailed logs should be hidden until a card is opened.
+- Athlete and coach progress history should stay clean by default: search/type filters and collapsed movement summary cards. Avoid extra top-level summary stat boxes unless Lawrence asks for them.
 
 ## Current navigation behavior
 
