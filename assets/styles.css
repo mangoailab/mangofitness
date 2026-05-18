@@ -1576,7 +1576,7 @@ body.is-reordering .exercise-row.dragging {
 }
 .coach-horizontal-detail {
   grid-column: 1 / -1;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(15, 122, 59, .32);
   border-radius: 16px;
   background: white;
   padding: 14px;
