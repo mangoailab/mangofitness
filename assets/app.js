@@ -2895,6 +2895,147 @@ function initAthleteHistoryApp(options = {}) {
   });
 }
 
+function initAthleteLeaderboardApp() {
+  const list = document.getElementById("athleteLeaderboardList");
+  const search = document.getElementById("leaderboardSearch");
+  const typeFilter = document.getElementById("leaderboardTypeFilter");
+  if (!list) return;
+
+  function eventKey(result) {
+    const name = String(result.exerciseName || result.event_name || "").toLowerCase();
+    if (/\b(row 2k|2k row|2000m row|row 2000m)\b/.test(name)) return { type: "row", name: "2K Row", mode: "lower" };
+    if (/\b(row 3k|3k row|3000m row|row 3000m)\b/.test(name)) return { type: "row", name: "3K Row", mode: "lower" };
+    if (/\b(row 4k|4k row|4000m row|row 4000m)\b/.test(name)) return { type: "row", name: "4K Row", mode: "lower" };
+    if (/\b(angie|cindy|murph|fran|helen|grace|annie|death by|koko|wall ball|burpee|air ?squat)\b/.test(name)) {
+      const lowerIsBetter = /\b(angie|murph|fran|helen|grace|annie|koko|wall ball)\b/.test(name) || String(result.score || "").includes(":");
+      return { type: "wod", name: result.exerciseName || result.event_name || "CrossFit WOD", mode: lowerIsBetter ? "lower" : "higher" };
+    }
+    return null;
+  }
+
+  function scoreSeconds(value) {
+    const text = String(value || "").trim();
+    const match = text.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+    if (!match) return null;
+    const first = Number(match[1]);
+    const second = Number(match[2]);
+    const third = match[3] == null ? null : Number(match[3]);
+    return third == null ? first * 60 + second : first * 3600 + second * 60 + third;
+  }
+
+  function scoreValue(result, mode) {
+    const score = String(result.score || "").toLowerCase();
+    const seconds = scoreSeconds(score);
+    if (seconds != null) return seconds;
+    const rounds = score.match(/(\d+(?:\.\d+)?)\s*round/);
+    const reps = score.match(/\+\s*(\d+(?:\.\d+)?)/) || score.match(/(\d+(?:\.\d+)?)\s*rep/);
+    if (rounds) return Number(rounds[1]) * 1000 + (reps ? Number(reps[1]) : 0);
+    const numeric = Number(score.replace(/[^0-9.-]/g, ""));
+    if (Number.isFinite(numeric)) return numeric;
+    const resultReps = Number(String(result.reps || "").replace(/[^0-9.-]/g, ""));
+    if (Number.isFinite(resultReps)) return resultReps;
+    return mode === "lower" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+  }
+
+  function isBetter(candidate, current, mode) {
+    if (!current) return true;
+    const candidateValue = scoreValue(candidate, mode);
+    const currentValue = scoreValue(current, mode);
+    if (candidateValue === currentValue) return String(candidate.completedOn || "").localeCompare(String(current.completedOn || "")) > 0;
+    return mode === "lower" ? candidateValue < currentValue : candidateValue > currentValue;
+  }
+
+  function leaderboardAthleteName(result) {
+    return result.athlete_name || "Athlete";
+  }
+
+  function leaderboardDisplayValue(result) {
+    return result.score || result.score_result || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.working_weight !== "" && result.working_weight != null ? `${result.working_weight} lb` : (result.reps || result.reps_completed || "Logged")));
+  }
+
+  function renderLeaderboardEvent(eventName, entries, mode) {
+    const ranked = [...entries].sort((a, b) => {
+      const av = scoreValue(a, mode);
+      const bv = scoreValue(b, mode);
+      return mode === "lower" ? av - bv : bv - av;
+    });
+    return `
+      <section class="item-card leaderboard-event-card">
+        <div class="item-head"><div><strong>${escapeHtml(eventName)}</strong><p class="muted">${ranked.length} athlete${ranked.length === 1 ? "" : "s"}</p></div><span class="pill">${mode === "lower" ? "Lowest time wins" : "Highest score wins"}</span></div>
+        <div class="progress-table-wrap">
+          <table class="progress-table leaderboard-table">
+            <thead><tr><th>Rank</th><th>Athlete</th><th>Best</th><th>Date</th><th>Notes</th></tr></thead>
+            <tbody>
+              ${ranked.map((result, index) => `
+                <tr class="${index === 0 ? "leaderboard-winner" : ""}">
+                  <td><strong>#${index + 1}</strong></td>
+                  <td>${escapeHtml(leaderboardAthleteName(result))}</td>
+                  <td><strong>${escapeHtml(leaderboardDisplayValue(result))}</strong></td>
+                  <td>${escapeHtml(result.completedOn || "-")}</td>
+                  <td>${escapeHtml(result.notes || "")}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }
+
+  async function renderLeaderboards() {
+    try {
+      const sb = MangoFitnessStore.client();
+      if (!sb?.rpc) throw new Error("Leaderboard unavailable until Supabase is ready.");
+      const { data, error } = await sb.rpc("leaderboard_results");
+      if (error) throw error;
+      const results = (data || []).map((row) => ({
+        athleteId: row.athlete_id,
+        athlete_name: row.athlete_name,
+        exerciseName: row.event_name,
+        completedOn: row.completed_on,
+        score: row.score_result,
+        weight: row.working_weight,
+        reps: row.reps_completed,
+        notes: row.notes || ""
+      }));
+      const term = (search?.value || "").trim().toLowerCase();
+      const selectedType = typeFilter?.value || "all";
+      const bestByEventAndAthlete = new Map();
+      results.forEach((result) => {
+        const event = eventKey(result);
+        if (!event) return;
+        if (selectedType !== "all" && event.type !== selectedType) return;
+        const haystack = [event.name, result.exerciseName, leaderboardAthleteName(result), result.score, result.notes].join(" ").toLowerCase();
+        if (term && !haystack.includes(term)) return;
+        const key = `${event.name}::${result.athleteId}`;
+        const current = bestByEventAndAthlete.get(key);
+        if (isBetter(result, current?.result, event.mode)) bestByEventAndAthlete.set(key, { event, result });
+      });
+      const eventGroups = [...bestByEventAndAthlete.values()].reduce((map, item) => {
+        if (!map.has(item.event.name)) map.set(item.event.name, { event: item.event, results: [] });
+        map.get(item.event.name).results.push(item.result);
+        return map;
+      }, new Map());
+      const eventOrder = ["Angie", "Cindy", "Murph", "Fran", "Helen", "Grace", "Annie", "2K Row", "3K Row", "4K Row"];
+      const groups = [...eventGroups.values()].sort((a, b) => {
+        const ai = eventOrder.indexOf(a.event.name);
+        const bi = eventOrder.indexOf(b.event.name);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a.event.name.localeCompare(b.event.name);
+      });
+      list.innerHTML = groups.length ? `<div class="list-stack leaderboard-list">${groups.map((group) => renderLeaderboardEvent(group.event.name, group.results, group.event.mode)).join("")}</div>` : `<p class="muted empty-state">No leaderboard results found yet.</p>`;
+    } catch (error) {
+      list.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
+    }
+  }
+
+  renderLeaderboards();
+  search?.addEventListener("input", renderLeaderboards);
+  typeFilter?.addEventListener("change", renderLeaderboards);
+  MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
+    if (session?.user) renderLeaderboards();
+  });
+}
+
 function metricNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;

@@ -549,6 +549,14 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .coach-results-table td { vertical-align: top; }
 .coach-results-table td:nth-child(8) { min-width: 180px; white-space: normal; }
 .coach-results-group { background: var(--soft); }
+.leaderboard-list,
+.leaderboard-event-card { min-width: 0; }
+.leaderboard-event-card { background: var(--soft); }
+.leaderboard-table { min-width: 720px; }
+.leaderboard-table td:nth-child(5) { min-width: 180px; white-space: normal; }
+.leaderboard-winner td {
+  background: rgba(255, 183, 3, .14);
+}
 .progress-table tr:last-child td { border-bottom: 0; }
 .progress-table tr.is-pr td { background: rgba(255, 183, 3, .12); }
 .pr-badge {

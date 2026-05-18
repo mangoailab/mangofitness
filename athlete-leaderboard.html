@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Leaderboard — Mango Fitness</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+</head>
+<body>
+  <main class="container">
+    <section class="card hero topbar">
+      <div class="hero-main">
+        <div class="brand-heading"><div class="brand-mark"><img src="assets/mango-fitness-logo.png" alt="Mango Fitness" /></div><h1>Leaderboard</h1></div>
+        <nav class="actions top-actions athlete-nav">
+          <a href="index.html" class="nav-link">Home</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete.html" class="nav-link">Athlete portal</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete-metrics.html" class="nav-link">Body metrics</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete-history.html" class="nav-link">Progress history</a>
+          <span class="nav-separator">|</span>
+          <a href="athlete-leaderboard.html" class="nav-link active" aria-current="page">Leaderboard</a>
+          <span id="athleteLeaderboardSignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="athleteLeaderboardSignOutBtn" class="nav-link link-button hidden">Sign out</button>
+        </nav>
+        <div id="athleteLeaderboardHeaderAuth" class="header-auth hidden"><p id="athleteLeaderboardDashboardMessage" class="muted"></p></div>
+      </div>
+      <p class="muted hero-description">Rank athletes for CrossFit WODs and row benchmarks only.</p>
+    </section>
+
+    <section id="athleteLeaderboardAuthCard" class="card auth-card">
+      <h2>Athlete Sign In</h2>
+      <div class="field"><label for="athleteLeaderboardEmail">Email</label><input id="athleteLeaderboardEmail" type="email" placeholder="Email" /></div>
+      <div class="field"><label for="athleteLeaderboardPassword">Password</label><input id="athleteLeaderboardPassword" type="password" placeholder="Password" /></div>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="athleteLeaderboardSignInBtn" class="primary">Sign In</button><button type="button" id="athleteLeaderboardForgotBtn">Forgot Password</button></div>
+      <p id="athleteLeaderboardAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
+    </section>
+
+    <section id="athleteLeaderboardDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="section-head compact"><div><h2>Leaderboard Filters</h2><p class="muted">Only CrossFit WODs and row benchmarks are included.</p></div></div>
+        <div class="saved-filter-grid">
+          <div class="field"><label for="leaderboardSearch">Search</label><input id="leaderboardSearch" type="search" placeholder="Search benchmark or athlete" /></div>
+          <div class="field"><label for="leaderboardTypeFilter">Benchmark type</label><select id="leaderboardTypeFilter"><option value="all">All leaderboard events</option><option value="wod">CrossFit WODs</option><option value="row">Rows only</option></select></div>
+        </div>
+      </div>
+
+      <div class="card dashboard-card">
+        <div class="section-head compact"><div><h2>Leaderboard</h2><p class="muted">Best score per athlete for each event.</p></div></div>
+        <div id="athleteLeaderboardList"></div>
+      </div>
+    </section>
+  </main>
+  <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    initLoginPage({ emailId:"athleteLeaderboardEmail", passwordId:"athleteLeaderboardPassword", signInBtnId:"athleteLeaderboardSignInBtn", forgotBtnId:"athleteLeaderboardForgotBtn", signOutBtnId:"athleteLeaderboardSignOutBtn", authCardId:"athleteLeaderboardAuthCard", dashboardId:"athleteLeaderboardDashboard", messageId:"athleteLeaderboardAuthMessage", dashboardMessageId:"athleteLeaderboardDashboardMessage" });
+    initAthleteLeaderboardApp();
+  </script>
+</body>
+</html>

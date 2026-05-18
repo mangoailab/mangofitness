@@ -515,3 +515,41 @@ create policy "delete own body scans" on athlete_body_scans for delete to authen
   public.is_coach()
   or (auth_user_id = auth.uid() and athlete_id in (select public.current_athlete_ids()))
 );
+
+-- Sanitized athlete-facing leaderboard data. Returns only athlete name, event, score, date, and cleaned notes for selected WOD/row events.
+create or replace function public.leaderboard_results()
+returns table (
+  athlete_id uuid,
+  athlete_name text,
+  event_name text,
+  completed_on date,
+  score_result text,
+  working_weight numeric,
+  reps_completed text,
+  notes text
+)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select
+    a.id as athlete_id,
+    a.name as athlete_name,
+    coalesce(we.benchmark_name, we.movement_name, we.exercise_name) as event_name,
+    r.completed_on,
+    r.score_result,
+    r.working_weight,
+    r.reps_completed,
+    nullif(regexp_replace(coalesce(r.notes, ''), 'Imported historical benchmark\. Import tag: [^\.]+\.\s*', '', 'g'), '') as notes
+  from public.athlete_workout_results r
+  join public.workout_exercises we on we.id = r.workout_exercise_id
+  join public.athletes a on a.id = r.athlete_id
+  where auth.uid() is not null
+    and (
+      lower(coalesce(we.benchmark_name, we.movement_name, we.exercise_name, '')) ~ '(angie|cindy|murph|fran|helen|grace|annie|death by|koko|wall ball|burpee|air ?squat)'
+      or lower(coalesce(we.benchmark_name, we.movement_name, we.exercise_name, '')) ~ '(row 2k|2k row|2000m row|row 2000m|row 3k|3k row|3000m row|row 3000m|row 4k|4k row|4000m row|row 4000m)'
+    );
+$$;
+
+grant execute on function public.leaderboard_results() to authenticated;
