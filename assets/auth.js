@@ -35,8 +35,75 @@ async function initLoginPage(options) {
   const headerAuth = dashboardMessage?.closest(".header-auth") || signOut?.closest(".header-auth");
   const authCard = document.getElementById(options.authCardId);
   const dashboard = document.getElementById(options.dashboardId);
+  const forgotCard = authCard ? document.createElement("section") : null;
+  const resetEmailId = `${options.forgotBtnId || options.emailId}ResetEmail`;
+  const sendResetBtnId = `${options.forgotBtnId || options.emailId}SendReset`;
+  const cancelResetBtnId = `${options.forgotBtnId || options.emailId}CancelReset`;
+  const forgotMessageId = `${options.forgotBtnId || options.emailId}ResetMessage`;
+  if (forgotCard && forgot) {
+    forgotCard.id = `${options.forgotBtnId}Card`;
+    forgotCard.className = "card auth-card hidden";
+    forgotCard.innerHTML = `
+      <h2>Forgot Password</h2>
+      <p class="muted">Enter your email address and we'll send a password reset link.</p>
+      <div class="field"><label for="${resetEmailId}">Email</label><input id="${resetEmailId}" type="email" placeholder="Email" /></div>
+      <div class="actions" style="margin-top:14px;">
+        <button type="button" id="${sendResetBtnId}" class="primary">Send Reset Link</button>
+        <button type="button" id="${cancelResetBtnId}">Back to Sign In</button>
+      </div>
+      <p id="${forgotMessageId}" class="muted hidden" style="margin:12px 0 0;"></p>
+    `;
+    authCard.insertAdjacentElement("afterend", forgotCard);
+  }
+
+  function setForgotMessage(text) {
+    setMessage(forgotMessageId, text);
+  }
+
+  function showForgotCard() {
+    const resetEmail = document.getElementById(resetEmailId);
+    if (!forgotCard || !resetEmail) return;
+    resetEmail.value = email?.value.trim() || "";
+    authCard?.classList.add("hidden");
+    dashboard?.classList.add("hidden");
+    forgotCard.classList.remove("hidden");
+    setMessage(options.messageId, "");
+    setForgotMessage("");
+    resetEmail.focus();
+  }
+
+  function hideForgotCard() {
+    forgotCard?.classList.add("hidden");
+    authCard?.classList.remove("hidden");
+    setForgotMessage("");
+  }
+
+  async function sendResetEmail() {
+    const resetEmail = document.getElementById(resetEmailId);
+    const sendResetBtn = document.getElementById(sendResetBtnId);
+    const userEmail = resetEmail?.value.trim().toLowerCase() || "";
+    setForgotMessage("");
+    if (!userEmail) return setForgotMessage("Enter your email address.");
+    const redirectTo = resetRedirectUrl();
+    if (redirectTo.startsWith("file:")) {
+      return setForgotMessage("Password reset emails cannot be sent while this page is opened as a file on your computer. Open the live portal and try again.");
+    }
+    if (sendResetBtn) sendResetBtn.disabled = true;
+    setForgotMessage("Sending reset link...");
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(userEmail, { redirectTo });
+    if (sendResetBtn) sendResetBtn.disabled = false;
+    if (error) {
+      const msg = (error.message || "").toLowerCase();
+      const hint = (msg.includes("redirect") || msg.includes("url"))
+        ? ` In Supabase Dashboard → Authentication → URL Configuration, add this exact address under Redirect URLs: ${redirectTo}`
+        : "";
+      return setForgotMessage((error.message || "Could not send reset email.") + hint);
+    }
+    setForgotMessage("If that email is registered, a reset link was sent. Check inbox, spam, or promotions.");
+  }
 
   function showSignedIn(userEmail) {
+    if (forgotCard) forgotCard.classList.add("hidden");
     if (authCard) authCard.classList.add("hidden");
     if (dashboard) dashboard.classList.remove("hidden");
     if (headerAuth) headerAuth.classList.remove("hidden");
@@ -46,6 +113,7 @@ async function initLoginPage(options) {
   }
 
   function showAccessDenied() {
+    if (forgotCard) forgotCard.classList.add("hidden");
     if (authCard) authCard.classList.remove("hidden");
     if (dashboard) dashboard.classList.add("hidden");
     if (headerAuth) headerAuth.classList.add("hidden");
@@ -64,6 +132,7 @@ async function initLoginPage(options) {
   }
 
   function showSignedOut() {
+    if (forgotCard) forgotCard.classList.add("hidden");
     if (authCard) authCard.classList.remove("hidden");
     if (dashboard) dashboard.classList.add("hidden");
     if (headerAuth) headerAuth.classList.add("hidden");
@@ -92,20 +161,9 @@ async function initLoginPage(options) {
     if (!allowed) await supabaseClient.auth.signOut();
   });
 
-  forgot?.addEventListener("click", async () => {
-    setMessage(options.messageId, "");
-    const userEmail = email.value.trim();
-    if (!userEmail) return setMessage(options.messageId, "Enter your email first, then tap Forgot Password.");
-
-    forgot.disabled = true;
-    forgot.textContent = "Sending...";
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(userEmail, { redirectTo: resetRedirectUrl() });
-    forgot.disabled = false;
-    forgot.textContent = "Forgot Password";
-
-    if (error) return setMessage(options.messageId, error.message || "Could not send reset email.");
-    setMessage(options.messageId, "Password reset email sent. Check your inbox.");
-  });
+  forgot?.addEventListener("click", showForgotCard);
+  document.getElementById(sendResetBtnId)?.addEventListener("click", sendResetEmail);
+  document.getElementById(cancelResetBtnId)?.addEventListener("click", hideForgotCard);
 
   signOut?.addEventListener("click", async () => {
     await supabaseClient.auth.signOut();
