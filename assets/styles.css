@@ -1601,11 +1601,22 @@ body.is-reordering .exercise-row.dragging {
   white-space: nowrap;
 }
 .inline-workout-editor {
-  margin: 0 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--soft);
-  padding: 14px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+.item-card:has(.inline-workout-editor:not(.hidden)),
+.calendar-workout-card:has(.inline-workout-editor:not(.hidden)) {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+.item-card:has(.inline-workout-editor:not(.hidden)) > .item-head,
+.calendar-workout-card:has(.inline-workout-editor:not(.hidden)) > .item-head {
+  padding: 0 0 10px;
 }
 .item-card:has(.inline-workout-editor:not(.hidden)) .program-readonly-content,
 .calendar-workout-card:has(.inline-workout-editor:not(.hidden)) .program-readonly-content {
