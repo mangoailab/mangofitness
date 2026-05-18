@@ -2433,7 +2433,11 @@ function initAthleteHistoryApp(options = {}) {
     try {
       const allResults = await MangoFitnessStore.results();
       const selectedAthleteId = coachMode ? (profileSelect?.value || "") : await currentAthleteId();
-      const baseResults = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : (coachMode ? allResults : []);
+      if (coachMode && !selectedAthleteId) {
+        history.innerHTML = `<p class="muted empty-state">Select an athlete to view progress history.</p>`;
+        return;
+      }
+      const baseResults = selectedAthleteId ? allResults.filter((result) => result.athleteId === selectedAthleteId) : [];
       const term = (search?.value || "").trim().toLowerCase();
       const selectedType = typeFilter?.value || "all";
       const results = baseResults.filter((result) => {
@@ -2485,7 +2489,7 @@ function initAthleteHistoryApp(options = {}) {
   async function bootstrapHistory() {
     if (coachMode) {
       profileField?.classList.remove("hidden");
-      await loadAthleteOptionsForSelect(profileSelect, "All athletes");
+      await loadAthleteOptionsForSelect(profileSelect, "Select athlete");
     } else {
       profileField?.classList.add("hidden");
     }
