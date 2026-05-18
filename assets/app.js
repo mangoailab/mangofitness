@@ -1862,7 +1862,7 @@ function initCoachApp() {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const exercises = collectExercises();
-    if (!date.value || !title.value.trim()) return setAppMessage("Add a workout date and title.");
+    if (!date.value) return setAppMessage("Add a workout date.");
     if (assignmentType?.value === "individual" && !assignmentAthlete?.value) return setAppMessage("Choose an athlete for this individual workout.", true);
     if (!exercises.length) return setAppMessage("Add at least one exercise.");
 
@@ -1870,7 +1870,7 @@ function initCoachApp() {
       const savedId = await MangoFitnessStore.saveWorkout({
         id: form.dataset.editId || "",
         date: date.value,
-        title: title.value.trim(),
+        title: title.value.trim() || "Workout",
         notes: notes.value.trim(),
         warmupNotes: warmupNotes.value.trim(),
         cardioNotes: cardioNotes.value.trim(),
