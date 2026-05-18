@@ -1617,8 +1617,30 @@ body.is-reordering .exercise-row.dragging {
   background: white;
   padding: 8px 0;
 }
+.inline-workout-editor .workout-section .section-head {
+  margin-bottom: 8px;
+}
+.inline-workout-editor .section-toggle {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  min-height: 24px;
+  width: 24px;
+}
 .inline-workout-editor .workout-sections {
-  gap: 8px;
+  gap: 6px;
+}
+.inline-workout-editor .exercise-row,
+.inline-workout-editor .template-manager,
+.inline-workout-editor .movement-manager,
+.inline-workout-editor .benchmark-manager {
+  border: 0;
+  border-radius: 0;
+  background: white;
+  box-shadow: none;
+  padding-left: 0;
+  padding-right: 0;
 }
 .item-card:has(.inline-workout-editor:not(.hidden)),
 .calendar-workout-card:has(.inline-workout-editor:not(.hidden)) {
