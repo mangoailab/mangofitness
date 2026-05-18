@@ -13,6 +13,17 @@ function resetRedirectUrl() {
   return new URL("reset-password.html", window.location.href).href.replace(/[#?].*$/, "");
 }
 
+async function userHasCoachAccess(user) {
+  if (!user?.id) return false;
+  const { data, error } = await supabaseClient
+    .from("coach_profiles")
+    .select("id")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean(data?.id);
+}
+
 async function initLoginPage(options) {
   const email = document.getElementById(options.emailId);
   const password = document.getElementById(options.passwordId);
@@ -34,6 +45,24 @@ async function initLoginPage(options) {
     setMessage(options.dashboardMessageId, `Signed in as ${userEmail || "your account"}.`);
   }
 
+  function showAccessDenied() {
+    if (authCard) authCard.classList.remove("hidden");
+    if (dashboard) dashboard.classList.add("hidden");
+    if (headerAuth) headerAuth.classList.add("hidden");
+    if (signOut) signOut.classList.add("hidden");
+    if (signOutSeparator) signOutSeparator.classList.add("hidden");
+    setMessage(options.messageId, "Coach access required. Sign in with a coach account.");
+  }
+
+  async function showSignedInIfAllowed(user) {
+    if (options.requiredRole === "coach" && !(await userHasCoachAccess(user))) {
+      showAccessDenied();
+      return false;
+    }
+    showSignedIn(user?.email);
+    return true;
+  }
+
   function showSignedOut() {
     if (authCard) authCard.classList.remove("hidden");
     if (dashboard) dashboard.classList.add("hidden");
@@ -43,7 +72,7 @@ async function initLoginPage(options) {
   }
 
   const { data: sessionData } = await supabaseClient.auth.getSession();
-  if (sessionData.session?.user) showSignedIn(sessionData.session.user.email);
+  if (sessionData.session?.user) await showSignedInIfAllowed(sessionData.session.user);
   else showSignedOut();
 
   signIn?.addEventListener("click", async () => {
@@ -59,7 +88,8 @@ async function initLoginPage(options) {
     signIn.textContent = "Sign In";
 
     if (error) return setMessage(options.messageId, error.message || "Could not sign in.");
-    showSignedIn(data.user?.email || userEmail);
+    const allowed = await showSignedInIfAllowed(data.user);
+    if (!allowed) await supabaseClient.auth.signOut();
   });
 
   forgot?.addEventListener("click", async () => {
