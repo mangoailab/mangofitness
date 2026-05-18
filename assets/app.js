@@ -2783,8 +2783,9 @@ function initAthleteHistoryApp(options = {}) {
         return matchesSearch && matchesType;
       });
       if (coachMode) renderCoachResultsSummary(results);
+      if (coachMode) return;
       if (!results.length) {
-        history.innerHTML = `<p class="muted empty-state">${baseResults.length ? "No progress logs match those filters." : (coachMode ? "No results logged yet." : "No results logged for your athlete account yet.")}</p>`;
+        history.innerHTML = `<p class="muted empty-state">${baseResults.length ? "No progress logs match those filters." : "No results logged for your athlete account yet."}</p>`;
         return;
       }
       const grouped = results.reduce((groups, result) => {
