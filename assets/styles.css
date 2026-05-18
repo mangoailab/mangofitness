@@ -391,52 +391,49 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   display: grid;
   gap: 16px;
 }
-.progress-summary-card {
+.progress-overview-wrap {
+  overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--soft);
-  padding: 18px;
+  border-radius: 18px;
+  background: white;
 }
-.progress-summary-card.has-pr {
-  border-color: rgba(255, 183, 3, .55);
+.progress-overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
 }
-.progress-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 22px;
-  cursor: pointer;
-  list-style: none;
+.progress-overview-table th,
+.progress-overview-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 12px;
+  text-align: left;
+  vertical-align: middle;
 }
-.progress-summary-row::-webkit-details-marker { display: none; }
-.progress-summary-row::before {
-  content: "▸";
-  color: var(--accent-dark);
-  font-weight: 900;
-  font-size: 18px;
-  line-height: 1;
+.progress-overview-table th {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
 }
-.progress-summary-card[open] .progress-summary-row::before { content: "▾"; }
-.progress-summary-copy {
+.progress-overview-table tbody tr:last-child td { border-bottom: 0; }
+.progress-overview-row.has-pr td { background: rgba(255, 183, 3, .08); }
+.progress-overview-row td:first-child {
   display: grid;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
+  gap: 3px;
 }
-.progress-summary-copy strong {
-  font-size: 18px;
+.progress-overview-row td:nth-child(2),
+.progress-overview-row td:nth-child(3),
+.progress-overview-row td:nth-child(4) { white-space: nowrap; }
+.progress-detail-row td {
+  background: var(--soft);
+  padding: 0;
 }
-.progress-summary-value {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  text-align: right;
-  white-space: nowrap;
+.progress-detail-row .progress-log-list {
+  padding: 14px;
 }
-.progress-summary-value strong {
-  color: var(--accent-dark);
+.progress-toggle {
+  min-height: 36px;
+  padding: 8px 12px;
 }
 .progress-log-list {
   border-top: 1px solid var(--line);
@@ -553,20 +550,11 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
     width: 100%;
     justify-content: flex-start;
   }
-  .client-profile-summary,
-  .progress-summary-row {
+  .client-profile-summary {
     align-items: flex-start;
   }
-  .progress-summary-row {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 12px 14px;
-  }
-  .progress-summary-value {
-    grid-column: 2;
-    justify-content: flex-start;
-    text-align: left;
-    white-space: normal;
+  .progress-overview-table {
+    min-width: 560px;
   }
   .progress-chart-head {
     display: grid;

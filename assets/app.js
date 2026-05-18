@@ -2456,31 +2456,32 @@ function initAthleteHistoryApp(options = {}) {
         return groups;
       }, {});
       const groups = Object.values(grouped).sort((a, b) => String(b[0]?.completedOn || "").localeCompare(String(a[0]?.completedOn || "")));
-      history.innerHTML = groups.map((group) => {
-        const latest = group[0];
-        const prCount = group.filter((result) => result.isPr).length;
-        const latestValue = progressDisplayValue(latest);
-        const subtitle = [coachMode ? athleteName(latest.athleteId) : "", `Latest ${latest.completedOn || "-"}`].filter(Boolean).join(" · ");
-        return `
-          <details class="progress-summary-card ${prCount ? "has-pr" : ""}">
-            <summary class="progress-summary-row">
-              <span class="progress-summary-copy">
-                <strong>${escapeHtml(latest.exerciseName)}</strong>
-                <span class="muted">${escapeHtml(subtitle)}</span>
-              </span>
-              <span class="progress-summary-value">
-                <strong>${escapeHtml(latestValue)}</strong>
-                <span class="pill">${group.length} log${group.length === 1 ? "" : "s"}</span>
-                ${prCount ? `<span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}
-              </span>
-            </summary>
-            <div class="progress-log-list">
-              ${renderProgressChart(group)}
-              ${renderProgressTable(group)}
-            </div>
-          </details>
-        `;
-      }).join("");
+      history.innerHTML = `
+        <div class="progress-overview-wrap">
+          <table class="progress-overview-table">
+            <thead><tr><th>Movement</th><th>Latest</th><th>Logs</th><th></th></tr></thead>
+            <tbody>
+              ${groups.map((group, index) => {
+                const latest = group[0];
+                const prCount = group.filter((result) => result.isPr).length;
+                const latestValue = progressDisplayValue(latest);
+                const subtitle = [coachMode ? athleteName(latest.athleteId) : "", latest.completedOn || "-"].filter(Boolean).join(" · ");
+                return `
+                  <tr class="progress-overview-row ${prCount ? "has-pr" : ""}">
+                    <td><strong>${escapeHtml(latest.exerciseName)}</strong><span class="muted">${escapeHtml(subtitle)}</span></td>
+                    <td><strong>${escapeHtml(latestValue)}</strong>${prCount ? ` <span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}</td>
+                    <td>${group.length}</td>
+                    <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false">View</button></td>
+                  </tr>
+                  <tr class="progress-detail-row hidden" data-progress-detail="${index}">
+                    <td colspan="4"><div class="progress-log-list">${renderProgressChart(group)}${renderProgressTable(group)}</div></td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
     } catch (error) {
       history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
     }
@@ -2500,6 +2501,16 @@ function initAthleteHistoryApp(options = {}) {
   profileSelect?.addEventListener("change", renderHistory);
   search?.addEventListener("input", renderHistory);
   typeFilter?.addEventListener("change", renderHistory);
+  history.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-progress-toggle]");
+    if (!button) return;
+    const key = button.dataset.progressToggle;
+    const row = history.querySelector(`[data-progress-detail="${key}"]`);
+    const isOpen = row && !row.classList.contains("hidden");
+    row?.classList.toggle("hidden", isOpen);
+    button.textContent = isOpen ? "View" : "Hide";
+    button.setAttribute("aria-expanded", String(!isOpen));
+  });
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
     if (session?.user) bootstrapHistory();
   });
