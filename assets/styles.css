@@ -400,7 +400,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .progress-overview-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 620px;
+  min-width: 520px;
 }
 .progress-overview-table th,
 .progress-overview-table td {
@@ -417,11 +417,16 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 }
 .progress-overview-table tbody tr:last-child td { border-bottom: 0; }
 .progress-overview-row.has-pr td { background: rgba(255, 183, 3, .08); }
-.progress-overview-row td:first-child {
+.progress-overview-table th:first-child,
+.progress-overview-table td:first-child {
+  width: 44px;
+  padding-right: 4px;
+  text-align: center;
+}
+.progress-overview-row td:nth-child(2) {
   display: grid;
   gap: 3px;
 }
-.progress-overview-row td:nth-child(2),
 .progress-overview-row td:nth-child(3),
 .progress-overview-row td:nth-child(4) { white-space: nowrap; }
 .progress-detail-row td {
@@ -432,8 +437,13 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   padding: 14px;
 }
 .progress-toggle {
-  min-height: 36px;
-  padding: 8px 12px;
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--accent-dark);
 }
 .progress-log-list {
   border-top: 1px solid var(--line);
@@ -554,7 +564,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
     align-items: flex-start;
   }
   .progress-overview-table {
-    min-width: 560px;
+    min-width: 500px;
   }
   .progress-chart-head {
     display: grid;

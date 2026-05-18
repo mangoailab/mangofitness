@@ -2459,7 +2459,7 @@ function initAthleteHistoryApp(options = {}) {
       history.innerHTML = `
         <div class="progress-overview-wrap">
           <table class="progress-overview-table">
-            <thead><tr><th>Movement</th><th>Latest</th><th>Logs</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Movement</th><th>Latest</th><th>Logs</th></tr></thead>
             <tbody>
               ${groups.map((group, index) => {
                 const latest = group[0];
@@ -2468,10 +2468,10 @@ function initAthleteHistoryApp(options = {}) {
                 const subtitle = [coachMode ? athleteName(latest.athleteId) : "", latest.completedOn || "-"].filter(Boolean).join(" · ");
                 return `
                   <tr class="progress-overview-row ${prCount ? "has-pr" : ""}">
+                    <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false" aria-label="Show ${escapeHtml(latest.exerciseName)} details">▸</button></td>
                     <td><strong>${escapeHtml(latest.exerciseName)}</strong><span class="muted">${escapeHtml(subtitle)}</span></td>
                     <td><strong>${escapeHtml(latestValue)}</strong>${prCount ? ` <span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}</td>
                     <td>${group.length}</td>
-                    <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false">View</button></td>
                   </tr>
                   <tr class="progress-detail-row hidden" data-progress-detail="${index}">
                     <td colspan="4"><div class="progress-log-list">${renderProgressChart(group)}${renderProgressTable(group)}</div></td>
@@ -2508,7 +2508,7 @@ function initAthleteHistoryApp(options = {}) {
     const row = history.querySelector(`[data-progress-detail="${key}"]`);
     const isOpen = row && !row.classList.contains("hidden");
     row?.classList.toggle("hidden", isOpen);
-    button.textContent = isOpen ? "View" : "Hide";
+    button.textContent = isOpen ? "▸" : "▾";
     button.setAttribute("aria-expanded", String(!isOpen));
   });
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
