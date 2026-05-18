@@ -2283,7 +2283,7 @@ function initAthleteApp() {
         const setGhostWeight = (input, value) => {
           if (!input.dataset.basePlaceholder) input.dataset.basePlaceholder = input.getAttribute("placeholder") || "lb";
           input.dataset.ghostWeight = value || "";
-          input.placeholder = input.dataset.basePlaceholder;
+          input.placeholder = value ? `${value} lb` : input.dataset.basePlaceholder;
           input.classList.toggle("has-ghost-weight", Boolean(value) && !input.value);
         };
         const confirmGhostWeight = (input) => {
