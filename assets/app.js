@@ -2628,13 +2628,28 @@ function initAthleteHistoryApp(options = {}) {
     const rows = [...allResults]
       .sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")))
       .slice(0, 30);
-    resultsList.innerHTML = rows.length ? rows.map((result) => `
-      <article class="item-card">
-        <strong>${escapeHtml(result.exerciseName)}</strong>
-        <p class="muted">${escapeHtml(athleteName(result.athleteId))} · ${escapeHtml(result.completedOn || "-")}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
-        ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
-      </article>
-    `).join("") : `<p class="muted empty-state">No athlete results logged yet.</p>`;
+    resultsList.innerHTML = rows.length ? `
+      <div class="progress-table-wrap">
+        <table class="progress-table coach-results-table">
+          <thead><tr><th>Date</th><th>Athlete</th><th>Movement</th><th>Score</th><th>Weight</th><th>Reps</th><th>Set</th><th>PR</th><th>Notes</th></tr></thead>
+          <tbody>
+            ${rows.map((result) => `
+              <tr class="${result.isPr ? "is-pr" : ""}">
+                <td>${escapeHtml(result.completedOn || "-")}</td>
+                <td>${escapeHtml(athleteName(result.athleteId))}</td>
+                <td><strong>${escapeHtml(result.exerciseName)}</strong></td>
+                <td>${escapeHtml(result.score || "-")}</td>
+                <td>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</td>
+                <td>${escapeHtml(result.reps || "-")}</td>
+                <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
+                <td>${result.isPr ? `<span class="pr-badge">PR</span>` : "-"}</td>
+                <td>${escapeHtml(result.notes || "")}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    ` : `<p class="muted empty-state">No athlete results logged yet.</p>`;
   }
 
   function scoreToNumber(value) {
