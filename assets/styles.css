@@ -1607,6 +1607,12 @@ body.is-reordering .exercise-row.dragging {
   background: transparent;
   padding: 0;
 }
+#coachWorkoutList.list-stack > .item-card:has(.inline-workout-editor:not(.hidden)) {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+}
 .item-card:has(.inline-workout-editor:not(.hidden)),
 .calendar-workout-card:has(.inline-workout-editor:not(.hidden)) {
   border: 0;
