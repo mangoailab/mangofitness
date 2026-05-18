@@ -1581,6 +1581,25 @@ body.is-reordering .exercise-row.dragging {
   background: white;
   padding: 14px;
 }
+.coach-horizontal-detail .item-head {
+  display: flex;
+  align-items: flex-start;
+}
+.coach-horizontal-detail .item-actions,
+.coach-horizontal-program-calendar .calendar-card-actions {
+  flex-wrap: nowrap;
+  gap: 5px;
+  width: auto;
+  justify-content: flex-end;
+}
+.coach-horizontal-detail .item-actions button,
+.coach-horizontal-program-calendar .calendar-card-actions button {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 6px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
 .inline-workout-editor {
   margin: 0 0 14px;
   border: 1px solid var(--line);
