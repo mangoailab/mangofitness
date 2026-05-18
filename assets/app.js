@@ -2373,16 +2373,17 @@ function initAthleteHistoryApp(options = {}) {
         const latest = group[0];
         const prCount = group.filter((result) => result.isPr).length;
         const latestValue = latest.score || (latest.weight !== "" && latest.weight != null ? `${latest.weight} lb` : (latest.reps || "Logged"));
-        const subtitle = [coachMode ? athleteName(latest.athleteId) : "", `Latest ${latest.completedOn || "-"}`, `${group.length} log${group.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ");
+        const subtitle = [coachMode ? athleteName(latest.athleteId) : "", `Latest ${latest.completedOn || "-"}`].filter(Boolean).join(" · ");
         return `
           <details class="progress-summary-card ${prCount ? "has-pr" : ""}">
             <summary class="progress-summary-row">
-              <span>
+              <span class="progress-summary-copy">
                 <strong>${escapeHtml(latest.exerciseName)}</strong>
                 <span class="muted">${escapeHtml(subtitle)}</span>
               </span>
               <span class="progress-summary-value">
                 <strong>${escapeHtml(latestValue)}</strong>
+                <span class="pill">${group.length} log${group.length === 1 ? "" : "s"}</span>
                 ${prCount ? `<span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}
               </span>
             </summary>
