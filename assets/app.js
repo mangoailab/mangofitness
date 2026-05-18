@@ -819,6 +819,7 @@ function initCoachClientsApp() {
   const clientNotes = document.getElementById("clientNotes");
   const saveBtn = document.getElementById("saveClientBtn");
   const clearBtn = document.getElementById("clearClientBtn");
+  const addClientBtn = document.getElementById("addClientBtn");
   const message = document.getElementById("clientProfileMessage");
   const list = document.getElementById("clientProfileList");
   const count = document.getElementById("clientProfileCount");
@@ -831,11 +832,18 @@ function initCoachClientsApp() {
     message.classList.toggle("error-text", Boolean(isError));
   }
 
+  function showCreateForm(show = true) {
+    form.classList.toggle("hidden", !show);
+    addClientBtn?.classList.toggle("hidden", show);
+    if (show) clientName?.focus();
+  }
+
   function clearForm() {
     clientId.value = "";
     form.reset();
     saveBtn.textContent = "Create client profile";
     setClientMessage("");
+    showCreateForm(false);
   }
 
   function clientSearchText(athlete) {
@@ -1032,6 +1040,7 @@ function initCoachClientsApp() {
     }
   });
 
+  addClientBtn?.addEventListener("click", () => showCreateForm(true));
   clearBtn?.addEventListener("click", clearForm);
   search?.addEventListener("input", renderClients);
 
