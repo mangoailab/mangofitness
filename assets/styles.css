@@ -1473,6 +1473,28 @@ body.is-reordering .exercise-row.dragging {
   }
 }
 
+.weight-suggestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(34, 197, 94, .24);
+  border-radius: 16px;
+  background: rgba(240, 253, 244, .72);
+  padding: 10px 12px;
+}
+.weight-suggestion strong {
+  color: var(--accent-dark);
+}
+.weight-suggestion p,
+.weight-suggestion-text {
+  margin: 3px 0 0;
+}
+.weight-suggestion button {
+  min-height: 36px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
 .set-log-table {
   display: grid;
   gap: 8px;
@@ -1503,6 +1525,15 @@ body.is-reordering .exercise-row.dragging {
 .set-log-row input {
   min-height: 42px;
   padding: 9px 10px;
+}
+@media (max-width: 520px) {
+  .weight-suggestion {
+    align-items: stretch;
+    display: grid;
+  }
+  .weight-suggestion button {
+    width: 100%;
+  }
 }
 @media (max-width: 420px) {
   .set-log-head,

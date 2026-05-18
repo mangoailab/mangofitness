@@ -44,6 +44,7 @@
 ## Progress history behavior
 
 - Athlete and coach progress history should stay clean by default: search/type filters and a compact movement overview table, not stacked cards. Expanded rows should show a chart plus Date/Score/Notes for cardio or Date/Weight/Reps/Set/Notes for strength so logs like Back Squat @ 8 reps are clear. Avoid extra top-level summary stat boxes unless Lawrence asks for them.
+- Athlete strength logging should reduce repeated typing: set 1 weight auto-fills empty later sets, athletes can tap a suggested weight, and percentage prescriptions like `75%` use estimated 1RM from prior logged weights/reps when available. If no percent exists, prefer programmed target weight, then the athlete's last-used weight.
 
 ## Current navigation behavior
 

@@ -2005,7 +2005,86 @@ async function aiParseBodyScanFile(file) {
 }
 
 
-function renderSetLogFields(exercise) {
+function resultMovementToken(result) {
+  return String(result?.movementKey || result?.movementName || result?.exerciseName || "").trim().toLowerCase();
+}
+
+function exerciseMovementToken(exercise) {
+  return String(exercise?.movementKey || exercise?.movementName || exercise?.name || "").trim().toLowerCase();
+}
+
+function numericWeight(value) {
+  const match = String(value ?? "").match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function numericReps(value) {
+  const match = String(value ?? "").match(/\d+/);
+  return match ? Number(match[0]) : null;
+}
+
+function matchingStrengthResults(results, exercise) {
+  const token = exerciseMovementToken(exercise);
+  return (results || []).filter((result) => {
+    if (!token || resultMovementToken(result) !== token) return false;
+    return numericWeight(result.weight) != null;
+  });
+}
+
+function latestStrengthResult(results, exercise) {
+  return matchingStrengthResults(results, exercise)[0] || null;
+}
+
+function estimatedOneRepMax(results, exercise) {
+  return matchingStrengthResults(results, exercise).reduce((best, result) => {
+    const weight = numericWeight(result.weight);
+    const reps = numericReps(result.reps) || 1;
+    if (!weight) return best;
+    const estimate = weight * (1 + Math.min(reps, 12) / 30);
+    return estimate > best ? estimate : best;
+  }, 0);
+}
+
+function prescribedPercent(value) {
+  const match = String(value || "").match(/(\d+(?:\.\d+)?)\s*%/);
+  return match ? Number(match[1]) : null;
+}
+
+function roundTrainingWeight(value) {
+  return Math.max(0, Math.round(value / 5) * 5);
+}
+
+function weightSuggestionForExercise(exercise, athleteResults = []) {
+  const prescribed = numericWeight(exercise.weight);
+  const percent = prescribedPercent(exercise.weight || exercise.target);
+  const oneRepMax = estimatedOneRepMax(athleteResults, exercise);
+  const latest = latestStrengthResult(athleteResults, exercise);
+  if (percent && oneRepMax) {
+    const suggested = roundTrainingWeight(oneRepMax * percent / 100);
+    return {
+      value: suggested,
+      label: `${percent}% suggestion: ${suggested} lb`,
+      detail: `Based on estimated 1RM ${Math.round(oneRepMax)} lb from history.`
+    };
+  }
+  if (prescribed) {
+    return {
+      value: prescribed,
+      label: `Programmed: ${prescribed} lb`,
+      detail: "Based on the coach's programmed weight."
+    };
+  }
+  if (latest) {
+    return {
+      value: numericWeight(latest.weight),
+      label: `Last used: ${numericWeight(latest.weight)} lb`,
+      detail: `${latest.completedOn || "Previous log"}${latest.reps ? ` · ${latest.reps} reps` : ""}`
+    };
+  }
+  return null;
+}
+
+function renderSetLogFields(exercise, athleteResults = []) {
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
     const scoreLabel = exercise.target || benchmarkScoreType(benchmarkByKey(exercise.benchmarkKey || "")) || "Score";
@@ -2017,14 +2096,21 @@ function renderSetLogFields(exercise) {
       </div>
     `;
   }
+  const suggestion = weightSuggestionForExercise(exercise, athleteResults);
   return `
+    ${suggestion ? `
+      <div class="weight-suggestion">
+        <div><strong>${escapeHtml(suggestion.label)}</strong><p class="muted">${escapeHtml(suggestion.detail)} Enter set 1 to fill the rest.</p></div>
+        <button type="button" data-apply-weight="${escapeHtml(suggestion.value)}">Use weight</button>
+      </div>
+    ` : `<p class="muted weight-suggestion-text">Enter set 1 weight to auto-fill the remaining sets.</p>`}
     <div class="set-log-table">
       <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
       ${Array.from({ length: prescribedSetCount(exercise) }, (_, index) => `
         <div class="set-log-row">
           <strong>${index + 1}</strong>
           <input name="set_${index + 1}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" />
-          <input name="set_${index + 1}_weight" type="number" min="0" step="0.5" placeholder="lb" />
+          <input name="set_${index + 1}_weight" type="number" min="0" step="0.5" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" />
         </div>
       `).join("")}
     </div>
@@ -2133,6 +2219,11 @@ function initAthleteApp() {
         });
       }
 
+      let athleteResults = [];
+      if (workout && selectedAthleteId) {
+        athleteResults = (await MangoFitnessStore.results()).filter((result) => result.athleteId === selectedAthleteId);
+      }
+
       if (!workout) {
         view.innerHTML = `<p class="muted empty-state">No workout has been assigned for this view yet.</p>`;
       } else {
@@ -2163,7 +2254,7 @@ function initAthleteApp() {
                           ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
                           ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
-                        ${renderSetLogFields(exercise)}
+                        ${renderSetLogFields(exercise, athleteResults)}
                         <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
                         <button type="submit" class="primary">Log result</button>
                       </form>
@@ -2188,6 +2279,20 @@ function initAthleteApp() {
       }
 
       view.querySelectorAll(".result-form").forEach((form) => {
+        const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
+        const fillWeightsFromFirst = () => {
+          const firstWeight = weightInputs[0]?.value;
+          if (!firstWeight) return;
+          weightInputs.slice(1).forEach((input) => {
+            if (!input.value) input.value = firstWeight;
+          });
+        };
+        weightInputs[0]?.addEventListener("input", fillWeightsFromFirst);
+        form.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-apply-weight]");
+          if (!button) return;
+          weightInputs.forEach((input) => { input.value = button.dataset.applyWeight || ""; });
+        });
         form.addEventListener("submit", async (event) => {
           event.preventDefault();
           const data = new FormData(form);
