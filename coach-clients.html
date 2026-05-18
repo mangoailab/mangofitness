@@ -41,8 +41,8 @@
       <div class="card dashboard-card">
         <div class="section-head compact">
           <div>
-            <h2>Client Profile</h2>
-            <p class="muted">Use this to add or update athlete/client records for programming and progress tracking.</p>
+            <h2>Create Client</h2>
+            <p class="muted">Add a new athlete/client profile for programming and progress tracking.</p>
           </div>
         </div>
 
@@ -52,16 +52,10 @@
             <div class="field"><label for="clientName">Client name</label><input id="clientName" type="text" placeholder="Alex Rivera" required /></div>
             <div class="field"><label for="clientEmail">Login email</label><input id="clientEmail" type="email" placeholder="client@example.com" required /></div>
           </div>
-          <div class="grid-2 form-grid">
-            <div class="field"><label for="clientPhone">Phone</label><input id="clientPhone" type="tel" placeholder="Optional" /></div>
-            <div class="field"><label for="clientAuthUserId">Supabase Auth user ID</label><input id="clientAuthUserId" type="text" placeholder="Paste auth.users ID after login is created" /></div>
-          </div>
+          <div class="field"><label for="clientPhone">Phone</label><input id="clientPhone" type="tel" placeholder="Optional" /></div>
           <div class="field"><label for="clientNotes">Coach notes</label><textarea id="clientNotes" rows="3" placeholder="Goals, injuries, preferences, onboarding notes"></textarea></div>
-          <div class="info-panel">
-            <strong>Login setup note:</strong> this page safely stores the client profile and login email. To create the actual password login, create/invite the user in Supabase Authentication, then paste that Auth user ID here to link the profile.
-          </div>
           <div class="actions form-actions">
-            <button type="submit" id="saveClientBtn" class="primary">Save client profile</button>
+            <button type="submit" id="saveClientBtn" class="primary">Create client profile</button>
             <button type="button" id="clearClientBtn">Clear form</button>
           </div>
           <p id="clientProfileMessage" class="muted hidden"></p>

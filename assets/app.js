@@ -816,7 +816,6 @@ function initCoachClientsApp() {
   const clientName = document.getElementById("clientName");
   const clientEmail = document.getElementById("clientEmail");
   const clientPhone = document.getElementById("clientPhone");
-  const clientAuthUserId = document.getElementById("clientAuthUserId");
   const clientNotes = document.getElementById("clientNotes");
   const saveBtn = document.getElementById("saveClientBtn");
   const clearBtn = document.getElementById("clearClientBtn");
@@ -835,20 +834,8 @@ function initCoachClientsApp() {
   function clearForm() {
     clientId.value = "";
     form.reset();
-    saveBtn.textContent = "Save client profile";
+    saveBtn.textContent = "Create client profile";
     setClientMessage("");
-  }
-
-  function fillForm(athlete) {
-    clientId.value = athlete.id || "";
-    clientName.value = athlete.name || "";
-    clientEmail.value = athlete.email || "";
-    clientPhone.value = athlete.phone || "";
-    clientAuthUserId.value = athlete.auth_user_id || athlete.authUserId || "";
-    clientNotes.value = athlete.notes || "";
-    saveBtn.textContent = "Update client profile";
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setClientMessage("Editing client profile.");
   }
 
   function clientSearchText(athlete) {
@@ -894,6 +881,21 @@ function initCoachClientsApp() {
               <button type="button" data-athlete-temp-password="${escapeHtml(athlete.id)}" ${authUserId ? "" : "disabled"}>Set Temporary Password</button>
               <button type="button" class="danger-button" data-delete-client="${escapeHtml(athlete.id)}">Delete</button>
             </div>
+            <div id="clientEditor-${escapeHtml(athlete.id)}" class="hidden client-card-editor">
+              <div class="grid-2 form-grid">
+                <div class="field"><label>Name</label><input id="clientEditName-${escapeHtml(athlete.id)}" value="${escapeHtml(athlete.name || "")}" /></div>
+                <div class="field"><label>Login email</label><input id="clientEditEmail-${escapeHtml(athlete.id)}" type="email" value="${escapeHtml(athlete.email || "")}" /></div>
+              </div>
+              <div class="grid-2 form-grid">
+                <div class="field"><label>Phone</label><input id="clientEditPhone-${escapeHtml(athlete.id)}" type="tel" value="${escapeHtml(athlete.phone || "")}" /></div>
+                <div class="field"><label>Supabase Auth user ID</label><input id="clientEditAuthUserId-${escapeHtml(athlete.id)}" value="${escapeHtml(authUserId)}" placeholder="Linked auth.users ID" /></div>
+              </div>
+              <div class="field"><label>Coach notes</label><textarea id="clientEditNotes-${escapeHtml(athlete.id)}" rows="3">${escapeHtml(athlete.notes || "")}</textarea></div>
+              <div class="actions client-profile-actions">
+                <button type="button" class="primary" data-save-client="${escapeHtml(athlete.id)}">Save</button>
+                <button type="button" data-cancel-client-edit="${escapeHtml(athlete.id)}">Cancel</button>
+              </div>
+            </div>
             <p id="clientLoginResult-${escapeHtml(athlete.id)}" class="muted hidden"></p>
           </div>
         </details>
@@ -903,6 +905,41 @@ function initCoachClientsApp() {
 
   function clientLoginResult(id) {
     return document.getElementById(`clientLoginResult-${id}`);
+  }
+
+  function clientEditField(id, field) {
+    return document.getElementById(`clientEdit${field}-${id}`);
+  }
+
+  function toggleClientCardEdit(id, force) {
+    const editor = document.getElementById(`clientEditor-${id}`);
+    if (!editor) return;
+    const shouldShow = typeof force === "boolean" ? force : editor.classList.contains("hidden");
+    editor.classList.toggle("hidden", !shouldShow);
+  }
+
+  async function saveClientCard(id) {
+    const name = clientEditField(id, "Name")?.value.trim() || "";
+    const email = clientEditField(id, "Email")?.value.trim() || "";
+    const authUserId = clientEditField(id, "AuthUserId")?.value.trim() || "";
+    if (!name) return setClientLoginResult(id, "Enter the client name.", true);
+    if (!email) return setClientLoginResult(id, "Enter the client login email.", true);
+    if (authUserId && !isUuid(authUserId)) return setClientLoginResult(id, "Auth user ID must be a valid UUID, or leave it blank until the login exists.", true);
+
+    try {
+      await MangoFitnessStore.saveAthlete({
+        id,
+        name,
+        email,
+        phone: clientEditField(id, "Phone")?.value.trim() || "",
+        authUserId,
+        notes: clientEditField(id, "Notes")?.value.trim() || ""
+      });
+      await loadClients();
+      setClientMessage("Client profile updated.");
+    } catch (error) {
+      setClientLoginResult(id, friendlyError(error), true);
+    }
   }
 
   function setClientLoginResult(id, text, isError = false) {
@@ -970,20 +1007,18 @@ function initCoachClientsApp() {
     setClientMessage("");
     const name = clientName.value.trim();
     const email = clientEmail.value.trim();
-    const authUserId = clientAuthUserId.value.trim();
     if (!name) return setClientMessage("Enter the client name.", true);
     if (!email) return setClientMessage("Enter the client login email.", true);
-    if (authUserId && !isUuid(authUserId)) return setClientMessage("Auth user ID must be a valid UUID, or leave it blank until the login exists.", true);
 
     saveBtn.disabled = true;
-    saveBtn.textContent = clientId.value ? "Updating..." : "Saving...";
+    saveBtn.textContent = "Creating...";
     try {
       await MangoFitnessStore.saveAthlete({
-        id: clientId.value,
+        id: "",
         name,
         email,
         phone: clientPhone.value.trim(),
-        authUserId,
+        authUserId: "",
         notes: clientNotes.value.trim()
       });
       clearForm();
@@ -993,7 +1028,7 @@ function initCoachClientsApp() {
       setClientMessage(friendlyError(error), true);
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = clientId.value ? "Update client profile" : "Save client profile";
+      saveBtn.textContent = "Create client profile";
     }
   });
 
@@ -1002,15 +1037,15 @@ function initCoachClientsApp() {
 
   list?.addEventListener("click", async (event) => {
     const editId = event.target.closest("[data-edit-client]")?.dataset.editClient;
+    const saveEditId = event.target.closest("[data-save-client]")?.dataset.saveClient;
+    const cancelEditId = event.target.closest("[data-cancel-client-edit]")?.dataset.cancelClientEdit;
     const createLoginId = event.target.closest("[data-create-athlete-login]")?.dataset.createAthleteLogin;
     const linkLoginId = event.target.closest("[data-link-athlete-login]")?.dataset.linkAthleteLogin;
     const tempPasswordId = event.target.closest("[data-athlete-temp-password]")?.dataset.athleteTempPassword;
     const deleteId = event.target.closest("[data-delete-client]")?.dataset.deleteClient;
-    if (editId) {
-      const athlete = athleteProfiles.find((item) => item.id === editId);
-      if (athlete) fillForm(athlete);
-      return;
-    }
+    if (editId) return toggleClientCardEdit(editId);
+    if (saveEditId) return saveClientCard(saveEditId);
+    if (cancelEditId) return toggleClientCardEdit(cancelEditId, false);
     if (createLoginId) return manageAthleteLogin(createLoginId, "create-user", event.target.closest("button"));
     if (linkLoginId) return manageAthleteLogin(linkLoginId, "link-existing-user", event.target.closest("button"));
     if (tempPasswordId) return manageAthleteLogin(tempPasswordId, "set-temporary-password", event.target.closest("button"));
