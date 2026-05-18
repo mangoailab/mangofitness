@@ -2344,7 +2344,7 @@ function initAthleteApp() {
         const workoutDate = parseLocalDate(item.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
-      const workout = visibleWorkouts.find((item) => item.date === date.value) || weekWorkouts[0] || visibleWorkouts[visibleWorkouts.length - 1];
+      const workout = visibleWorkouts.find((item) => item.date === date.value);
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       if (workoutCount) workoutCount.textContent = `${weekWorkouts.length} workout${weekWorkouts.length === 1 ? "" : "s"}`;
@@ -2391,7 +2391,7 @@ function initAthleteApp() {
       }
 
       if (!workout) {
-        view.innerHTML = `<p class="muted empty-state">No workout has been assigned for this view yet.</p>`;
+        view.innerHTML = `<p class="muted empty-state">No program assigned for ${escapeHtml(date.value || "this date")}.</p>`;
       } else {
         view.innerHTML = `
           <article class="item-card workout-detail">
