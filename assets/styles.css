@@ -1527,25 +1527,22 @@ body.is-reordering .exercise-row.dragging {
   }
   .athlete-program-calendar {
     display: grid;
-    grid-template-columns: repeat(7, minmax(116px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
     max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 10px;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+    overflow-x: visible;
+    padding-bottom: 0;
   }
   .athlete-program-calendar .calendar-day {
     display: block;
-    min-width: 116px;
+    min-width: 0;
+    border-radius: 12px;
   }
   .athlete-program-calendar .calendar-day-head {
     display: grid;
     justify-items: center;
-    gap: 4px;
-    padding: 10px 8px;
+    gap: 3px;
+    padding: 8px 2px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
     text-align: center;
@@ -1557,7 +1554,17 @@ body.is-reordering .exercise-row.dragging {
     display: none;
   }
   .athlete-program-calendar .athlete-program-day-head {
-    min-height: 82px;
+    min-height: 58px;
+  }
+  .athlete-program-calendar .athlete-program-weekday {
+    font-size: 10px;
+  }
+  .athlete-program-calendar .athlete-program-date {
+    font-size: 16px;
+  }
+  .athlete-program-calendar .athlete-program-dot {
+    width: 6px;
+    height: 6px;
   }
 }
 
