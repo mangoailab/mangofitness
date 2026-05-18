@@ -1623,11 +1623,13 @@ function initCoachApp() {
           return map;
         }, new Map());
         list.className = savedWorkoutView === "horizontal" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar" : "workout-calendar";
+        let selectedHorizontalDate = "";
         list.innerHTML = Array.from({ length: 7 }, (_, index) => {
           const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
           if (savedWorkoutView === "horizontal") {
+            if (!selectedHorizontalDate && dayWorkouts.length) selectedHorizontalDate = dayIso;
             return `
               <section class="calendar-day athlete-program-day" data-coach-horizontal-day="${escapeHtml(dayIso)}">
                 <button type="button" class="calendar-day-head athlete-program-day-head" data-coach-horizontal-toggle="${escapeHtml(dayIso)}" aria-expanded="false" aria-label="Show ${escapeHtml(calendarDayLabel(day))} programs">
@@ -1636,9 +1638,6 @@ function initCoachApp() {
                   <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
                   <span class="athlete-program-dot${dayWorkouts.length ? " has-program" : ""}" aria-hidden="true"></span>
                 </button>
-                <div class="calendar-day-body">
-                  ${dayWorkouts.length ? dayWorkouts.map((workout) => renderWorkoutProgramCard(workout, results, true)).join("") : `<p class="muted calendar-empty">No workout</p>`}
-                </div>
               </section>
             `;
           }
@@ -1654,18 +1653,33 @@ function initCoachApp() {
             </section>
           `;
         }).join("");
+        if (savedWorkoutView === "horizontal") {
+          const selectedWorkouts = workoutsByDate.get(selectedHorizontalDate) || [];
+          list.insertAdjacentHTML("beforeend", `
+            <section class="coach-horizontal-detail" data-coach-horizontal-detail>
+              <div class="section-head compact"><div><h3>${selectedHorizontalDate ? escapeHtml(calendarDayLabel(parseLocalDate(selectedHorizontalDate))) : "Program details"}</h3><p class="muted">${selectedWorkouts.length ? `${selectedWorkouts.length} program${selectedWorkouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div></div>
+              <div class="list-stack">${selectedWorkouts.length ? selectedWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">Select a day with a dot to view its program.</p>`}</div>
+            </section>
+          `);
+          list.querySelector(`[data-coach-horizontal-day="${CSS.escape(selectedHorizontalDate)}"]`)?.classList.add("is-selected");
+          list.querySelector(`[data-coach-horizontal-toggle="${CSS.escape(selectedHorizontalDate)}"]`)?.setAttribute("aria-expanded", "true");
+        }
       }
 
       list.querySelectorAll("[data-coach-horizontal-toggle]").forEach((button) => button.addEventListener("click", () => {
-        const day = button.closest("[data-coach-horizontal-day]");
-        const isOpen = day?.classList.contains("is-expanded");
-        list.querySelectorAll("[data-coach-horizontal-day]").forEach((item) => {
-          item.classList.remove("is-expanded");
-          item.querySelector("[data-coach-horizontal-toggle]")?.setAttribute("aria-expanded", "false");
-        });
-        if (day && !isOpen) {
-          day.classList.add("is-expanded");
-          button.setAttribute("aria-expanded", "true");
+        const selectedDate = button.dataset.coachHorizontalToggle;
+        const workouts = visibleWorkouts.filter((workout) => workout.date === selectedDate);
+        list.querySelectorAll("[data-coach-horizontal-day]").forEach((item) => item.classList.remove("is-selected"));
+        list.querySelectorAll("[data-coach-horizontal-toggle]").forEach((item) => item.setAttribute("aria-expanded", "false"));
+        button.closest("[data-coach-horizontal-day]")?.classList.add("is-selected");
+        button.setAttribute("aria-expanded", "true");
+        const detail = list.querySelector("[data-coach-horizontal-detail]");
+        if (detail) {
+          detail.innerHTML = `
+            <div class="section-head compact"><div><h3>${escapeHtml(calendarDayLabel(parseLocalDate(selectedDate)))}</h3><p class="muted">${workouts.length ? `${workouts.length} program${workouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div></div>
+            <div class="list-stack">${workouts.length ? workouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">No program for this day.</p>`}</div>
+          `;
+          detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }));
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
