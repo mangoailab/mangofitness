@@ -1104,6 +1104,17 @@ body.is-reordering .exercise-row.dragging {
 .search-field {
   margin-bottom: 0;
 }
+.view-toggle-actions {
+  width: 100%;
+}
+.view-toggle-actions button {
+  flex: 1 1 0;
+}
+.view-toggle-actions button.active {
+  background: var(--accent-dark);
+  color: white;
+  border-color: var(--accent-dark);
+}
 
 @media (max-width: 760px) {
   .week-actions button,
@@ -1552,6 +1563,12 @@ body.is-reordering .exercise-row.dragging {
 }
 .calendar-day.is-selected .calendar-day-head {
   color: var(--accent-dark);
+}
+.coach-horizontal-program-calendar .coach-program-athlete-field,
+.coach-horizontal-program-calendar .exercise-group,
+.coach-horizontal-program-calendar .exercise-list,
+.coach-horizontal-program-calendar .calendar-workout-card > .muted {
+  display: none;
 }
 
 @media (max-width: 760px) {

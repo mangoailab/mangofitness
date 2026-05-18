@@ -1134,8 +1134,11 @@ function initCoachApp() {
   const prevWeekBtn = document.getElementById("prevWeekBtn");
   const thisWeekBtn = document.getElementById("thisWeekBtn");
   const nextWeekBtn = document.getElementById("nextWeekBtn");
+  const savedWorkoutVerticalViewBtn = document.getElementById("savedWorkoutVerticalViewBtn");
+  const savedWorkoutHorizontalViewBtn = document.getElementById("savedWorkoutHorizontalViewBtn");
   const message = document.getElementById("coachAppMessage");
   let selectedWeekStart = startOfWeek(new Date());
+  let savedWorkoutView = "vertical";
 
   date.value = todayISO();
 
@@ -1619,11 +1622,26 @@ function initCoachApp() {
           map.get(workout.date).push(workout);
           return map;
         }, new Map());
-        list.className = "workout-calendar";
+        list.className = savedWorkoutView === "horizontal" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar" : "workout-calendar";
         list.innerHTML = Array.from({ length: 7 }, (_, index) => {
           const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
+          if (savedWorkoutView === "horizontal") {
+            return `
+              <section class="calendar-day athlete-program-day">
+                <div class="calendar-day-head athlete-program-day-head">
+                  <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
+                  <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
+                  <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
+                  <span class="athlete-program-dot${dayWorkouts.length ? " has-program" : ""}" aria-hidden="true"></span>
+                </div>
+                <div class="calendar-day-body">
+                  ${dayWorkouts.length ? dayWorkouts.map((workout) => renderWorkoutProgramCard(workout, results, true)).join("") : `<p class="muted calendar-empty">No workout</p>`}
+                </div>
+              </section>
+            `;
+          }
           return `
             <section class="calendar-day">
               <div class="calendar-day-head">
@@ -1677,6 +1695,19 @@ function initCoachApp() {
   });
   workoutSearch?.addEventListener("input", renderCoach);
   savedWorkoutAthleteFilter?.addEventListener("change", renderCoach);
+  savedWorkoutVerticalViewBtn?.addEventListener("click", () => {
+    savedWorkoutView = "vertical";
+    savedWorkoutVerticalViewBtn.classList.add("active");
+    savedWorkoutHorizontalViewBtn?.classList.remove("active");
+    renderCoach();
+  });
+  savedWorkoutHorizontalViewBtn?.addEventListener("click", () => {
+    savedWorkoutView = "horizontal";
+    savedWorkoutHorizontalViewBtn.classList.add("active");
+    savedWorkoutVerticalViewBtn?.classList.remove("active");
+    if (workoutSearch) workoutSearch.value = "";
+    renderCoach();
+  });
 
   warmupTemplate?.addEventListener("change", () => {
     const template = warmupTemplateByKey(warmupTemplate.value);
