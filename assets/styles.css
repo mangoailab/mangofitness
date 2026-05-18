@@ -417,6 +417,14 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   letter-spacing: .04em;
 }
 .progress-overview-table tbody tr:last-child td { border-bottom: 0; }
+.progress-category-row td {
+  background: var(--soft);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
 .progress-overview-row.has-pr td { background: rgba(255, 183, 3, .08); }
 .progress-overview-table th:first-child,
 .progress-overview-table td:first-child {
@@ -515,7 +523,25 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .progress-table td:nth-child(3),
 .progress-table td:nth-child(4) { white-space: nowrap; }
 .coach-results-groups,
-.coach-results-group { min-width: 0; }
+.coach-results-group,
+.progress-category-block { min-width: 0; }
+.progress-category-block {
+  display: grid;
+  gap: 12px;
+}
+.progress-category-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 4px;
+  color: var(--accent-dark);
+}
+.progress-category-head strong {
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
 .coach-results-table {
   min-width: 880px;
 }

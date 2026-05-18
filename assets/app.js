@@ -2623,41 +2623,69 @@ function initAthleteHistoryApp(options = {}) {
     return result.score || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.reps || "Logged"));
   }
 
+  const progressGroupOrder = ["WODs", "Cardio", "Squats", "Barbell / Olympic Lifts", "Gymnastics", "Accessory / Strength", "Other"];
+
+  function progressGroupLabel(result) {
+    const text = [result.exerciseName, result.benchmarkName, result.movementName, result.notes].join(" ").toLowerCase();
+    if (/\b(angie|cindy|murph|fran|helen|grace|death by|koko|wall ball|air ?squat|burpee|wod|amrap)\b/.test(text)) return "WODs";
+    if (/\b(row|ski|assault bike|\bab\b|run|mile|double under|\bdu\b|vo2|heart rate)\b/.test(text)) return "Cardio";
+    if (/\b(back squat|front squat|overhead squat|oh squat|sumo squat)\b/.test(text)) return "Squats";
+    if (/\b(clean|snatch|jerk|thruster|deadlift|bench|press|push press|barbell|\bbb\b)\b/.test(text)) return "Barbell / Olympic Lifts";
+    if (/\b(pull[- ]?up|chin[- ]?up|push[- ]?up|dip|hang|muscle[- ]?up|sit[- ]?up|v[- ]?up|box jump)\b/.test(text)) return "Gymnastics";
+    if (/\b(row|curl|lunge|extension|farmer|t-bar|db|dumbbell|kettlebell|kb|forearm|bicep|abs|leg|shoulder)\b/.test(text)) return "Accessory / Strength";
+    return "Other";
+  }
+
+  function sortProgressCategories(entries) {
+    return [...entries].sort(([a], [b]) => {
+      const ai = progressGroupOrder.indexOf(a);
+      const bi = progressGroupOrder.indexOf(b);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a.localeCompare(b);
+    });
+  }
+
   function renderCoachResultsSummary(allResults) {
     if (!resultsList) return;
     const rows = [...allResults]
       .sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")))
       .slice(0, 60);
-    const groups = rows.reduce((map, result) => {
+    const categoryGroups = rows.reduce((map, result) => {
+      const category = progressGroupLabel(result);
       const movement = result.exerciseName || "Movement";
-      if (!map.has(movement)) map.set(movement, []);
-      map.get(movement).push(result);
+      if (!map.has(category)) map.set(category, new Map());
+      if (!map.get(category).has(movement)) map.get(category).set(movement, []);
+      map.get(category).get(movement).push(result);
       return map;
     }, new Map());
     resultsList.innerHTML = rows.length ? `
       <div class="list-stack coach-results-groups">
-        ${[...groups.entries()].map(([movement, group]) => `
-          <section class="item-card coach-results-group">
-            <div class="item-head"><div><strong>${escapeHtml(movement)}</strong><p class="muted">${group.length} recent log${group.length === 1 ? "" : "s"}</p></div></div>
-            <div class="progress-table-wrap">
-              <table class="progress-table coach-results-table">
-                <thead><tr><th>Date</th><th>Athlete</th><th>Score</th><th>Weight</th><th>Reps</th><th>Set</th><th>PR</th><th>Notes</th></tr></thead>
-                <tbody>
-                  ${group.map((result) => `
-                    <tr class="${result.isPr ? "is-pr" : ""}">
-                      <td>${escapeHtml(result.completedOn || "-")}</td>
-                      <td>${escapeHtml(athleteName(result.athleteId))}</td>
-                      <td>${escapeHtml(result.score || "-")}</td>
-                      <td>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</td>
-                      <td>${escapeHtml(result.reps || "-")}</td>
-                      <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
-                      <td>${result.isPr ? `<span class="pr-badge">PR</span>` : "-"}</td>
-                      <td>${escapeHtml(result.notes || "")}</td>
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
-            </div>
+        ${sortProgressCategories(categoryGroups.entries()).map(([category, movementGroups]) => `
+          <section class="progress-category-block">
+            <div class="progress-category-head"><strong>${escapeHtml(category)}</strong><span class="muted">${[...movementGroups.values()].reduce((total, group) => total + group.length, 0)} log${[...movementGroups.values()].reduce((total, group) => total + group.length, 0) === 1 ? "" : "s"}</span></div>
+            ${[...movementGroups.entries()].map(([movement, group]) => `
+              <section class="item-card coach-results-group">
+                <div class="item-head"><div><strong>${escapeHtml(movement)}</strong><p class="muted">${group.length} recent log${group.length === 1 ? "" : "s"}</p></div></div>
+                <div class="progress-table-wrap">
+                  <table class="progress-table coach-results-table">
+                    <thead><tr><th>Date</th><th>Athlete</th><th>Score</th><th>Weight</th><th>Reps</th><th>Set</th><th>PR</th><th>Notes</th></tr></thead>
+                    <tbody>
+                      ${group.map((result) => `
+                        <tr class="${result.isPr ? "is-pr" : ""}">
+                          <td>${escapeHtml(result.completedOn || "-")}</td>
+                          <td>${escapeHtml(athleteName(result.athleteId))}</td>
+                          <td>${escapeHtml(result.score || "-")}</td>
+                          <td>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</td>
+                          <td>${escapeHtml(result.reps || "-")}</td>
+                          <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
+                          <td>${result.isPr ? `<span class="pr-badge">PR</span>` : "-"}</td>
+                          <td>${escapeHtml(result.notes || "")}</td>
+                        </tr>
+                      `).join("")}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            `).join("")}
           </section>
         `).join("")}
       </div>
@@ -2795,28 +2823,39 @@ function initAthleteHistoryApp(options = {}) {
         return groups;
       }, {});
       const groups = Object.values(grouped).sort((a, b) => String(b[0]?.completedOn || "").localeCompare(String(a[0]?.completedOn || "")));
+      const categoryGroups = groups.reduce((map, group) => {
+        const category = progressGroupLabel(group[0]);
+        if (!map.has(category)) map.set(category, []);
+        map.get(category).push(group);
+        return map;
+      }, new Map());
+      let detailIndex = 0;
       history.innerHTML = `
         <div class="progress-overview-wrap">
           <table class="progress-overview-table">
             <thead><tr><th></th><th>Movement</th><th>Latest</th><th>Logs</th></tr></thead>
             <tbody>
-              ${groups.map((group, index) => {
-                const latest = group[0];
-                const prCount = group.filter((result) => result.isPr).length;
-                const latestValue = progressDisplayValue(latest);
-                const subtitle = [coachMode ? athleteName(latest.athleteId) : "", latest.completedOn || "-"].filter(Boolean).join(" · ");
-                return `
-                  <tr class="progress-overview-row ${prCount ? "has-pr" : ""}">
-                    <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false" aria-label="Show ${escapeHtml(latest.exerciseName)} details">▸</button></td>
-                    <td><strong>${escapeHtml(latest.exerciseName)}</strong><span class="muted">${escapeHtml(subtitle)}</span></td>
-                    <td><strong>${escapeHtml(latestValue)}</strong>${prCount ? ` <span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}</td>
-                    <td>${group.length}</td>
-                  </tr>
-                  <tr class="progress-detail-row hidden" data-progress-detail="${index}">
-                    <td colspan="4"><div class="progress-log-list">${renderProgressChart(group)}${renderProgressTable(group)}</div></td>
-                  </tr>
-                `;
-              }).join("")}
+              ${sortProgressCategories(categoryGroups.entries()).map(([category, categoryMovementGroups]) => `
+                <tr class="progress-category-row"><td colspan="4">${escapeHtml(category)}</td></tr>
+                ${categoryMovementGroups.map((group) => {
+                  const index = detailIndex++;
+                  const latest = group[0];
+                  const prCount = group.filter((result) => result.isPr).length;
+                  const latestValue = progressDisplayValue(latest);
+                  const subtitle = [coachMode ? athleteName(latest.athleteId) : "", latest.completedOn || "-"].filter(Boolean).join(" · ");
+                  return `
+                    <tr class="progress-overview-row ${prCount ? "has-pr" : ""}">
+                      <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false" aria-label="Show ${escapeHtml(latest.exerciseName)} details">▸</button></td>
+                      <td><strong>${escapeHtml(latest.exerciseName)}</strong><span class="muted">${escapeHtml(subtitle)}</span></td>
+                      <td><strong>${escapeHtml(latestValue)}</strong>${prCount ? ` <span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}</td>
+                      <td>${group.length}</td>
+                    </tr>
+                    <tr class="progress-detail-row hidden" data-progress-detail="${index}">
+                      <td colspan="4"><div class="progress-log-list">${renderProgressChart(group)}${renderProgressTable(group)}</div></td>
+                    </tr>
+                  `;
+                }).join("")}
+              `).join("")}
             </tbody>
           </table>
         </div>
