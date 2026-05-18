@@ -1600,6 +1600,7 @@ body.is-reordering .exercise-row.dragging {
   font-size: 11px;
   white-space: nowrap;
 }
+#workoutForm.builder-form,
 .inline-workout-editor {
   margin: 0;
   border: 0;
@@ -1607,19 +1608,24 @@ body.is-reordering .exercise-row.dragging {
   background: white;
   padding: 14px;
 }
+#workoutForm .section-head h2,
+#workoutForm .workout-section h3,
 .inline-workout-editor .section-head h2,
 .inline-workout-editor .workout-section h3 {
   color: var(--accent-dark);
 }
+#workoutForm .workout-section,
 .inline-workout-editor .workout-section {
   border: 0;
   border-radius: 0;
   background: white;
   padding: 8px 0;
 }
+#workoutForm .workout-section .section-head,
 .inline-workout-editor .workout-section .section-head {
   margin-bottom: 8px;
 }
+#workoutForm .section-toggle,
 .inline-workout-editor .section-toggle {
   background: transparent;
   border: 0;
@@ -1628,9 +1634,14 @@ body.is-reordering .exercise-row.dragging {
   min-height: 24px;
   width: 24px;
 }
+#workoutForm .workout-sections,
 .inline-workout-editor .workout-sections {
   gap: 6px;
 }
+#workoutForm .exercise-row,
+#workoutForm .template-manager,
+#workoutForm .movement-manager,
+#workoutForm .benchmark-manager,
 .inline-workout-editor .exercise-row,
 .inline-workout-editor .template-manager,
 .inline-workout-editor .movement-manager,
