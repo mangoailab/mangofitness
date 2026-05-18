@@ -1129,7 +1129,6 @@ function initCoachApp() {
   const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
   const list = document.getElementById("coachWorkoutList");
-  const resultsList = document.getElementById("coachResultsList");
   const count = document.getElementById("workoutCount");
   const weekLabel = document.getElementById("workoutWeekLabel");
   const workoutSearch = document.getElementById("workoutSearch");
@@ -1606,14 +1605,6 @@ function initCoachApp() {
         }).join("");
       }
 
-      resultsList.innerHTML = results.length ? results.map((result) => `
-        <article class="item-card">
-          <strong>${escapeHtml(result.exerciseName)}</strong>
-          <p class="muted">${escapeHtml(result.completedOn)}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
-          ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
-        </article>
-      `).join("") : `<p class="muted empty-state">No athlete results logged yet.</p>`;
-
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => {
@@ -1630,7 +1621,6 @@ function initCoachApp() {
       count.textContent = "0 workouts";
       list.className = "list-stack";
       list.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
-      resultsList.innerHTML = `<p class="muted empty-state">Results unavailable until Supabase is ready.</p>`;
     }
   }
 
@@ -2556,6 +2546,7 @@ function initAthleteHistoryApp(options = {}) {
   const profileSelect = document.getElementById("historyProfileSelect");
   const profileField = profileSelect?.closest(".field");
   const history = document.getElementById("athleteHistoryList");
+  const resultsList = document.getElementById("coachResultsList");
   const search = document.getElementById("progressSearch");
   const typeFilter = document.getElementById("progressTypeFilter");
   if (!history) return;
@@ -2594,6 +2585,20 @@ function initAthleteHistoryApp(options = {}) {
 
   function progressDisplayValue(result) {
     return result.score || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.reps || "Logged"));
+  }
+
+  function renderCoachResultsSummary(allResults) {
+    if (!resultsList) return;
+    const rows = [...allResults]
+      .sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")))
+      .slice(0, 30);
+    resultsList.innerHTML = rows.length ? rows.map((result) => `
+      <article class="item-card">
+        <strong>${escapeHtml(result.exerciseName)}</strong>
+        <p class="muted">${escapeHtml(athleteName(result.athleteId))} · ${escapeHtml(result.completedOn || "-")}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""} · ${escapeHtml(result.weight || "-")} lb · ${escapeHtml(result.reps || "-")} reps${result.isPr ? " · PR" : ""}</p>
+        ${result.notes ? `<p>${escapeHtml(result.notes)}</p>` : ""}
+      </article>
+    `).join("") : `<p class="muted empty-state">No athlete results logged yet.</p>`;
   }
 
   function scoreToNumber(value) {
@@ -2703,6 +2708,7 @@ function initAthleteHistoryApp(options = {}) {
   async function renderHistory() {
     try {
       const allResults = await MangoFitnessStore.results();
+      if (coachMode) renderCoachResultsSummary(allResults);
       const selectedAthleteId = coachMode ? (profileSelect?.value || "") : await currentAthleteId();
       if (coachMode && !selectedAthleteId) {
         history.innerHTML = `<p class="muted empty-state">Select an athlete to view progress history.</p>`;
@@ -2755,6 +2761,7 @@ function initAthleteHistoryApp(options = {}) {
       `;
     } catch (error) {
       history.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
+      if (resultsList) resultsList.innerHTML = `<p class="muted empty-state">Results unavailable until Supabase is ready.</p>`;
     }
   }
 
