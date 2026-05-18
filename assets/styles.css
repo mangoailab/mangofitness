@@ -1564,11 +1564,18 @@ body.is-reordering .exercise-row.dragging {
 .calendar-day.is-selected .calendar-day-head {
   color: var(--accent-dark);
 }
+.coach-horizontal-program-calendar .athlete-program-day-head {
+  width: 100%;
+}
 .coach-horizontal-program-calendar .coach-program-athlete-field,
 .coach-horizontal-program-calendar .exercise-group,
 .coach-horizontal-program-calendar .exercise-list,
 .coach-horizontal-program-calendar .calendar-workout-card > .muted {
   display: none;
+}
+.coach-horizontal-program-calendar .calendar-day.is-expanded {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, .16);
 }
 
 @media (max-width: 760px) {
@@ -1608,6 +1615,12 @@ body.is-reordering .exercise-row.dragging {
   }
   .athlete-program-calendar .calendar-day-body {
     display: none;
+  }
+  .coach-horizontal-program-calendar .calendar-day.is-expanded .calendar-day-body {
+    display: grid;
+  }
+  .coach-horizontal-program-calendar .calendar-day.is-expanded {
+    grid-column: 1 / -1;
   }
   .athlete-program-calendar .athlete-program-count {
     display: none;

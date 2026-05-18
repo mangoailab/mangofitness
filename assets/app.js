@@ -1629,13 +1629,13 @@ function initCoachApp() {
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
           if (savedWorkoutView === "horizontal") {
             return `
-              <section class="calendar-day athlete-program-day">
-                <div class="calendar-day-head athlete-program-day-head">
+              <section class="calendar-day athlete-program-day" data-coach-horizontal-day="${escapeHtml(dayIso)}">
+                <button type="button" class="calendar-day-head athlete-program-day-head" data-coach-horizontal-toggle="${escapeHtml(dayIso)}" aria-expanded="false" aria-label="Show ${escapeHtml(calendarDayLabel(day))} programs">
                   <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
                   <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
                   <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
                   <span class="athlete-program-dot${dayWorkouts.length ? " has-program" : ""}" aria-hidden="true"></span>
-                </div>
+                </button>
                 <div class="calendar-day-body">
                   ${dayWorkouts.length ? dayWorkouts.map((workout) => renderWorkoutProgramCard(workout, results, true)).join("") : `<p class="muted calendar-empty">No workout</p>`}
                 </div>
@@ -1656,6 +1656,18 @@ function initCoachApp() {
         }).join("");
       }
 
+      list.querySelectorAll("[data-coach-horizontal-toggle]").forEach((button) => button.addEventListener("click", () => {
+        const day = button.closest("[data-coach-horizontal-day]");
+        const isOpen = day?.classList.contains("is-expanded");
+        list.querySelectorAll("[data-coach-horizontal-day]").forEach((item) => {
+          item.classList.remove("is-expanded");
+          item.querySelector("[data-coach-horizontal-toggle]")?.setAttribute("aria-expanded", "false");
+        });
+        if (day && !isOpen) {
+          day.classList.add("is-expanded");
+          button.setAttribute("aria-expanded", "true");
+        }
+      }));
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-program-athlete]").forEach((select) => select.addEventListener("change", renderCoach));
