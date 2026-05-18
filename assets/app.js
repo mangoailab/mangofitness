@@ -1429,7 +1429,7 @@ function initCoachApp() {
         `}</${compact ? "strong" : "div"}>
         ${compact ? `<p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p><div data-inline-workout-editor></div>` : `<div data-inline-workout-editor></div>`}
         <div class="program-readonly-content">
-        <div class="field coach-program-athlete-field">
+          <div class="field coach-program-athlete-field">
           <label for="coachProgramAthlete-${escapeHtml(workout.id)}">View athlete logs in this program</label>
           <select id="coachProgramAthlete-${escapeHtml(workout.id)}" data-program-athlete="${escapeHtml(workout.id)}">${workoutAthleteOptions(workout, selectedAthleteId)}</select>
         </div>
