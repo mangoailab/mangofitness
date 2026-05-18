@@ -39,7 +39,7 @@
 ## Coach client management
 
 - Coach portal now has a separate Clients page for creating/updating athlete/client profiles, storing login email, phone, notes, and optional Supabase Auth user ID link. Client rows stay collapsed by default and include search to keep the page clean.
-- Static frontend cannot safely create Supabase Auth password users by itself because that requires privileged server-side access. Coaches should create/invite the auth user in Supabase Authentication, then link the profile with the Auth user ID until a secure backend/Edge Function is added.
+- Client cards include athlete login tools, similar to Mango Loan borrower portal tools: Create Login, Find & Link Existing User, and Set Temporary Password. These call the deployed `create-athlete-user` Supabase Edge Function so coaches do not need to manually copy Auth user IDs for normal setup.
 
 ## Progress history behavior
 

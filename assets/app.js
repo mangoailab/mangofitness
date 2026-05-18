@@ -889,12 +889,69 @@ function initCoachClientsApp() {
             ${athlete.notes ? `<p>${escapeHtml(athlete.notes)}</p>` : ""}
             <div class="actions client-profile-actions">
               <button type="button" data-edit-client="${escapeHtml(athlete.id)}">Edit</button>
+              <button type="button" data-create-athlete-login="${escapeHtml(athlete.id)}" ${authUserId ? "disabled" : ""}>Create Login</button>
+              <button type="button" data-link-athlete-login="${escapeHtml(athlete.id)}" ${authUserId ? "disabled" : ""}>Find & Link Existing User</button>
+              <button type="button" data-athlete-temp-password="${escapeHtml(athlete.id)}" ${authUserId ? "" : "disabled"}>Set Temporary Password</button>
               <button type="button" class="danger-button" data-delete-client="${escapeHtml(athlete.id)}">Delete</button>
             </div>
+            <p id="clientLoginResult-${escapeHtml(athlete.id)}" class="muted hidden"></p>
           </div>
         </details>
       `;
     }).join("");
+  }
+
+  function clientLoginResult(id) {
+    return document.getElementById(`clientLoginResult-${id}`);
+  }
+
+  function setClientLoginResult(id, text, isError = false) {
+    const result = clientLoginResult(id);
+    if (!result) return;
+    result.textContent = text || "";
+    result.classList.toggle("hidden", !text);
+    result.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function athleteResetRedirectUrl() {
+    return new URL("reset-password.html", window.location.href).href.replace(/[#?].*$/, "");
+  }
+
+  async function manageAthleteLogin(id, action, button) {
+    const athlete = athleteProfiles.find((item) => item.id === id);
+    if (!athlete) return;
+    const email = String(athlete.email || "").trim().toLowerCase();
+    if (!email) return setClientLoginResult(id, "Add an athlete login email first.", true);
+    const sb = MangoFitnessStore.client();
+    if (!sb?.functions) return setClientLoginResult(id, "Supabase connection required to manage athlete logins.", true);
+
+    const actionText = action === "create-user"
+      ? "Creating athlete login..."
+      : action === "link-existing-user"
+        ? "Finding existing login..."
+        : "Setting temporary password...";
+    setClientLoginResult(id, actionText);
+    if (button) button.disabled = true;
+    try {
+      const { data, error } = await sb.functions.invoke("create-athlete-user", {
+        body: {
+          action,
+          athleteId: id,
+          email,
+          redirectTo: athleteResetRedirectUrl()
+        }
+      });
+      if (error || data?.error) throw new Error(data?.hint || data?.error || error?.message || "Could not manage athlete login.");
+      const emailLine = data.email ? ` Login email: ${data.email}.` : "";
+      const userLine = data.userId ? ` User ID: ${data.userId}.` : "";
+      const passwordLine = data.tempPassword ? ` Temporary password: ${data.tempPassword}` : "";
+      const messageText = `${data.message || "Athlete login updated."}${emailLine}${userLine}${passwordLine}`;
+      await loadClients();
+      setClientLoginResult(id, messageText);
+    } catch (error) {
+      setClientLoginResult(id, friendlyError(error), true);
+      if (button) button.disabled = false;
+    }
   }
 
   async function loadClients() {
@@ -945,12 +1002,18 @@ function initCoachClientsApp() {
 
   list?.addEventListener("click", async (event) => {
     const editId = event.target.closest("[data-edit-client]")?.dataset.editClient;
+    const createLoginId = event.target.closest("[data-create-athlete-login]")?.dataset.createAthleteLogin;
+    const linkLoginId = event.target.closest("[data-link-athlete-login]")?.dataset.linkAthleteLogin;
+    const tempPasswordId = event.target.closest("[data-athlete-temp-password]")?.dataset.athleteTempPassword;
     const deleteId = event.target.closest("[data-delete-client]")?.dataset.deleteClient;
     if (editId) {
       const athlete = athleteProfiles.find((item) => item.id === editId);
       if (athlete) fillForm(athlete);
       return;
     }
+    if (createLoginId) return manageAthleteLogin(createLoginId, "create-user", event.target.closest("button"));
+    if (linkLoginId) return manageAthleteLogin(linkLoginId, "link-existing-user", event.target.closest("button"));
+    if (tempPasswordId) return manageAthleteLogin(tempPasswordId, "set-temporary-password", event.target.closest("button"));
     if (!deleteId) return;
     const athlete = athleteProfiles.find((item) => item.id === deleteId);
     if (!athlete) return;
