@@ -2110,7 +2110,7 @@ function renderSetLogFields(exercise, athleteResults = []) {
         <div class="set-log-row">
           <strong>${index + 1}</strong>
           <input name="set_${index + 1}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" />
-          <input name="set_${index + 1}_weight" type="number" min="0" step="0.5" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" />
+          <input name="set_${index + 1}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" />
         </div>
       `).join("")}
     </div>
@@ -2303,8 +2303,8 @@ function initAthleteApp() {
               for (const [index] of setRows.entries()) {
                 const setNumber = index + 1;
                 const reps = data.get(`set_${setNumber}_reps`);
-                const weight = data.get(`set_${setNumber}_weight`);
-                if (!reps && !weight) continue;
+                const weight = numericWeight(data.get(`set_${setNumber}_weight`));
+                if (!reps && weight == null) continue;
                 savedAnySet = true;
                 await MangoFitnessStore.saveResult({
                   id: uid("result"),
