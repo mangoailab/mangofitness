@@ -43,7 +43,7 @@
 
 ## Progress history behavior
 
-- Athlete and coach progress history should stay clean by default: search/type filters and collapsed movement summary cards. Opened cards should show a chart plus a simple Date/Score/Notes table, not clustered log cards. Avoid extra top-level summary stat boxes unless Lawrence asks for them.
+- Athlete and coach progress history should stay clean by default: search/type filters and collapsed movement summary cards. Opened score/cardio cards should show a chart plus Date/Score/Notes table; opened strength cards should show weight trend plus Date/Weight/Reps/Set/Notes table so logs like Back Squat @ 8 reps are clear. Avoid extra top-level summary stat boxes unless Lawrence asks for them.
 
 ## Current navigation behavior
 

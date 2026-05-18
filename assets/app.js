@@ -2347,13 +2347,18 @@ function initAthleteHistoryApp(options = {}) {
     return `${minutes}:${seconds}`;
   }
 
+  function isStrengthGroup(group) {
+    return group.some((result) => !result.score && result.weight !== "" && result.weight != null);
+  }
+
   function renderProgressChart(group) {
+    const strengthGroup = isStrengthGroup(group);
     const points = [...group]
       .sort((a, b) => String(a.completedOn || "").localeCompare(String(b.completedOn || "")))
-      .map((result, index) => ({ result, index, value: scoreToNumber(result.score || result.weight) }))
+      .map((result, index) => ({ result, index, value: scoreToNumber(strengthGroup ? result.weight : (result.score || result.weight)) }))
       .filter((point) => point.value != null);
     if (points.length < 2) return "";
-    const preferTime = points.some((point) => String(point.result.score || "").includes(":"));
+    const preferTime = !strengthGroup && points.some((point) => String(point.result.score || "").includes(":"));
     const width = 640;
     const height = 220;
     const pad = 34;
@@ -2369,7 +2374,7 @@ function initAthleteHistoryApp(options = {}) {
     const polyPoints = points.map((point, index) => `${x(index)},${y(point.value)}`);
     return `
       <div class="progress-chart-card">
-        <div class="progress-chart-head"><strong>Trend</strong><span class="muted">${escapeHtml(chartLabel(points[0].value, preferTime))} → ${escapeHtml(chartLabel(points.at(-1).value, preferTime))}</span></div>
+        <div class="progress-chart-head"><strong>${strengthGroup ? "Weight trend" : "Score trend"}</strong><span class="muted">${escapeHtml(chartLabel(points[0].value, preferTime))}${strengthGroup ? " lb" : ""} → ${escapeHtml(chartLabel(points.at(-1).value, preferTime))}${strengthGroup ? " lb" : ""}</span></div>
         <div class="progress-chart-wrap">
           <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(group[0]?.exerciseName || "Progress")} trend chart">
             <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="#d9f5c9" stroke-width="2" />
@@ -2385,6 +2390,27 @@ function initAthleteHistoryApp(options = {}) {
 
   function renderProgressTable(group) {
     const rows = [...group].sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")));
+    const strengthGroup = isStrengthGroup(group);
+    if (strengthGroup) {
+      return `
+        <div class="progress-table-wrap">
+          <table class="progress-table strength-progress-table">
+            <thead><tr><th>Date</th><th>Weight</th><th>Reps</th><th>Set</th><th>Notes</th></tr></thead>
+            <tbody>
+              ${rows.map((result) => `
+                <tr class="${result.isPr ? "is-pr" : ""}">
+                  <td>${escapeHtml(result.completedOn || "-")}</td>
+                  <td><strong>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</strong>${result.isPr ? ` <span class="pr-badge">PR</span>` : ""}</td>
+                  <td>${escapeHtml(result.reps || "-")}</td>
+                  <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
+                  <td>${escapeHtml(result.notes || "")}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
     return `
       <div class="progress-table-wrap">
         <table class="progress-table">
