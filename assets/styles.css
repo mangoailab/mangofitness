@@ -302,6 +302,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   gap: 10px;
 }
 .form-actions { margin-top: 2px; }
+.wide-add-button { width: 100%; }
 .info-panel {
   border: 1px solid rgba(15, 122, 59, .18);
   border-radius: 16px;
