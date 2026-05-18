@@ -1571,11 +1571,31 @@ body.is-reordering .exercise-row.dragging {
 .calendar-day.is-selected .calendar-day-head {
   color: var(--accent-dark);
 }
+.coach-horizontal-program-calendar .calendar-day,
+.coach-horizontal-program-calendar .calendar-day.is-selected {
+  border: 0;
+  background: white;
+  box-shadow: none;
+}
+.coach-horizontal-program-calendar .calendar-day-head,
+.coach-horizontal-program-calendar .calendar-day-body,
+.coach-horizontal-program-calendar .athlete-program-day-head {
+  background: white;
+}
+.coach-horizontal-program-calendar .calendar-day-head {
+  border-right: 0;
+}
 .coach-horizontal-program-calendar .athlete-program-day-head {
   width: 100%;
 }
 .coach-horizontal-detail {
   grid-column: 1 / -1;
+  border: 0;
+  border-radius: 0;
+  background: white;
+  padding: 0;
+}
+.coach-horizontal-detail > .list-stack {
   border: 1px solid rgba(15, 122, 59, .32);
   border-radius: 16px;
   background: white;
