@@ -2361,11 +2361,12 @@ function initAthleteApp() {
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
           return `
-            <section class="calendar-day${dayIso === date.value ? " is-selected" : ""}">
-              <div class="calendar-day-head">
-                <strong>${escapeHtml(calendarDayLabel(day))}</strong>
-                <span class="muted">${dayWorkouts.length || ""}</span>
-              </div>
+            <section class="calendar-day athlete-program-day${dayIso === date.value ? " is-selected" : ""}" data-athlete-day="${escapeHtml(dayIso)}">
+              <button type="button" class="calendar-day-head athlete-program-day-head" data-athlete-date="${escapeHtml(dayIso)}" aria-label="View ${escapeHtml(calendarDayLabel(day))}">
+                <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
+                <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
+                <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
+              </button>
               <div class="calendar-day-body">
                 ${dayWorkouts.length ? dayWorkouts.map((item) => `
                   <button type="button" class="calendar-workout-card athlete-schedule-card" data-athlete-date="${escapeHtml(item.date)}">
