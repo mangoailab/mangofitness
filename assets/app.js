@@ -1137,6 +1137,8 @@ function initCoachApp() {
   const savedWorkoutVerticalViewBtn = document.getElementById("savedWorkoutVerticalViewBtn");
   const savedWorkoutHorizontalViewBtn = document.getElementById("savedWorkoutHorizontalViewBtn");
   const message = document.getElementById("coachAppMessage");
+  const formHome = document.createComment("workout-form-home");
+  form.after(formHome);
   let selectedWeekStart = startOfWeek(new Date());
   let savedWorkoutView = "vertical";
 
@@ -1505,9 +1507,21 @@ function initCoachApp() {
 
   sectionRows.forEach(enableRowSorting);
 
-  function showWorkoutForm(show = true) {
+  function returnWorkoutFormHome() {
+    form.classList.remove("inline-workout-editor");
+    formHome.parentNode?.insertBefore(form, formHome);
+  }
+
+  function showWorkoutForm(show = true, options = {}) {
+    if (options.inlineContainer) {
+      options.inlineContainer.innerHTML = "";
+      options.inlineContainer.appendChild(form);
+      form.classList.add("inline-workout-editor");
+    } else if (show) {
+      returnWorkoutFormHome();
+    }
     form.classList.toggle("hidden", !show);
-    showWorkoutFormBtn?.classList.toggle("hidden", show);
+    showWorkoutFormBtn?.classList.toggle("hidden", show && !options.inlineContainer);
     if (show) date?.focus();
   }
 
@@ -1527,7 +1541,10 @@ function initCoachApp() {
     addExerciseRow("lifting");
     addExerciseRow("cardio");
     setAppMessage("");
-    if (options.close !== false) showWorkoutForm(false);
+    if (options.close !== false) {
+      returnWorkoutFormHome();
+      showWorkoutForm(false);
+    }
   }
 
   function collectExercises() {
@@ -1547,7 +1564,7 @@ function initCoachApp() {
     })).filter((exercise) => exercise.name);
   }
 
-  async function editWorkout(id) {
+  async function editWorkout(id, options = {}) {
     const workout = (await MangoFitnessStore.workouts()).find((item) => item.id === id);
     if (!workout) return;
     form.dataset.editId = workout.id;
@@ -1561,8 +1578,8 @@ function initCoachApp() {
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
     workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
-    showWorkoutForm(true);
-    window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
+    showWorkoutForm(true, { inlineContainer: options.inlineContainer });
+    if (!options.inlineContainer) window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
 
   async function copyWorkout(id) {
@@ -1658,6 +1675,7 @@ function initCoachApp() {
           list.insertAdjacentHTML("beforeend", `
             <section class="coach-horizontal-detail" data-coach-horizontal-detail>
               <div class="section-head compact"><div><h3>${selectedHorizontalDate ? escapeHtml(calendarDayLabel(parseLocalDate(selectedHorizontalDate))) : "Program details"}</h3><p class="muted">${selectedWorkouts.length ? `${selectedWorkouts.length} program${selectedWorkouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div></div>
+              <div data-inline-workout-editor></div>
               <div class="list-stack">${selectedWorkouts.length ? selectedWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">Select a day with a dot to view its program.</p>`}</div>
             </section>
           `);
@@ -1677,12 +1695,16 @@ function initCoachApp() {
         if (detail) {
           detail.innerHTML = `
             <div class="section-head compact"><div><h3>${escapeHtml(calendarDayLabel(parseLocalDate(selectedDate)))}</h3><p class="muted">${workouts.length ? `${workouts.length} program${workouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div></div>
+            <div data-inline-workout-editor></div>
             <div class="list-stack">${workouts.length ? workouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">No program for this day.</p>`}</div>
           `;
           detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }));
-      list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
+      list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => {
+        const inlineContainer = button.closest("[data-coach-horizontal-detail]")?.querySelector("[data-inline-workout-editor]");
+        editWorkout(button.dataset.edit, { inlineContainer }).catch((error) => setAppMessage(friendlyError(error), true));
+      }));
       list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-program-athlete]").forEach((select) => select.addEventListener("change", renderCoach));
       list.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => {

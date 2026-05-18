@@ -1574,6 +1574,13 @@ body.is-reordering .exercise-row.dragging {
   background: white;
   padding: 14px;
 }
+.inline-workout-editor {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--soft);
+  padding: 14px;
+}
 
 @media (max-width: 760px) {
   .athlete-filter-grid .narrow-field {
