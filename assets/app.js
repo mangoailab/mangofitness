@@ -1134,13 +1134,20 @@ function initCoachApp() {
   const prevWeekBtn = document.getElementById("prevWeekBtn");
   const thisWeekBtn = document.getElementById("thisWeekBtn");
   const nextWeekBtn = document.getElementById("nextWeekBtn");
-  const savedWorkoutVerticalViewBtn = document.getElementById("savedWorkoutVerticalViewBtn");
-  const savedWorkoutHorizontalViewBtn = document.getElementById("savedWorkoutHorizontalViewBtn");
+  const savedWorkoutViewToggleBtn = document.getElementById("savedWorkoutViewToggleBtn");
   const message = document.getElementById("coachAppMessage");
   const formHome = document.createComment("workout-form-home");
   form.after(formHome);
   let selectedWeekStart = startOfWeek(new Date());
   let savedWorkoutView = "vertical";
+
+  function updateSavedWorkoutViewToggle() {
+    if (!savedWorkoutViewToggleBtn) return;
+    const isHorizontal = savedWorkoutView === "horizontal";
+    savedWorkoutViewToggleBtn.classList.toggle("active", isHorizontal);
+    savedWorkoutViewToggleBtn.setAttribute("aria-label", isHorizontal ? "Switch to vertical list view" : "Switch to horizontal calendar view");
+    savedWorkoutViewToggleBtn.title = isHorizontal ? "Vertical view" : "Horizontal view";
+  }
 
   date.value = todayISO();
 
@@ -1749,17 +1756,10 @@ function initCoachApp() {
   });
   workoutSearch?.addEventListener("input", renderCoach);
   savedWorkoutAthleteFilter?.addEventListener("change", renderCoach);
-  savedWorkoutVerticalViewBtn?.addEventListener("click", () => {
-    savedWorkoutView = "vertical";
-    savedWorkoutVerticalViewBtn.classList.add("active");
-    savedWorkoutHorizontalViewBtn?.classList.remove("active");
-    renderCoach();
-  });
-  savedWorkoutHorizontalViewBtn?.addEventListener("click", () => {
-    savedWorkoutView = "horizontal";
-    savedWorkoutHorizontalViewBtn.classList.add("active");
-    savedWorkoutVerticalViewBtn?.classList.remove("active");
-    if (workoutSearch) workoutSearch.value = "";
+  savedWorkoutViewToggleBtn?.addEventListener("click", () => {
+    savedWorkoutView = savedWorkoutView === "horizontal" ? "vertical" : "horizontal";
+    updateSavedWorkoutViewToggle();
+    if (savedWorkoutView === "horizontal" && workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
 

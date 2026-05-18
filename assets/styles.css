@@ -1104,16 +1104,25 @@ body.is-reordering .exercise-row.dragging {
 .search-field {
   margin-bottom: 0;
 }
-.view-toggle-actions {
-  width: 100%;
+.saved-workout-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
-.view-toggle-actions button {
-  flex: 1 1 0;
+.view-icon-button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 10px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--accent-dark);
 }
-.view-toggle-actions button.active {
-  background: var(--accent-dark);
-  color: white;
-  border-color: var(--accent-dark);
+.view-icon-button.active {
+  background: var(--soft);
+  border-color: var(--accent-green);
 }
 
 @media (max-width: 760px) {
