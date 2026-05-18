@@ -1134,11 +1134,8 @@ function initCoachApp() {
   const prevWeekBtn = document.getElementById("prevWeekBtn");
   const thisWeekBtn = document.getElementById("thisWeekBtn");
   const nextWeekBtn = document.getElementById("nextWeekBtn");
-  const savedWorkoutListViewBtn = document.getElementById("savedWorkoutListViewBtn");
-  const savedWorkoutCalendarViewBtn = document.getElementById("savedWorkoutCalendarViewBtn");
   const message = document.getElementById("coachAppMessage");
   let selectedWeekStart = startOfWeek(new Date());
-  let savedWorkoutView = "list";
 
   date.value = todayISO();
 
@@ -1613,26 +1610,25 @@ function initCoachApp() {
           : `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       }
 
-      if (searchQuery || savedWorkoutView === "list") {
+      if (searchQuery) {
         list.className = "list-stack";
-        list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">${searchQuery ? "No workouts matched your search." : "No workouts scheduled this week."}</p>`;
+        list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">No workouts matched your search.</p>`;
       } else {
         const workoutsByDate = visibleWorkouts.reduce((map, workout) => {
           if (!map.has(workout.date)) map.set(workout.date, []);
           map.get(workout.date).push(workout);
           return map;
         }, new Map());
-        list.className = "workout-calendar coach-program-calendar";
+        list.className = "workout-calendar";
         list.innerHTML = Array.from({ length: 7 }, (_, index) => {
           const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
           return `
-            <section class="calendar-day coach-program-day">
-              <div class="calendar-day-head coach-program-day-head">
-                <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
-                <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
-                <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
+            <section class="calendar-day">
+              <div class="calendar-day-head">
+                <strong>${escapeHtml(calendarDayLabel(day))}</strong>
+                <span class="muted">${dayWorkouts.length || ""}</span>
               </div>
               <div class="calendar-day-body">
                 ${dayWorkouts.length ? dayWorkouts.map((workout) => renderWorkoutProgramCard(workout, results, true)).join("") : `<p class="muted calendar-empty">No workout</p>`}
@@ -1681,19 +1677,6 @@ function initCoachApp() {
   });
   workoutSearch?.addEventListener("input", renderCoach);
   savedWorkoutAthleteFilter?.addEventListener("change", renderCoach);
-  savedWorkoutListViewBtn?.addEventListener("click", () => {
-    savedWorkoutView = "list";
-    savedWorkoutListViewBtn.classList.add("active");
-    savedWorkoutCalendarViewBtn?.classList.remove("active");
-    renderCoach();
-  });
-  savedWorkoutCalendarViewBtn?.addEventListener("click", () => {
-    savedWorkoutView = "calendar";
-    savedWorkoutCalendarViewBtn.classList.add("active");
-    savedWorkoutListViewBtn?.classList.remove("active");
-    if (workoutSearch) workoutSearch.value = "";
-    renderCoach();
-  });
 
   warmupTemplate?.addEventListener("change", () => {
     const template = warmupTemplateByKey(warmupTemplate.value);

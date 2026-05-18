@@ -1104,17 +1104,6 @@ body.is-reordering .exercise-row.dragging {
 .search-field {
   margin-bottom: 0;
 }
-.view-toggle-actions {
-  width: 100%;
-}
-.view-toggle-actions button {
-  flex: 1 1 0;
-}
-.view-toggle-actions button.active {
-  background: var(--accent-dark);
-  color: white;
-  border-color: var(--accent-dark);
-}
 
 @media (max-width: 760px) {
   .week-actions button,
@@ -1181,50 +1170,9 @@ body.is-reordering .exercise-row.dragging {
   font-size: 12px;
 }
 
-.coach-program-calendar .coach-program-day-head {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  text-align: center;
-}
-.coach-program-calendar .coach-program-athlete-field,
-.coach-program-calendar .exercise-group,
-.coach-program-calendar .exercise-list,
-.coach-program-calendar .calendar-workout-card > .muted {
-  display: none;
-}
-
 @media (max-width: 900px) {
   .workout-calendar {
     grid-template-columns: 1fr;
-  }
-  .coach-program-calendar {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px;
-  }
-  .coach-program-calendar .calendar-day {
-    display: block;
-    min-width: 0;
-    border-radius: 12px;
-  }
-  .coach-program-calendar .calendar-day-head {
-    padding: 8px 2px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .coach-program-calendar .calendar-day-body {
-    min-height: 72px;
-    padding: 5px;
-  }
-  .coach-program-calendar .calendar-workout-card {
-    padding: 6px;
-    border-radius: 10px;
-  }
-  .coach-program-calendar .calendar-workout-card strong {
-    font-size: 10px;
-  }
-  .coach-program-calendar .calendar-card-actions {
-    display: none;
   }
   .calendar-day {
     display: grid;
