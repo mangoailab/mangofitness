@@ -1494,6 +1494,15 @@ body.is-reordering .exercise-row.dragging {
   font-size: 12px;
   font-weight: 800;
 }
+.athlete-program-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.athlete-program-dot.has-program {
+  background: var(--accent-green);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .16);
+}
 .athlete-schedule-card {
   width: 100%;
   text-align: left;
@@ -1542,11 +1551,19 @@ body.is-reordering .exercise-row.dragging {
     text-align: center;
   }
   .athlete-program-calendar .calendar-day-body {
-    min-height: 120px;
-    padding: 8px;
+    display: none;
   }
-  .athlete-program-calendar .calendar-workout-card {
-    padding: 8px;
+  .athlete-program-calendar .athlete-program-count {
+    display: none;
+  }
+  .athlete-program-calendar .athlete-program-day-head {
+    min-height: 82px;
+  }
+}
+
+@media (min-width: 761px) {
+  .athlete-program-dot {
+    display: none;
   }
 }
 

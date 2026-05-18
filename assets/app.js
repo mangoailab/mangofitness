@@ -773,9 +773,7 @@ function isoDate(dateValue) {
 function startOfWeek(dateValue) {
   const date = new Date(dateValue);
   date.setHours(0, 0, 0, 0);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  date.setDate(date.getDate() + diff);
+  date.setDate(date.getDate() - date.getDay());
   return date;
 }
 
@@ -2366,6 +2364,7 @@ function initAthleteApp() {
                 <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
                 <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
                 <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
+                <span class="athlete-program-dot${dayWorkouts.length ? " has-program" : ""}" aria-hidden="true"></span>
               </button>
               <div class="calendar-day-body">
                 ${dayWorkouts.length ? dayWorkouts.map((item) => `
