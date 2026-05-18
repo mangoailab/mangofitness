@@ -1369,15 +1369,74 @@ function initCoachApp() {
     })).filter((group) => group.exercises.length);
   }
 
-  function renderExerciseGroups(exercises) {
+  function resultRowsForExercise(workoutResults, exercise) {
+    return workoutResults.filter((result) => result.exerciseId === exercise.id || result.exerciseName === exercise.name);
+  }
+
+  function renderCoachProgramLogRows(workoutResults, exercise) {
+    const rows = resultRowsForExercise(workoutResults, exercise);
+    if (!rows.length) return `<p class="muted progress-note">No log yet.</p>`;
+    return `
+      <div class="coach-program-log-list">
+        ${rows.map((result) => `
+          <p class="muted progress-note">${escapeHtml(result.completedOn || "-")}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""}${result.weight !== "" && result.weight != null ? ` · ${escapeHtml(result.weight)} lb` : ""}${result.reps ? ` · ${escapeHtml(result.reps)} reps` : ""}${result.setNumber ? ` · set ${escapeHtml(result.setNumber)}` : ""}${result.isPr ? " · PR" : ""}${result.notes ? ` · ${escapeHtml(result.notes)}` : ""}</p>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderExerciseGroups(exercises, options = {}) {
     const groups = exercisesBySection(exercises);
     if (!groups.length) return "";
+    const workoutResults = options.results || [];
     return groups.map((group) => `
       <div class="exercise-group">
         <h4>${escapeHtml(group.label)}</h4>
-        <ul class="clean-list">${group.exercises.map((exercise) => `<li><strong>${escapeHtml(exercise.name)}</strong>${exerciseSummary(exercise) ? ` — ${exerciseSummary(exercise)}` : ""}</li>`).join("")}</ul>
+        <ul class="clean-list">${group.exercises.map((exercise) => `
+          <li>
+            <strong>${escapeHtml(exercise.name)}</strong>${exerciseSummary(exercise) ? ` — ${exerciseSummary(exercise)}` : ""}
+            ${options.showLogs ? renderCoachProgramLogRows(workoutResults, exercise) : ""}
+          </li>
+        `).join("")}</ul>
       </div>
     `).join("");
+  }
+
+  function workoutAthleteOptions(workout, selectedId = "") {
+    const assignedIds = workout.assignmentType === "individual" ? (workout.assignedAthleteIds || []) : athleteProfiles.map((athlete) => athlete.id);
+    const assignedAthletes = athleteProfiles.filter((athlete) => assignedIds.includes(athlete.id));
+    return `<option value="">View athlete logs</option>${assignedAthletes.map((athlete) => `<option value="${escapeHtml(athlete.id)}"${athlete.id === selectedId ? " selected" : ""}>${escapeHtml(athlete.name)}</option>`).join("")}`;
+  }
+
+  function renderWorkoutProgramCard(workout, results, compact = false) {
+    const selectedAthleteId = document.getElementById(`coachProgramAthlete-${workout.id}`)?.value || "";
+    const selectedAthlete = athleteProfiles.find((athlete) => athlete.id === selectedAthleteId);
+    const workoutResults = selectedAthleteId
+      ? results.filter((result) => result.athleteId === selectedAthleteId && result.workoutId === workout.id)
+      : [];
+    return `
+      <article class="${compact ? "calendar-workout-card" : "item-card"}" data-program-card="${escapeHtml(workout.id)}">
+        <${compact ? "strong" : "div class=\"item-head\""}>${compact ? escapeHtml(workout.title) : `
+          <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}</p></div>
+          <div class="actions item-actions">
+            <button type="button" data-edit="${workout.id}">Edit</button>
+            <button type="button" data-copy="${workout.id}">Copy</button>
+            <button type="button" data-delete="${workout.id}">Delete</button>
+          </div>
+        `}</${compact ? "strong" : "div"}>
+        ${compact ? `<p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>` : ""}
+        <div class="field coach-program-athlete-field">
+          <label for="coachProgramAthlete-${escapeHtml(workout.id)}">View athlete logs in this program</label>
+          <select id="coachProgramAthlete-${escapeHtml(workout.id)}" data-program-athlete="${escapeHtml(workout.id)}">${workoutAthleteOptions(workout, selectedAthleteId)}</select>
+        </div>
+        ${selectedAthlete ? `<p class="muted">Showing ${escapeHtml(selectedAthlete.name)}'s logged reps, weights, and scores inside this program.</p>` : ""}
+        ${!compact && workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
+        ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
+        ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
+        ${renderExerciseGroups(workout.exercises, { showLogs: Boolean(selectedAthleteId), results: workoutResults })}
+        ${compact ? `<div class="actions calendar-card-actions"><button type="button" data-edit="${workout.id}">Edit</button><button type="button" data-copy="${workout.id}">Copy</button></div>` : ""}
+      </article>
+    `;
   }
 
   function rowAfterPointer(container, y) {
@@ -1555,22 +1614,7 @@ function initCoachApp() {
 
       if (searchQuery) {
         list.className = "list-stack";
-        list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => `
-          <article class="item-card">
-            <div class="item-head">
-              <div><strong>${escapeHtml(workout.title)}</strong><p class="muted">${escapeHtml(workout.date)} · ${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}</p></div>
-              <div class="actions item-actions">
-                <button type="button" data-edit="${workout.id}">Edit</button>
-                <button type="button" data-copy="${workout.id}">Copy</button>
-                <button type="button" data-delete="${workout.id}">Delete</button>
-              </div>
-            </div>
-            ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-            ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
-            ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
-            ${renderExerciseGroups(workout.exercises)}
-          </article>
-        `).join("") : `<p class="muted empty-state">No workouts matched your search.</p>`;
+        list.innerHTML = visibleWorkouts.length ? visibleWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">No workouts matched your search.</p>`;
       } else {
         const workoutsByDate = visibleWorkouts.reduce((map, workout) => {
           if (!map.has(workout.date)) map.set(workout.date, []);
@@ -1589,16 +1633,7 @@ function initCoachApp() {
                 <span class="muted">${dayWorkouts.length || ""}</span>
               </div>
               <div class="calendar-day-body">
-                ${dayWorkouts.length ? dayWorkouts.map((workout) => `
-                  <article class="calendar-workout-card">
-                    <strong>${escapeHtml(workout.title)}</strong>
-                    <p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p>
-                    <div class="actions calendar-card-actions">
-                      <button type="button" data-edit="${workout.id}">Edit</button>
-                      <button type="button" data-copy="${workout.id}">Copy</button>
-                    </div>
-                  </article>
-                `).join("") : `<p class="muted calendar-empty">No workout</p>`}
+                ${dayWorkouts.length ? dayWorkouts.map((workout) => renderWorkoutProgramCard(workout, results, true)).join("") : `<p class="muted calendar-empty">No workout</p>`}
               </div>
             </section>
           `;
@@ -1607,6 +1642,7 @@ function initCoachApp() {
 
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => editWorkout(button.dataset.edit).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
+      list.querySelectorAll("[data-program-athlete]").forEach((select) => select.addEventListener("change", renderCoach));
       list.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => {
         const workoutTitle = button.closest(".item-card")?.querySelector("strong")?.textContent || "this workout";
         if (!confirm(`Delete ${workoutTitle}? This cannot be undone.`)) return;
@@ -2310,7 +2346,7 @@ function initAthleteApp() {
         const workoutDate = parseLocalDate(item.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
-      const workout = visibleWorkouts.find((item) => item.date === date.value) || weekWorkouts[0] || visibleWorkouts[visibleWorkouts.length - 1];
+      const selectedWorkouts = visibleWorkouts.filter((item) => item.date === date.value);
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       if (workoutCount) workoutCount.textContent = `${weekWorkouts.length} workout${weekWorkouts.length === 1 ? "" : "s"}`;
@@ -2350,14 +2386,14 @@ function initAthleteApp() {
       }
 
       let athleteResults = [];
-      if (workout && selectedAthleteId) {
+      if (selectedWorkouts.length && selectedAthleteId) {
         athleteResults = (await MangoFitnessStore.results()).filter((result) => result.athleteId === selectedAthleteId);
       }
 
-      if (!workout) {
-        view.innerHTML = `<p class="muted empty-state">No workout has been assigned for this view yet.</p>`;
+      if (!selectedWorkouts.length) {
+        view.innerHTML = `<p class="muted empty-state">No program assigned for ${escapeHtml(date.value || "this date")}.</p>`;
       } else {
-        view.innerHTML = `
+        view.innerHTML = selectedWorkouts.map((workout) => `
           <article class="item-card workout-detail">
             <h3>${escapeHtml(workout.title)}</h3>
             <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}</p>
@@ -2386,7 +2422,7 @@ function initAthleteApp() {
                         </div>
                         ${renderSetLogFields(exercise, athleteResults)}
                         <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
-                        <button type="submit" class="primary">Log result</button>
+                        <button type="submit" class="primary">Log program result</button>
                       </form>
                     `).join("")}
                     ${group.section === "partner" && group.exercises[0] ? `
@@ -2405,7 +2441,7 @@ function initAthleteApp() {
               `).join("")}
             </div>
           </article>
-        `;
+        `).join("");
       }
 
       view.querySelectorAll(".result-form").forEach((form) => {
