@@ -1604,7 +1604,7 @@ body.is-reordering .exercise-row.dragging {
   margin: 0;
   border: 0;
   border-radius: 0;
-  background: transparent;
+  background: white;
   padding: 0;
 }
 .item-card:has(.inline-workout-editor:not(.hidden)),
