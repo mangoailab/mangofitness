@@ -1198,6 +1198,13 @@ body.is-reordering .exercise-row.dragging {
   .calendar-day-body {
     min-height: 76px;
   }
+  .calendar-day:has(.inline-workout-editor:not(.hidden)) {
+    display: block;
+    grid-column: 1 / -1;
+  }
+  .calendar-day:has(.inline-workout-editor:not(.hidden)) > .calendar-day-head {
+    display: none;
+  }
 }
 
 /* Keep week navigation on one line. */
