@@ -1527,8 +1527,9 @@ body.is-reordering .exercise-row.dragging {
   padding: 9px 10px;
 }
 .set-log-row input.has-ghost-weight {
-  background: rgba(15, 122, 59, .045);
-  border-color: rgba(15, 122, 59, .16);
+  background: rgba(15, 122, 59, .10);
+  border-color: rgba(15, 122, 59, .24);
+  box-shadow: inset 0 0 0 999px rgba(15, 122, 59, .02);
 }
 @media (max-width: 520px) {
   .weight-suggestion {
