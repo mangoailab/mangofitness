@@ -89,12 +89,11 @@ h2 { margin:0 0 10px; font-size:22px; letter-spacing:-.02em; }
 .actions { display:flex; gap:10px; flex-wrap:wrap; }
 .top-actions { align-items:center; gap:14px; flex-shrink:0; }
 .nav-link { color:white; font-size:14px; font-weight:800; text-decoration:none; }
-.nav-link:hover { text-decoration:underline; }
+.nav-link:hover,
 .nav-link.active,
 .nav-link[aria-current="page"] {
-  font-weight: 900;
-  letter-spacing: .01em;
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .link-button {
   appearance: none;
