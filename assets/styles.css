@@ -1581,6 +1581,12 @@ body.is-reordering .exercise-row.dragging {
   background: white;
   padding: 14px;
 }
+.coach-horizontal-detail .item-card {
+  border: 0;
+  box-shadow: none;
+  background: white;
+  padding: 0;
+}
 .coach-horizontal-detail .item-head {
   display: flex;
   align-items: flex-start;
