@@ -38,7 +38,7 @@
 
 ## Coach client management
 
-- Coach portal has a separate Clients page. The create form starts collapsed behind an Add Client button; Create Client + Login creates the athlete profile and creates/links the Supabase Auth login in one step. Edits happen inline inside each athlete card with its own Edit/Save controls. Client rows stay collapsed by default and include search to keep the page clean.
+- Coach portal Add Workout and Clients create flows use the collapsed full-width Add button pattern. Add Workout opens the workout builder; Add Client opens Create Client + Login, which creates the athlete profile and creates/links the Supabase Auth login in one step. Client edits happen inline inside each athlete card with its own Edit/Save controls. Client rows stay collapsed by default and include search to keep the page clean.
 - Client cards include athlete login tools, similar to Mango Loan borrower portal tools: Create Login, Find & Link Existing User, and Set Temporary Password. These call the deployed `create-athlete-user` Supabase Edge Function so coaches do not need to manually copy Auth user IDs for normal setup.
 
 ## Progress history behavior

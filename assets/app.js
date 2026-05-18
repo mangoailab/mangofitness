@@ -1101,6 +1101,7 @@ function initCoachApp() {
   const form = document.getElementById("workoutForm");
   if (!form) return;
 
+  const showWorkoutFormBtn = document.getElementById("showWorkoutFormBtn");
   const date = document.getElementById("workoutDate");
   const title = document.getElementById("workoutTitle");
   const notes = document.getElementById("workoutNotes");
@@ -1445,7 +1446,13 @@ function initCoachApp() {
 
   sectionRows.forEach(enableRowSorting);
 
-  function clearForm() {
+  function showWorkoutForm(show = true) {
+    form.classList.toggle("hidden", !show);
+    showWorkoutFormBtn?.classList.toggle("hidden", show);
+    if (show) date?.focus();
+  }
+
+  function clearForm(options = {}) {
     form.dataset.editId = "";
     date.value = todayISO();
     title.value = "";
@@ -1461,6 +1468,7 @@ function initCoachApp() {
     addExerciseRow("lifting");
     addExerciseRow("cardio");
     setAppMessage("");
+    if (options.close !== false) showWorkoutForm(false);
   }
 
   function collectExercises() {
@@ -1494,6 +1502,7 @@ function initCoachApp() {
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
     workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
+    showWorkoutForm(true);
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
 
@@ -1511,6 +1520,7 @@ function initCoachApp() {
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
     workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", { ...exercise, id: "" }));
+    showWorkoutForm(true);
     setAppMessage("Workout copied into the builder. Pick a date and save it.");
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
@@ -1823,7 +1833,8 @@ function initCoachApp() {
   document.querySelectorAll("[data-add-section]").forEach((button) => {
     button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
   });
-  document.getElementById("clearWorkoutBtn")?.addEventListener("click", clearForm);
+  showWorkoutFormBtn?.addEventListener("click", () => showWorkoutForm(true));
+  document.getElementById("clearWorkoutBtn")?.addEventListener("click", () => clearForm());
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const exercises = collectExercises();

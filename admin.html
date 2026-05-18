@@ -45,13 +45,14 @@
 
     <section id="coachDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="section-head">
-          <div>
-            <h2>Workout Builder</h2>
-          </div>
-        </div>
+        <button type="button" id="showWorkoutFormBtn" class="primary wide-add-button">Add Workout</button>
 
-        <form id="workoutForm" class="builder-form">
+        <form id="workoutForm" class="builder-form hidden">
+          <div class="section-head">
+            <div>
+              <h2>Workout Builder</h2>
+            </div>
+          </div>
           <div class="grid-2 form-grid">
             <div class="field"><label for="workoutDate">Workout date</label><input id="workoutDate" type="date" required /></div>
             <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Partner Cardio" required /></div>
@@ -160,10 +161,10 @@
 
           <div class="actions form-actions">
             <button type="submit" class="primary">Save workout</button>
-            <button type="button" id="clearWorkoutBtn">Clear form</button>
+            <button type="button" id="clearWorkoutBtn">Cancel</button>
           </div>
-          <p id="coachAppMessage" class="muted hidden"></p>
         </form>
+        <p id="coachAppMessage" class="muted hidden"></p>
       </div>
 
       <div class="card dashboard-card">
