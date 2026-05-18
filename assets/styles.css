@@ -1588,6 +1588,10 @@ body.is-reordering .exercise-row.dragging {
   background: var(--soft);
   padding: 14px;
 }
+.item-card:has(.inline-workout-editor:not(.hidden)) .program-readonly-content,
+.calendar-workout-card:has(.inline-workout-editor:not(.hidden)) .program-readonly-content {
+  display: none;
+}
 
 @media (max-width: 760px) {
   .athlete-filter-grid .narrow-field {

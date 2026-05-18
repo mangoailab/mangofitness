@@ -1428,6 +1428,7 @@ function initCoachApp() {
           </div>
         `}</${compact ? "strong" : "div"}>
         ${compact ? `<p class="muted">${workout.exercises.length} items · ${workoutAssignmentLabel(workout)}${workout.warmupNotes ? " · Warm-up" : ""}${workout.cardioNotes ? " · WOD" : ""}</p><div data-inline-workout-editor></div>` : `<div data-inline-workout-editor></div>`}
+        <div class="program-readonly-content">
         <div class="field coach-program-athlete-field">
           <label for="coachProgramAthlete-${escapeHtml(workout.id)}">View athlete logs in this program</label>
           <select id="coachProgramAthlete-${escapeHtml(workout.id)}" data-program-athlete="${escapeHtml(workout.id)}">${workoutAthleteOptions(workout, selectedAthleteId)}</select>
@@ -1438,6 +1439,7 @@ function initCoachApp() {
         ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
         ${renderExerciseGroups(workout.exercises, { showLogs: Boolean(selectedAthleteId), results: workoutResults })}
         ${compact ? `<div class="actions calendar-card-actions"><button type="button" data-edit="${workout.id}">Edit</button><button type="button" data-copy="${workout.id}">Copy</button></div>` : ""}
+        </div>
       </article>
     `;
   }
