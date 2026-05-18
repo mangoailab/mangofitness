@@ -1526,6 +1526,15 @@ body.is-reordering .exercise-row.dragging {
   min-height: 42px;
   padding: 9px 10px;
 }
+.set-log-row input.has-ghost-weight {
+  background: rgba(15, 122, 59, .07);
+  border-color: rgba(15, 122, 59, .22);
+  font-style: italic;
+}
+.set-log-row input.has-ghost-weight::placeholder {
+  color: rgba(15, 122, 59, .62);
+  opacity: 1;
+}
 @media (max-width: 520px) {
   .weight-suggestion {
     align-items: stretch;

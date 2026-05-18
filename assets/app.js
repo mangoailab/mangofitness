@@ -2280,28 +2280,42 @@ function initAthleteApp() {
 
       view.querySelectorAll(".result-form").forEach((form) => {
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
+        const setGhostWeight = (input, value) => {
+          if (!input.dataset.basePlaceholder) input.dataset.basePlaceholder = input.getAttribute("placeholder") || "lb";
+          input.dataset.ghostWeight = value || "";
+          input.placeholder = value ? `${value} lb suggested` : input.dataset.basePlaceholder;
+          input.classList.toggle("has-ghost-weight", Boolean(value) && !input.value);
+        };
+        const confirmGhostWeight = (input) => {
+          if (!input.value && input.dataset.ghostWeight) {
+            input.value = input.dataset.ghostWeight;
+          }
+          setGhostWeight(input, "");
+        };
         const fillWeightsDown = (sourceIndex) => {
           const source = weightInputs[sourceIndex];
-          const sourceWeight = source?.value || "";
+          const sourceWeight = source?.value || source?.dataset.ghostWeight || "";
           weightInputs.slice(sourceIndex + 1).forEach((input) => {
-            if (!input.value || input.dataset.autoFilled === "true") {
-              input.value = sourceWeight;
-              input.dataset.autoFilled = "true";
-            }
+            if (!input.value) setGhostWeight(input, sourceWeight);
           });
         };
         weightInputs.forEach((input, index) => {
           input.addEventListener("input", () => {
-            input.dataset.autoFilled = "false";
+            setGhostWeight(input, "");
             fillWeightsDown(index);
           });
+          input.addEventListener("focus", () => confirmGhostWeight(input));
         });
         form.addEventListener("click", (event) => {
           const button = event.target.closest("[data-apply-weight]");
           if (!button) return;
-          weightInputs.forEach((input) => {
-            input.value = button.dataset.applyWeight || "";
-            input.dataset.autoFilled = "true";
+          weightInputs.forEach((input, index) => {
+            if (index === 0) {
+              input.value = button.dataset.applyWeight || "";
+              setGhostWeight(input, "");
+            } else if (!input.value) {
+              setGhostWeight(input, button.dataset.applyWeight || "");
+            }
           });
         });
         form.addEventListener("submit", async (event) => {
@@ -2314,7 +2328,8 @@ function initAthleteApp() {
               for (const [index] of setRows.entries()) {
                 const setNumber = index + 1;
                 const reps = data.get(`set_${setNumber}_reps`);
-                const weight = numericWeight(data.get(`set_${setNumber}_weight`));
+                const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
+                const weight = numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
                 if (!reps && weight == null) continue;
                 savedAnySet = true;
                 await MangoFitnessStore.saveResult({
