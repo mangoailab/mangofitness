@@ -481,7 +481,13 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   margin-top: 4px;
 }
 .progress-table-wrap {
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 .progress-table {
   width: 100%;
@@ -508,6 +514,11 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .progress-table td:nth-child(2),
 .progress-table td:nth-child(3),
 .progress-table td:nth-child(4) { white-space: nowrap; }
+.coach-results-groups,
+.coach-results-group { min-width: 0; }
+.coach-results-table {
+  min-width: 880px;
+}
 .coach-results-table th,
 .coach-results-table td { vertical-align: top; }
 .coach-results-table td:nth-child(8) { min-width: 180px; white-space: normal; }
