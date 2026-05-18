@@ -1698,6 +1698,10 @@ function initCoachApp() {
             <div data-inline-workout-editor></div>
             <div class="list-stack">${workouts.length ? workouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">No program for this day.</p>`}</div>
           `;
+          detail.querySelectorAll("[data-edit]").forEach((editButton) => editButton.addEventListener("click", () => {
+            const inlineContainer = editButton.closest("[data-program-card]")?.querySelector("[data-inline-workout-editor]") || detail.querySelector("[data-inline-workout-editor]");
+            editWorkout(editButton.dataset.edit, { inlineContainer }).catch((error) => setAppMessage(friendlyError(error), true));
+          }));
           detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }));
