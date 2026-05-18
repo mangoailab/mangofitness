@@ -1571,10 +1571,6 @@ body.is-reordering .exercise-row.dragging {
 .calendar-day.is-selected .calendar-day-head {
   color: var(--accent-dark);
 }
-.coach-horizontal-program-calendar .calendar-day.is-selected {
-  border-color: var(--line);
-  box-shadow: none;
-}
 .coach-horizontal-program-calendar .athlete-program-day-head {
   width: 100%;
 }
