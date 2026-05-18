@@ -2100,7 +2100,7 @@ function renderSetLogFields(exercise, athleteResults = []) {
   return `
     ${suggestion ? `
       <div class="weight-suggestion">
-        <div><strong>${escapeHtml(suggestion.label)}</strong><p class="muted">${escapeHtml(suggestion.detail)} Enter set 1 to fill the rest.</p></div>
+        <div><strong>${escapeHtml(suggestion.label)}</strong><p class="muted">${escapeHtml(suggestion.detail)}</p></div>
         <button type="button" data-apply-weight="${escapeHtml(suggestion.value)}">Use weight</button>
       </div>
     ` : `<p class="muted weight-suggestion-text">Enter set 1 weight to auto-fill the remaining sets.</p>`}
