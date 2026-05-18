@@ -841,7 +841,7 @@ function initCoachClientsApp() {
   function clearForm() {
     clientId.value = "";
     form.reset();
-    saveBtn.textContent = "Create client profile";
+    saveBtn.textContent = "Create Client + Login";
     setClientMessage("");
     showCreateForm(false);
   }
@@ -962,13 +962,44 @@ function initCoachClientsApp() {
     return new URL("reset-password.html", window.location.href).href.replace(/[#?].*$/, "");
   }
 
+  async function invokeAthleteLogin(athlete, action) {
+    const id = athlete.id;
+    const email = String(athlete.email || "").trim().toLowerCase();
+    if (!email) throw new Error("Add an athlete login email first.");
+    const sb = MangoFitnessStore.client();
+    if (!sb?.functions) throw new Error("Supabase connection required to manage athlete logins.");
+
+    const { data, error } = await sb.functions.invoke("create-athlete-user", {
+      body: {
+        action,
+        athleteId: id,
+        email,
+        redirectTo: athleteResetRedirectUrl()
+      }
+    });
+    if (error || data?.error) throw new Error(data?.hint || data?.error || error?.message || "Could not manage athlete login.");
+    return data;
+  }
+
+  function athleteLoginMessage(data) {
+    const emailLine = data.email ? ` Login email: ${data.email}.` : "";
+    const userLine = data.userId ? ` User ID: ${data.userId}.` : "";
+    const passwordLine = data.tempPassword ? ` Temporary password: ${data.tempPassword}` : "";
+    return `${data.message || "Athlete login updated."}${emailLine}${userLine}${passwordLine}`;
+  }
+
+  async function createOrLinkAthleteLogin(athlete) {
+    try {
+      return await invokeAthleteLogin(athlete, "create-user");
+    } catch (error) {
+      if (!/already|registered|exists/i.test(friendlyError(error))) throw error;
+      return invokeAthleteLogin(athlete, "link-existing-user");
+    }
+  }
+
   async function manageAthleteLogin(id, action, button) {
     const athlete = athleteProfiles.find((item) => item.id === id);
     if (!athlete) return;
-    const email = String(athlete.email || "").trim().toLowerCase();
-    if (!email) return setClientLoginResult(id, "Add an athlete login email first.", true);
-    const sb = MangoFitnessStore.client();
-    if (!sb?.functions) return setClientLoginResult(id, "Supabase connection required to manage athlete logins.", true);
 
     const actionText = action === "create-user"
       ? "Creating athlete login..."
@@ -978,19 +1009,8 @@ function initCoachClientsApp() {
     setClientLoginResult(id, actionText);
     if (button) button.disabled = true;
     try {
-      const { data, error } = await sb.functions.invoke("create-athlete-user", {
-        body: {
-          action,
-          athleteId: id,
-          email,
-          redirectTo: athleteResetRedirectUrl()
-        }
-      });
-      if (error || data?.error) throw new Error(data?.hint || data?.error || error?.message || "Could not manage athlete login.");
-      const emailLine = data.email ? ` Login email: ${data.email}.` : "";
-      const userLine = data.userId ? ` User ID: ${data.userId}.` : "";
-      const passwordLine = data.tempPassword ? ` Temporary password: ${data.tempPassword}` : "";
-      const messageText = `${data.message || "Athlete login updated."}${emailLine}${userLine}${passwordLine}`;
+      const data = await invokeAthleteLogin(athlete, action);
+      const messageText = athleteLoginMessage(data);
       await loadClients();
       setClientLoginResult(id, messageText);
     } catch (error) {
@@ -1019,9 +1039,9 @@ function initCoachClientsApp() {
     if (!email) return setClientMessage("Enter the client login email.", true);
 
     saveBtn.disabled = true;
-    saveBtn.textContent = "Creating...";
+    saveBtn.textContent = "Creating client and login...";
     try {
-      await MangoFitnessStore.saveAthlete({
+      const savedAthlete = await MangoFitnessStore.saveAthlete({
         id: "",
         name,
         email,
@@ -1029,14 +1049,16 @@ function initCoachClientsApp() {
         authUserId: "",
         notes: clientNotes.value.trim()
       });
-      clearForm();
+      const loginData = await createOrLinkAthleteLogin(savedAthlete);
+      form.reset();
+      showCreateForm(false);
       await loadClients();
-      setClientMessage("Client profile saved.");
+      setClientMessage(`Client profile created. ${athleteLoginMessage(loginData)}`);
     } catch (error) {
       setClientMessage(friendlyError(error), true);
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = "Create client profile";
+      saveBtn.textContent = "Create Client + Login";
     }
   });
 
