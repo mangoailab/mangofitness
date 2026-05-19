@@ -174,9 +174,14 @@
             <p id="workoutWeekLabel" class="muted">This week</p>
           </div>
           <span id="workoutCount" class="pill hidden">0 workouts</span>
-          <button type="button" id="savedWorkoutViewToggleBtn" class="view-icon-button saved-workout-view-corner" aria-label="Switch to horizontal calendar view" title="Switch view">
-            <span class="view-icon-lines" aria-hidden="true"><span></span><span></span><span></span></span>
-          </button>
+          <div class="saved-workout-view-corner" aria-label="Saved workout view">
+            <button type="button" id="savedWorkoutListViewBtn" class="view-icon-button active" aria-label="List view" title="List view">
+              <span class="view-icon-lines" aria-hidden="true"><span></span><span></span><span></span></span>
+            </button>
+            <button type="button" id="savedWorkoutCalendarViewBtn" class="view-icon-button" aria-label="Calendar view" title="Calendar view">
+              <span class="view-icon-calendar" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+            </button>
+          </div>
         </div>
         <div class="saved-workout-tools">
           <div class="actions week-actions">
