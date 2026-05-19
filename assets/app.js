@@ -3252,7 +3252,7 @@ function initCoachMovementsApp() {
                 <td data-movement-cell="name"><strong>${escapeHtml(movement.name)}</strong></td>
                 <td data-movement-cell="category">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
                 <td data-movement-cell="description">${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
-                <td data-movement-cell="showOnLeaderboard">${movement.showOnLeaderboard ? "✓" : ""}</td>
+                <td data-movement-cell="showOnLeaderboard"><input type="checkbox" disabled${movement.showOnLeaderboard ? " checked" : ""} aria-label="${movement.showOnLeaderboard ? "Shown on leaderboard" : "Not shown on leaderboard"}" /></td>
                 <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
               </tr>
             `).join("")}
