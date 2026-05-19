@@ -586,6 +586,30 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   color: var(--text);
   font-weight: 600;
 }
+@media (max-width: 640px) and (orientation: portrait) {
+  .movement-library-table { min-width: 680px; }
+  .movement-library-table th:nth-child(5),
+  .movement-library-table td:nth-child(5) {
+    min-width: 78px;
+    width: 78px;
+    padding: 8px 6px;
+    box-shadow: -4px 0 8px rgba(15, 122, 59, .06);
+  }
+  .movement-library-table .table-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .movement-library-table .table-actions button {
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1;
+  }
+}
 .leaderboard-winner td {
   background: rgba(255, 183, 3, .14);
 }
