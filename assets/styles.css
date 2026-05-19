@@ -265,6 +265,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
+  position: relative;
 }
 .section-head {
   display: flex;
@@ -1104,12 +1105,6 @@ body.is-reordering .exercise-row.dragging {
 .search-field {
   margin-bottom: 0;
 }
-.saved-workout-head-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
 .view-icon-button {
   width: 36px;
   height: 36px;
@@ -1121,6 +1116,11 @@ body.is-reordering .exercise-row.dragging {
 .view-icon-button.active {
   background: var(--soft);
   border-color: var(--accent-green);
+}
+.saved-workout-view-corner {
+  position: absolute;
+  top: 14px;
+  right: 14px;
 }
 .view-icon-lines {
   width: 20px;
