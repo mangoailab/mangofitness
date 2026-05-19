@@ -571,6 +571,11 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   width: 100%;
   min-width: 120px;
 }
+.movement-library-table input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  min-width: 0;
+}
 .movement-library-table tr.is-editing td { background: var(--soft); }
 .table-check {
   display: inline-flex;
