@@ -2565,13 +2565,3 @@ body.is-reordering .exercise-row.dragging {
   background: #fff1f2;
   color: #be123c;
 }
-
-.coach-month-program-calendar .calendar-day {
-  min-height: 76px;
-}
-.coach-month-program-calendar .athlete-program-day-head {
-  min-height: 76px;
-}
-.coach-month-program-calendar .calendar-day.is-outside-month {
-  opacity: .45;
-}

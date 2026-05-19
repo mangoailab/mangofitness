@@ -783,20 +783,6 @@ function addDays(dateValue, days) {
   return date;
 }
 
-function addMonths(dateValue, months) {
-  const date = new Date(dateValue);
-  date.setMonth(date.getMonth() + months);
-  return startOfWeek(date);
-}
-
-function endOfWeek(dateValue) {
-  return addDays(startOfWeek(dateValue), 6);
-}
-
-function monthLabel(dateValue) {
-  return new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(dateValue);
-}
-
 function shortDate(dateValue) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(dateValue);
 }
@@ -1157,9 +1143,9 @@ function initCoachApp() {
   let savedWorkoutView = "vertical";
 
   function updateSavedWorkoutViewToggle() {
-    const isMonth = savedWorkoutView === "month";
-    savedWorkoutListViewBtn?.classList.toggle("active", !isMonth);
-    savedWorkoutCalendarViewBtn?.classList.toggle("active", isMonth);
+    const isHorizontal = savedWorkoutView === "horizontal";
+    savedWorkoutListViewBtn?.classList.toggle("active", !isHorizontal);
+    savedWorkoutCalendarViewBtn?.classList.toggle("active", isHorizontal);
   }
 
   date.value = todayISO();
@@ -1632,10 +1618,6 @@ function initCoachApp() {
       const selectedScheduleAthlete = athleteProfiles.find((athlete) => athlete.id === selectedScheduleAthleteId);
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
-      const monthStart = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
-      const monthEnd = new Date(weekStart.getFullYear(), weekStart.getMonth() + 1, 0);
-      const viewStart = savedWorkoutView === "month" ? monthStart : weekStart;
-      const viewEnd = savedWorkoutView === "month" ? monthEnd : weekEnd;
       const visibleWorkouts = workouts.filter((workout) => {
         const matchesAthlete = selectedScheduleAthleteId
           ? (workout.assignmentType || "everyone") === "individual" && (workout.assignedAthleteIds || []).includes(selectedScheduleAthleteId)
@@ -1644,24 +1626,17 @@ function initCoachApp() {
         if (!matchesAthlete || !matchesSearch) return false;
         if (searchQuery) return true;
         const workoutDate = parseLocalDate(workout.date);
-        return workoutDate >= viewStart && workoutDate <= viewEnd;
+        return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
 
       count.textContent = searchQuery
         ? `${visibleWorkouts.length} match${visibleWorkouts.length === 1 ? "" : "es"}`
-        : savedWorkoutView === "month"
-          ? `${visibleWorkouts.length} this month`
-          : `${visibleWorkouts.length} this week`;
+        : `${visibleWorkouts.length} this week`;
       if (weekLabel) {
         weekLabel.textContent = searchQuery
           ? `Search results${selectedScheduleAthlete ? ` for ${selectedScheduleAthlete.name}` : ""}`
-          : savedWorkoutView === "month"
-            ? `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}${monthLabel(monthStart)}`
-            : `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
+          : `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       }
-      if (prevWeekBtn) prevWeekBtn.textContent = savedWorkoutView === "month" ? "Previous month" : "Previous week";
-      if (thisWeekBtn) thisWeekBtn.textContent = savedWorkoutView === "month" ? "This month" : "This week";
-      if (nextWeekBtn) nextWeekBtn.textContent = savedWorkoutView === "month" ? "Next month" : "Next week";
 
       if (searchQuery) {
         list.className = "list-stack";
@@ -1672,20 +1647,16 @@ function initCoachApp() {
           map.get(workout.date).push(workout);
           return map;
         }, new Map());
-        const calendarStart = savedWorkoutView === "month" ? startOfWeek(monthStart) : weekStart;
-        const calendarEnd = savedWorkoutView === "month" ? endOfWeek(monthEnd) : weekEnd;
-        const calendarDayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
-        list.className = savedWorkoutView === "month" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar coach-month-program-calendar" : "workout-calendar";
+        list.className = savedWorkoutView === "horizontal" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar" : "workout-calendar";
         let selectedHorizontalDate = "";
-        list.innerHTML = Array.from({ length: calendarDayCount }, (_, index) => {
-          const day = addDays(calendarStart, index);
+        list.innerHTML = Array.from({ length: 7 }, (_, index) => {
+          const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
-          if (savedWorkoutView === "month") {
+          if (savedWorkoutView === "horizontal") {
             if (!selectedHorizontalDate && dayWorkouts.length) selectedHorizontalDate = dayIso;
-            const isOutsideMonth = day.getMonth() !== monthStart.getMonth();
             return `
-              <section class="calendar-day athlete-program-day${isOutsideMonth ? " is-outside-month" : ""}" data-coach-horizontal-day="${escapeHtml(dayIso)}">
+              <section class="calendar-day athlete-program-day" data-coach-horizontal-day="${escapeHtml(dayIso)}">
                 <button type="button" class="calendar-day-head athlete-program-day-head" data-coach-horizontal-toggle="${escapeHtml(dayIso)}" aria-expanded="false" aria-label="Show ${escapeHtml(calendarDayLabel(day))} programs">
                   <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
                   <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
@@ -1707,7 +1678,7 @@ function initCoachApp() {
             </section>
           `;
         }).join("");
-        if (savedWorkoutView === "month") {
+        if (savedWorkoutView === "horizontal") {
           const selectedWorkouts = workoutsByDate.get(selectedHorizontalDate) || [];
           list.insertAdjacentHTML("beforeend", `
             <section class="coach-horizontal-detail" data-coach-horizontal-detail>
@@ -1768,7 +1739,7 @@ function initCoachApp() {
   assignmentType?.addEventListener("change", updateAssignmentVisibility);
 
   prevWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = savedWorkoutView === "month" ? addMonths(selectedWeekStart, -1) : addDays(selectedWeekStart, -7);
+    selectedWeekStart = addDays(selectedWeekStart, -7);
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
@@ -1778,7 +1749,7 @@ function initCoachApp() {
     renderCoach();
   });
   nextWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = savedWorkoutView === "month" ? addMonths(selectedWeekStart, 1) : addDays(selectedWeekStart, 7);
+    selectedWeekStart = addDays(selectedWeekStart, 7);
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
@@ -1790,7 +1761,7 @@ function initCoachApp() {
     renderCoach();
   });
   savedWorkoutCalendarViewBtn?.addEventListener("click", () => {
-    savedWorkoutView = "month";
+    savedWorkoutView = "horizontal";
     updateSavedWorkoutViewToggle();
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
@@ -2460,7 +2431,7 @@ function initAthleteApp() {
       const visibleWorkouts = workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
       const weekWorkouts = visibleWorkouts.filter((item) => {
         const workoutDate = parseLocalDate(item.date);
-        return workoutDate >= viewStart && workoutDate <= viewEnd;
+        return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
       const workout = visibleWorkouts.find((item) => item.date === date.value);
 
@@ -2667,7 +2638,7 @@ function initAthleteApp() {
     if (session?.user) loadAthleteProfiles().then(renderAthlete);
   });
   prevWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = savedWorkoutView === "month" ? addMonths(selectedWeekStart, -1) : addDays(selectedWeekStart, -7);
+    selectedWeekStart = addDays(selectedWeekStart, -7);
     renderAthlete();
   });
   thisWeekBtn?.addEventListener("click", () => {
@@ -2676,7 +2647,7 @@ function initAthleteApp() {
     renderAthlete();
   });
   nextWeekBtn?.addEventListener("click", () => {
-    selectedWeekStart = savedWorkoutView === "month" ? addMonths(selectedWeekStart, 1) : addDays(selectedWeekStart, 7);
+    selectedWeekStart = addDays(selectedWeekStart, 7);
     renderAthlete();
   });
   loadAthleteProfiles().then(renderAthlete);
