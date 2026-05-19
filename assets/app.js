@@ -1148,6 +1148,7 @@ function initCoachApp() {
   let coachWeekPickerOpen = false;
   let coachWeekPickerMonth = null;
   let selectedCoachProgramDate = "";
+  let coachWeekPickerWorkouts = [];
 
 
   function renderCoachWeekPicker(workoutsForDots) {
@@ -1699,7 +1700,8 @@ function initCoachApp() {
           ? `Search results${selectedScheduleAthlete ? ` for ${selectedScheduleAthlete.name}` : ""}`
           : `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       }
-      renderCoachWeekPicker(matchingWorkouts);
+      coachWeekPickerWorkouts = matchingWorkouts;
+      renderCoachWeekPicker(coachWeekPickerWorkouts);
 
       if (searchQuery) {
         list.className = "list-stack";
@@ -1835,7 +1837,7 @@ function initCoachApp() {
   weekLabel?.addEventListener("click", () => {
     coachWeekPickerOpen = !coachWeekPickerOpen;
     if (coachWeekPickerOpen) coachWeekPickerMonth = new Date(selectedWeekStart);
-    renderCoach();
+    renderCoachWeekPicker(coachWeekPickerWorkouts);
   });
   savedWorkoutViewToggleBtn?.addEventListener("click", () => {
     savedWorkoutView = savedWorkoutView === "horizontal" ? "vertical" : "horizontal";
@@ -2478,6 +2480,7 @@ function initAthleteApp() {
   let signedInAthleteId = "";
   let weekPickerOpen = false;
   let weekPickerMonth = null;
+  let weekPickerWorkouts = [];
 
 
   function renderWeekPicker(visibleWorkouts) {
@@ -2510,7 +2513,8 @@ function initAthleteApp() {
     `;
     weekPicker.querySelector("[data-close-week-picker]")?.addEventListener("click", () => {
       weekPickerOpen = false;
-      renderWeekPicker(visibleWorkouts);
+      weekPickerWorkouts = visibleWorkouts;
+      renderWeekPicker(weekPickerWorkouts);
     });
     weekPicker.querySelectorAll("[data-week-picker-month]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -2770,7 +2774,7 @@ function initAthleteApp() {
   weekLabel?.addEventListener("click", () => {
     weekPickerOpen = !weekPickerOpen;
     if (weekPickerOpen) weekPickerMonth = new Date(selectedWeekStart);
-    renderAthlete();
+    renderWeekPicker(weekPickerWorkouts);
   });
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
     if (session?.user) loadAthleteProfiles().then(renderAthlete);
