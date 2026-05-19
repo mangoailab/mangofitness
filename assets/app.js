@@ -3065,7 +3065,7 @@ function initAthleteHistoryApp(options = {}) {
         groups[key].push(result);
         return groups;
       }, {});
-      const groups = Object.values(grouped).sort((a, b) => String(b[0]?.completedOn || "").localeCompare(String(a[0]?.completedOn || "")));
+      const groups = Object.values(grouped).sort((a, b) => String(a[0]?.exerciseName || "").localeCompare(String(b[0]?.exerciseName || "")));
       const categoryGroups = groups.reduce((map, group) => {
         const category = progressGroupLabel(group[0]);
         if (!map.has(category)) map.set(category, []);
