@@ -1685,7 +1685,7 @@ function initCoachApp() {
             <section class="coach-horizontal-detail" data-coach-horizontal-detail>
               <div class="section-head compact"><div><h3>${selectedHorizontalDate ? escapeHtml(calendarDayLabel(parseLocalDate(selectedHorizontalDate))) : "Program details"}</h3><p class="muted">${selectedWorkouts.length ? `${selectedWorkouts.length} program${selectedWorkouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div></div>
               <div data-inline-workout-editor></div>
-              <div class="list-stack">${selectedWorkouts.length ? selectedWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">Select a day with a dot to view its program.</p>`}</div>
+              <div class="list-stack">${selectedWorkouts.length ? selectedWorkouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : ""}</div>
             </section>
           `);
           list.querySelector(`[data-coach-horizontal-day="${CSS.escape(selectedHorizontalDate)}"]`)?.classList.add("is-selected");
