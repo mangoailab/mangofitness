@@ -2879,7 +2879,6 @@ function initAthleteHistoryApp(options = {}) {
   const search = document.getElementById("progressSearch");
   const typeFilter = document.getElementById("progressTypeFilter");
   const categoryFilter = document.getElementById("progressCategoryFilter");
-  const movementFilter = document.getElementById("progressMovementFilter");
   const limitFilter = document.getElementById("progressLimitFilter");
   const filterSummary = document.getElementById("progressFilterSummary");
   const historicalForm = document.getElementById("historicalBenchmarkForm");
@@ -3044,7 +3043,6 @@ function initAthleteHistoryApp(options = {}) {
 
   function updateProgressFilterOptions(baseResults) {
     const selectedCategory = categoryFilter?.value || "all";
-    const selectedMovement = movementFilter?.value || "all";
     if (categoryFilter) {
       const categories = [...new Set(baseResults.map(progressGroupLabel))].sort((a, b) => {
         const ai = progressGroupOrder.indexOf(a);
@@ -3053,15 +3051,6 @@ function initAthleteHistoryApp(options = {}) {
       });
       categoryFilter.innerHTML = `<option value="all">All categories</option>${categories.map((category) => `<option value="${escapeHtml(category)}"${selectedCategory === category ? " selected" : ""}>${escapeHtml(category)}</option>`).join("")}`;
       if (selectedCategory !== "all" && !categories.includes(selectedCategory)) categoryFilter.value = "all";
-    }
-    if (movementFilter) {
-      const activeCategory = categoryFilter?.value || "all";
-      const movements = [...new Set(baseResults
-        .filter((result) => activeCategory === "all" || progressGroupLabel(result) === activeCategory)
-        .map((result) => result.exerciseName || "Movement"))]
-        .sort((a, b) => a.localeCompare(b));
-      movementFilter.innerHTML = `<option value="all">All movements</option>${movements.map((movement) => `<option value="${escapeHtml(movement)}"${selectedMovement === movement ? " selected" : ""}>${escapeHtml(movement)}</option>`).join("")}`;
-      if (selectedMovement !== "all" && !movements.includes(selectedMovement)) movementFilter.value = "all";
     }
   }
 
@@ -3230,16 +3219,13 @@ function initAthleteHistoryApp(options = {}) {
       updateProgressFilterOptions(baseResults);
       const selectedType = typeFilter?.value || "all";
       const selectedCategory = categoryFilter?.value || "all";
-      const selectedMovement = movementFilter?.value || "all";
       const selectedLimit = limitFilter?.value || "all";
       const filteredResults = baseResults.filter((result) => {
         const category = progressGroupLabel(result);
-        const movement = result.exerciseName || "Movement";
         const matchesSearch = !term || resultSearchText(result).includes(term);
         const matchesType = selectedType === "all" || (selectedType === "pr" ? result.isPr : resultType(result) === selectedType);
         const matchesCategory = selectedCategory === "all" || category === selectedCategory;
-        const matchesMovement = selectedMovement === "all" || movement === selectedMovement;
-        return matchesSearch && matchesType && matchesCategory && matchesMovement;
+        return matchesSearch && matchesType && matchesCategory;
       });
       const results = selectedLimit === "all" ? filteredResults : filteredResults.slice(0, Number(selectedLimit) || filteredResults.length);
       if (filterSummary) {
@@ -3321,11 +3307,7 @@ function initAthleteHistoryApp(options = {}) {
   profileSelect?.addEventListener("change", renderHistory);
   search?.addEventListener("input", renderHistory);
   typeFilter?.addEventListener("change", renderHistory);
-  categoryFilter?.addEventListener("change", () => {
-    if (movementFilter) movementFilter.value = "all";
-    renderHistory();
-  });
-  movementFilter?.addEventListener("change", renderHistory);
+  categoryFilter?.addEventListener("change", renderHistory);
   limitFilter?.addEventListener("change", renderHistory);
   addHistoricalBtn?.addEventListener("click", () => showHistoricalForm(true));
   clearHistoricalBtn?.addEventListener("click", () => {
