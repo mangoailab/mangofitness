@@ -385,7 +385,11 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   margin-bottom: 22px;
 }
 .athlete-progress-filter-grid {
-  grid-template-columns: minmax(220px, 1fr) minmax(150px, .45fr);
+  grid-template-columns: minmax(220px, 1.2fr) minmax(160px, .8fr) minmax(180px, .9fr) minmax(140px, .65fr) minmax(120px, .55fr);
+}
+.progress-filter-summary {
+  margin: -10px 0 18px;
+  font-size: 13px;
 }
 .progress-timeline,
 .progress-log-list {
