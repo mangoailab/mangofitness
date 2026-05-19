@@ -1731,7 +1731,7 @@ function initCoachApp() {
             `;
           }
           return `
-            <section class="calendar-day">
+            <section class="calendar-day${dayIso === selectedCoachProgramDate ? " is-selected" : ""}" data-coach-vertical-day="${escapeHtml(dayIso)}">
               <div class="calendar-day-head">
                 <strong>${escapeHtml(calendarDayLabel(day))}</strong>
                 <span class="muted">${dayWorkouts.length || ""}</span>
@@ -1754,6 +1754,8 @@ function initCoachApp() {
           `);
           list.querySelector(`[data-coach-horizontal-day="${CSS.escape(selectedHorizontalDate)}"]`)?.classList.add("is-selected");
           list.querySelector(`[data-coach-horizontal-toggle="${CSS.escape(selectedHorizontalDate)}"]`)?.setAttribute("aria-expanded", "true");
+        } else if (selectedCoachProgramDate) {
+          list.querySelector(`[data-coach-vertical-day="${CSS.escape(selectedCoachProgramDate)}"]`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }
 
