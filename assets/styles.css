@@ -1362,7 +1362,8 @@ body.is-reordering .exercise-row.dragging {
   min-width: 0;
 }
 
-@media (max-width: 640px) and (orientation: portrait) {
+@media (max-width: 640px) and (orientation: portrait),
+       (max-width: 900px) and (orientation: landscape) {
   .historical-benchmark-top-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
