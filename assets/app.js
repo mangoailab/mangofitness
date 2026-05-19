@@ -2887,6 +2887,9 @@ function initAthleteHistoryApp(options = {}) {
   const historicalWeight = document.getElementById("historicalBenchmarkWeight");
   const historicalReps = document.getElementById("historicalBenchmarkReps");
   const historicalScore = document.getElementById("historicalBenchmarkScore");
+  const historicalWeightField = document.getElementById("historicalBenchmarkWeightField");
+  const historicalRepsField = document.getElementById("historicalBenchmarkRepsField");
+  const historicalScoreField = document.getElementById("historicalBenchmarkScoreField");
   const historicalNotes = document.getElementById("historicalBenchmarkNotes");
   const historicalPr = document.getElementById("historicalBenchmarkPr");
   const historicalMessage = document.getElementById("historicalBenchmarkMessage");
@@ -2939,10 +2942,32 @@ function initAthleteHistoryApp(options = {}) {
     historicalSuggestions.style.maxHeight = `${suggestionHeight}px`;
   }
 
+  function historicalBenchmarkEntryType(movement) {
+    const text = [movement?.name, movement?.category, movement?.description].join(" ").toLowerCase();
+    if (/\b(row|run|mile|meter|metre|ski|bike|assault|echo|erg|cal|calorie|wod|amrap|for time|time|wall ball|burpee|double[- ]?under|sit[- ]?up|push[- ]?up|max reps|reps)\b/.test(text)) return "score";
+    return "strength";
+  }
+
+  function updateHistoricalFields(movement = null) {
+    const type = movement ? historicalBenchmarkEntryType(movement) : "all";
+    const scoreOnly = type === "score";
+    historicalWeightField?.classList.toggle("hidden", scoreOnly);
+    historicalRepsField?.classList.toggle("hidden", scoreOnly);
+    historicalScoreField?.classList.toggle("hidden", false);
+    if (scoreOnly) {
+      if (historicalWeight) historicalWeight.value = "";
+      if (historicalReps) historicalReps.value = "";
+      if (historicalScore) historicalScore.placeholder = "Time, calories, reps, or score";
+    } else {
+      if (historicalScore) historicalScore.placeholder = "Optional score or notes, if needed";
+    }
+  }
+
   function applyHistoricalBenchmark(movement) {
     if (!historicalInput || !movement) return;
     historicalInput.value = movement.name;
     historicalInput.dataset.movementId = movement.id;
+    updateHistoricalFields(movement);
     hideHistoricalSuggestions();
   }
 
@@ -3245,6 +3270,7 @@ function initAthleteHistoryApp(options = {}) {
       profileField?.classList.add("hidden");
       if (historicalDate && !historicalDate.value) historicalDate.value = todayISO();
       await loadHistoricalBenchmarkOptions();
+      updateHistoricalFields();
     }
     await renderHistory();
   }
@@ -3259,6 +3285,7 @@ function initAthleteHistoryApp(options = {}) {
     if (historicalInput) historicalInput.dataset.movementId = "";
     if (historicalDate) historicalDate.value = todayISO();
     if (historicalPr) historicalPr.checked = true;
+    updateHistoricalFields();
     hideHistoricalSuggestions();
     setHistoricalMessage("");
     showHistoricalForm(false);
@@ -3267,6 +3294,7 @@ function initAthleteHistoryApp(options = {}) {
     const query = event.target.value.trim().toLowerCase();
     const exactBenchmark = historicalBenchmarkByName(event.target.value);
     event.target.dataset.movementId = exactBenchmark ? exactBenchmark.id : "";
+    updateHistoricalFields(exactBenchmark);
     if (!historicalSuggestions) return;
     const matches = query ? historicalBenchmarks
       .filter((movement) => movement.name.toLowerCase().includes(query))
@@ -3289,12 +3317,14 @@ function initAthleteHistoryApp(options = {}) {
   historicalForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const selectedBenchmark = historicalBenchmarkById(historicalInput?.dataset.movementId || "") || historicalBenchmarkByName(historicalInput?.value || "");
-    const weight = numericWeight(historicalWeight?.value);
+    const scoreOnly = selectedBenchmark && historicalBenchmarkEntryType(selectedBenchmark) === "score";
+    const weight = scoreOnly ? null : numericWeight(historicalWeight?.value);
     const score = historicalScore?.value.trim() || "";
-    const reps = historicalReps?.value.trim() || "";
+    const reps = scoreOnly ? "" : historicalReps?.value.trim() || "";
     if (!selectedBenchmark) return setHistoricalMessage("Choose a benchmark from the suggestions first.", true);
     if (!historicalDate?.value) return setHistoricalMessage("Choose the date achieved.", true);
-    if (weight == null && !score && !reps) return setHistoricalMessage("Enter a weight, reps, or time/score.", true);
+    if (scoreOnly && !score) return setHistoricalMessage("Enter the time or score for this benchmark.", true);
+    if (!scoreOnly && weight == null && !score && !reps) return setHistoricalMessage("Enter a weight, reps, or optional score.", true);
     try {
       await MangoFitnessStore.saveHistoricalBenchmark({
         movementId: selectedBenchmark.id,
@@ -3310,6 +3340,7 @@ function initAthleteHistoryApp(options = {}) {
       if (historicalInput) historicalInput.dataset.movementId = "";
       if (historicalDate) historicalDate.value = todayISO();
       if (historicalPr) historicalPr.checked = true;
+      updateHistoricalFields();
       hideHistoricalSuggestions();
       showHistoricalForm(false);
       setHistoricalMessage("Past benchmark saved as a self-reported historical entry.");
