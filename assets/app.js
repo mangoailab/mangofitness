@@ -1574,9 +1574,9 @@ function initCoachApp() {
           <select id="coachProgramAthlete-${escapeHtml(workout.id)}" data-program-athlete="${escapeHtml(workout.id)}">${workoutAthleteOptions(workout, selectedAthleteId)}</select>
         </div>
         ${selectedAthlete ? `<p class="muted">Showing ${escapeHtml(selectedAthlete.name)}'s logged reps, weights, and scores inside this program.</p>` : ""}
-        ${!compact && workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-        ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
-        ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
+        ${!compact && workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
+        ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
+        ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
         ${renderExerciseGroups(workout.exercises, { showLogs: Boolean(selectedAthleteId), results: workoutResults })}
         ${compact ? `<div class="actions calendar-card-actions"><button type="button" data-edit="${workout.id}">Edit</button><button type="button" data-copy="${workout.id}">Copy</button><button type="button" class="danger-button" data-delete="${workout.id}">Delete</button></div>` : ""}
         </div>
@@ -2694,9 +2694,9 @@ function initAthleteApp() {
           <article class="item-card workout-detail">
             <h3>${escapeHtml(workout.title)}</h3>
             <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}</p>
-            ${workout.notes ? `<p>${escapeHtml(workout.notes)}</p>` : ""}
-            ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p>${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
-            ${workout.cardioNotes ? `<section class="athlete-workout-section"><h4>Cardio / WOD</h4><p>${escapeHtml(workout.cardioNotes)}</p></section>` : ""}
+            ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
+            ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
+            ${workout.cardioNotes ? `<section class="athlete-workout-section"><h4>Cardio / WOD</h4><p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p></section>` : ""}
             <div class="list-stack">
               ${workoutSectionGroups(workout.exercises).map((group) => `
                 <section class="athlete-workout-section">

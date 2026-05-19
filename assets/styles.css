@@ -780,6 +780,9 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   display: grid;
   gap: 10px;
 }
+.formatted-notes {
+  white-space: pre-line;
+}
 
 @media (max-width: 760px) {
   .workout-section {
