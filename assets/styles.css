@@ -559,15 +559,8 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .movement-library-table td:nth-child(3) { min-width: 220px; white-space: normal; }
 .movement-library-table th:nth-child(5),
 .movement-library-table td:nth-child(5) {
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  background: white;
-  box-shadow: -8px 0 12px rgba(15, 122, 59, .08);
   white-space: normal;
 }
-.movement-library-table th:nth-child(5) { z-index: 2; }
-.movement-library-table tr.is-editing td:nth-child(5) { background: var(--soft); }
 .table-actions {
   flex-wrap: nowrap;
   gap: 6px;
@@ -593,7 +586,6 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
     min-width: 78px;
     width: 78px;
     padding: 8px 6px;
-    box-shadow: -4px 0 8px rgba(15, 122, 59, .06);
   }
   .movement-library-table .table-actions {
     width: 100%;
