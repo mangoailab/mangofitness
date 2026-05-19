@@ -561,10 +561,19 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   flex-wrap: nowrap;
   gap: 6px;
 }
-.inline-movement-editor {
-  display: grid;
-  gap: 12px;
-  padding: 10px 2px;
+.movement-library-table input,
+.movement-library-table select,
+.movement-library-table textarea {
+  width: 100%;
+  min-width: 120px;
+}
+.movement-library-table tr.is-editing td { background: var(--soft); }
+.table-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-weight: 600;
 }
 .leaderboard-winner td {
   background: rgba(255, 183, 3, .14);

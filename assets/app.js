@@ -3249,24 +3249,11 @@ function initCoachMovementsApp() {
           <tbody>
             ${rows.map((movement) => `
               <tr data-movement-row="${escapeHtml(movement.id)}">
-                <td><strong>${escapeHtml(movement.name)}</strong></td>
-                <td>${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
-                <td>${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
-                <td>${movement.showOnLeaderboard ? "Yes" : "No"}</td>
+                <td data-movement-cell="name"><strong>${escapeHtml(movement.name)}</strong></td>
+                <td data-movement-cell="category">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
+                <td data-movement-cell="description">${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
+                <td data-movement-cell="showOnLeaderboard">${movement.showOnLeaderboard ? "Yes" : "No"}</td>
                 <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
-              </tr>
-              <tr class="movement-edit-row hidden" data-movement-editor="${escapeHtml(movement.id)}">
-                <td colspan="5">
-                  <div class="inline-movement-editor">
-                    <div class="grid-2 form-grid">
-                      <div class="field"><label>Name</label><input data-movement-edit-field="name" value="${escapeHtml(movement.name || "")}" /></div>
-                      <div class="field"><label>Category</label><select data-movement-edit-field="category"><option value="strength"${(movement.category || "strength") === "strength" ? " selected" : ""}>Strength</option><option value="cardio"${movement.category === "cardio" ? " selected" : ""}>Cardio</option><option value="wod"${movement.category === "wod" ? " selected" : ""}>WOD</option><option value="gymnastics"${movement.category === "gymnastics" ? " selected" : ""}>Gymnastics</option><option value="accessory"${movement.category === "accessory" ? " selected" : ""}>Accessory</option><option value="other"${movement.category === "other" ? " selected" : ""}>Other</option></select></div>
-                    </div>
-                    <div class="field"><label>Description / details</label><textarea data-movement-edit-field="description" rows="3">${escapeHtml(movement.description || "")}</textarea></div>
-                    <label class="check-field"><input data-movement-edit-field="showOnLeaderboard" type="checkbox"${movement.showOnLeaderboard ? " checked" : ""} /> Show this movement on the athlete leaderboard page</label>
-                    <div class="actions form-actions"><button type="button" class="primary" data-save-movement-page="${escapeHtml(movement.id)}">Save</button><button type="button" data-cancel-movement-edit="${escapeHtml(movement.id)}">Cancel</button></div>
-                  </div>
-                </td>
               </tr>
             `).join("")}
           </tbody>
@@ -3313,28 +3300,53 @@ function initCoachMovementsApp() {
   search?.addEventListener("input", renderMovementList);
   categoryFilter?.addEventListener("change", renderMovementList);
 
+  function categoryOptions(selected = "strength") {
+    return [
+      ["strength", "Strength"],
+      ["cardio", "Cardio"],
+      ["wod", "WOD"],
+      ["gymnastics", "Gymnastics"],
+      ["accessory", "Accessory"],
+      ["other", "Other"]
+    ].map(([value, label]) => `<option value="${value}"${selected === value ? " selected" : ""}>${label}</option>`).join("");
+  }
+
+  function openMovementRowEditor(id) {
+    const movement = movements.find((item) => item.id === id);
+    const row = list.querySelector(`[data-movement-row="${CSS.escape(id)}"]`);
+    if (!movement || !row) return;
+    renderMovementList();
+    const freshRow = list.querySelector(`[data-movement-row="${CSS.escape(id)}"]`);
+    if (!freshRow) return;
+    freshRow.classList.add("is-editing");
+    freshRow.querySelector('[data-movement-cell="name"]').innerHTML = `<input data-movement-edit-field="name" value="${escapeHtml(movement.name || "")}" />`;
+    freshRow.querySelector('[data-movement-cell="category"]').innerHTML = `<select data-movement-edit-field="category">${categoryOptions(movement.category || "strength")}</select>`;
+    freshRow.querySelector('[data-movement-cell="description"]').innerHTML = `<textarea data-movement-edit-field="description" rows="2">${escapeHtml(movement.description || "")}</textarea>`;
+    freshRow.querySelector('[data-movement-cell="showOnLeaderboard"]').innerHTML = `<label class="table-check"><input data-movement-edit-field="showOnLeaderboard" type="checkbox"${movement.showOnLeaderboard ? " checked" : ""} /> Yes</label>`;
+    freshRow.querySelector(".table-actions").innerHTML = `<button type="button" class="primary" data-save-movement-page="${escapeHtml(id)}">Save</button><button type="button" data-cancel-movement-edit="${escapeHtml(id)}">Cancel</button>`;
+    freshRow.querySelector('[data-movement-edit-field="name"]')?.focus();
+  }
+
   list.addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-edit-movement-page]");
     if (editButton) {
-      const editor = list.querySelector(`[data-movement-editor="${CSS.escape(editButton.dataset.editMovementPage)}"]`);
-      if (!editor) return;
-      list.querySelectorAll("[data-movement-editor]").forEach((row) => row.classList.toggle("hidden", row !== editor));
+      openMovementRowEditor(editButton.dataset.editMovementPage);
       return;
     }
     const cancelEditButton = event.target.closest("[data-cancel-movement-edit]");
     if (cancelEditButton) {
-      list.querySelector(`[data-movement-editor="${CSS.escape(cancelEditButton.dataset.cancelMovementEdit)}"]`)?.classList.add("hidden");
+      renderMovementList();
       return;
     }
     const saveEditButton = event.target.closest("[data-save-movement-page]");
     if (saveEditButton) {
-      const editor = list.querySelector(`[data-movement-editor="${CSS.escape(saveEditButton.dataset.saveMovementPage)}"]`);
-      if (!editor) return;
+      const row = list.querySelector(`[data-movement-row="${CSS.escape(saveEditButton.dataset.saveMovementPage)}"]`);
+      if (!row) return;
       const payload = {
-        name: editor.querySelector('[data-movement-edit-field="name"]')?.value.trim() || "",
-        category: editor.querySelector('[data-movement-edit-field="category"]')?.value || "strength",
-        description: editor.querySelector('[data-movement-edit-field="description"]')?.value.trim() || "",
-        showOnLeaderboard: Boolean(editor.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked)
+        name: row.querySelector('[data-movement-edit-field="name"]')?.value.trim() || "",
+        category: row.querySelector('[data-movement-edit-field="category"]')?.value || "strength",
+        description: row.querySelector('[data-movement-edit-field="description"]')?.value.trim() || "",
+        showOnLeaderboard: Boolean(row.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked)
       };
       if (!payload.name) return setMovementMessage("Add a movement name first.", true);
       try {
