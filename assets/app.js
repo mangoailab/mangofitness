@@ -2397,10 +2397,24 @@ async function pdfImagesFromFile(file) {
   return images;
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error("Could not read scan file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function scanImagesFromFile(file) {
+  if (file?.type?.startsWith("image/")) return [await fileToDataUrl(file)];
+  return pdfImagesFromFile(file);
+}
+
 async function aiParseBodyScanFile(file) {
   const sb = MangoFitnessStore.client?.() || window.mangoSupabaseClient || null;
   if (!sb?.functions?.invoke) throw new Error("AI parser unavailable.");
-  const images = await pdfImagesFromFile(file);
+  const images = await scanImagesFromFile(file);
   const { data, error } = await sb.functions.invoke("parse-body-scan", {
     body: { filename: file.name, images }
   });
@@ -3911,7 +3925,7 @@ function initBodyMetricsApp() {
 
   parseBodyScanBtn?.addEventListener("click", async () => {
     if (!bodyScanPdf?.files?.[0]) {
-      if (bodyScanPreview) bodyScanPreview.innerHTML = `<p class="error-text">Choose a PDF first.</p>`;
+      if (bodyScanPreview) bodyScanPreview.innerHTML = `<p class="error-text">Choose a PDF or photo first.</p>`;
       bodyScanPreview?.classList.remove("hidden");
       return;
     }
@@ -3921,6 +3935,7 @@ function initBodyMetricsApp() {
       try {
         parsedBodyScan = { ...(await aiParseBodyScanFile(bodyScanPdf.files[0])), athleteId: "" };
       } catch (aiError) {
+        if (bodyScanPdf.files[0]?.type?.startsWith("image/")) throw aiError;
         parseBodyScanBtn.textContent = "Using backup parser...";
         const text = await pdfTextFromFile(bodyScanPdf.files[0]);
         parsedBodyScan = { ...parseBodyScanText(text, bodyScanPdf.files[0].name), athleteId: "", notes: `Backup parser used. AI parser note: ${friendlyError(aiError)}` };
@@ -3958,7 +3973,7 @@ function initBodyMetricsApp() {
       bodyScanPreview?.classList.remove("hidden");
     } finally {
       parseBodyScanBtn.disabled = false;
-      parseBodyScanBtn.textContent = "Parse PDF";
+      parseBodyScanBtn.textContent = "Parse Scan";
     }
   });
 

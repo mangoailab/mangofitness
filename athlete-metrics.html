@@ -42,10 +42,10 @@
 
     <section id="metricsDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="section-head compact"><div><h2>Body Metrics</h2><p class="muted">Upload a BodySpec or InBody PDF scan.</p></div></div>
+        <div class="section-head compact"><div><h2>Body Metrics</h2><p class="muted">Upload a BodySpec or InBody PDF, or take a photo on iPhone.</p></div></div>
         <div class="scan-upload-grid">
-          <div class="field"><label for="bodyScanPdf">Scan PDF</label><input id="bodyScanPdf" type="file" accept="application/pdf" /></div>
-          <button type="button" id="parseBodyScanBtn">Parse PDF</button>
+          <div class="field"><label for="bodyScanPdf">Scan file or photo</label><input id="bodyScanPdf" type="file" accept="application/pdf,image/*" /></div>
+          <button type="button" id="parseBodyScanBtn">Parse Scan</button>
         </div>
         <div id="bodyScanPreview" class="hidden"></div>
         <div class="section-head compact scan-history-head"><div><h3>Saved scans</h3><p class="muted">Your uploaded body scan history appears here.</p></div></div>
