@@ -1121,8 +1121,6 @@ body.is-reordering .exercise-row.dragging {
   position: absolute;
   top: 14px;
   right: 14px;
-  display: flex;
-  gap: 6px;
 }
 .view-icon-lines {
   width: 20px;
@@ -1139,28 +1137,6 @@ body.is-reordering .exercise-row.dragging {
   height: 2px;
   border-radius: 999px;
   background: currentColor;
-}
-.view-icon-calendar {
-  width: 20px;
-  height: 20px;
-  border: 2px solid currentColor;
-  border-radius: 5px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: 5px 1fr 1fr;
-  gap: 2px;
-  padding: 3px;
-}
-.view-icon-calendar::before {
-  content: "";
-  grid-column: 1 / -1;
-  border-bottom: 2px solid currentColor;
-}
-.view-icon-calendar span {
-  display: block;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: .75;
 }
 
 @media (max-width: 760px) {
@@ -2564,4 +2540,82 @@ body.is-reordering .exercise-row.dragging {
   border-color: #fb7185;
   background: #fff1f2;
   color: #be123c;
+}
+
+.week-picker-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 0;
+  justify-content: flex-start;
+  font-weight: 600;
+  text-align: left;
+}
+.week-picker-button:hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--accent-dark);
+}
+.week-picker-popover {
+  position: absolute;
+  z-index: 20;
+  width: min(320px, calc(100vw - 40px));
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, .14);
+  padding: 12px;
+}
+.week-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: var(--accent-dark);
+}
+.week-picker-head button {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 999px;
+}
+.week-picker-weekdays,
+.week-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.week-picker-weekdays {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+.week-picker-day {
+  min-height: 36px;
+  padding: 4px 2px;
+  border-radius: 10px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  font-size: 12px;
+}
+.week-picker-day.is-selected {
+  border-color: var(--accent-green);
+  background: var(--soft);
+  color: var(--accent-dark);
+}
+.week-picker-day.is-outside-month {
+  opacity: .42;
+}
+.athlete-week-head {
+  position: relative;
+}
+.athlete-week-head .week-picker-popover {
+  top: 100%;
+  left: 0;
 }

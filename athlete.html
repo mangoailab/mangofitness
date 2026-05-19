@@ -48,9 +48,10 @@
     <section id="athleteDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
         <div class="section-head compact">
-          <div>
+          <div class="athlete-week-head">
             <h2>Training Schedule</h2>
-            <p id="athleteWeekLabel" class="muted">This week</p>
+            <button type="button" id="athleteWeekLabel" class="muted week-picker-button">This week</button>
+            <div id="athleteWeekPicker" class="week-picker-popover hidden"></div>
           </div>
           <span id="athleteWorkoutCount" class="pill">0 workouts</span>
         </div>
