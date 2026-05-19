@@ -1146,14 +1146,16 @@ function initCoachApp() {
   let selectedWeekStart = startOfWeek(new Date());
   let savedWorkoutView = "vertical";
   let coachWeekPickerOpen = false;
+  let coachWeekPickerMonth = null;
 
 
   function renderCoachWeekPicker(workoutsForDots) {
     if (!coachWeekPicker) return;
     coachWeekPicker.classList.toggle("hidden", !coachWeekPickerOpen);
     if (!coachWeekPickerOpen) return;
-    const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
-    const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
+    const pickerMonth = coachWeekPickerMonth || selectedWeekStart;
+    const monthStart = new Date(pickerMonth.getFullYear(), pickerMonth.getMonth(), 1);
+    const monthEnd = new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 0);
     const calendarStart = startOfWeek(monthStart);
     const calendarEnd = addDays(startOfWeek(monthEnd), 6);
     const workoutDates = new Set(workoutsForDots.map((item) => item.date));
@@ -1181,14 +1183,15 @@ function initCoachApp() {
     });
     coachWeekPicker.querySelectorAll("[data-coach-week-picker-month]").forEach((button) => {
       button.addEventListener("click", () => {
-        selectedWeekStart = startOfWeek(new Date(monthStart.getFullYear(), monthStart.getMonth() + (button.dataset.coachWeekPickerMonth === "next" ? 1 : -1), 1));
-        renderCoach();
+        coachWeekPickerMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + (button.dataset.coachWeekPickerMonth === "next" ? 1 : -1), 1);
+        renderCoachWeekPicker(workoutsForDots);
       });
     });
     coachWeekPicker.querySelectorAll("[data-coach-week-picker-date]").forEach((button) => {
       button.addEventListener("click", () => {
         selectedWeekStart = startOfWeek(parseLocalDate(button.dataset.coachWeekPickerDate));
         coachWeekPickerOpen = false;
+        coachWeekPickerMonth = null;
         if (workoutSearch) workoutSearch.value = "";
         renderCoach();
       });
@@ -1821,6 +1824,7 @@ function initCoachApp() {
   });
   weekLabel?.addEventListener("click", () => {
     coachWeekPickerOpen = !coachWeekPickerOpen;
+    if (coachWeekPickerOpen) coachWeekPickerMonth = new Date(selectedWeekStart);
     renderCoach();
   });
   savedWorkoutViewToggleBtn?.addEventListener("click", () => {
@@ -2463,14 +2467,16 @@ function initAthleteApp() {
   let selectedWeekStart = startOfWeek(new Date());
   let signedInAthleteId = "";
   let weekPickerOpen = false;
+  let weekPickerMonth = null;
 
 
   function renderWeekPicker(visibleWorkouts) {
     if (!weekPicker) return;
     weekPicker.classList.toggle("hidden", !weekPickerOpen);
     if (!weekPickerOpen) return;
-    const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
-    const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
+    const pickerMonth = weekPickerMonth || selectedWeekStart;
+    const monthStart = new Date(pickerMonth.getFullYear(), pickerMonth.getMonth(), 1);
+    const monthEnd = new Date(pickerMonth.getFullYear(), pickerMonth.getMonth() + 1, 0);
     const calendarStart = startOfWeek(monthStart);
     const calendarEnd = addDays(startOfWeek(monthEnd), 6);
     const workoutDates = new Set(visibleWorkouts.map((item) => item.date));
@@ -2498,8 +2504,8 @@ function initAthleteApp() {
     });
     weekPicker.querySelectorAll("[data-week-picker-month]").forEach((button) => {
       button.addEventListener("click", () => {
-        selectedWeekStart = startOfWeek(new Date(monthStart.getFullYear(), monthStart.getMonth() + (button.dataset.weekPickerMonth === "next" ? 1 : -1), 1));
-        renderAthlete();
+        weekPickerMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + (button.dataset.weekPickerMonth === "next" ? 1 : -1), 1);
+        renderWeekPicker(visibleWorkouts);
       });
     });
     weekPicker.querySelectorAll("[data-week-picker-date]").forEach((button) => {
@@ -2507,6 +2513,7 @@ function initAthleteApp() {
         date.value = button.dataset.weekPickerDate;
         selectedWeekStart = startOfWeek(parseLocalDate(date.value));
         weekPickerOpen = false;
+        weekPickerMonth = null;
         renderAthlete();
       });
     });
@@ -2747,10 +2754,12 @@ function initAthleteApp() {
   date.addEventListener("change", () => {
     selectedWeekStart = startOfWeek(parseLocalDate(date.value));
     weekPickerOpen = false;
+    weekPickerMonth = null;
     renderAthlete();
   });
   weekLabel?.addEventListener("click", () => {
     weekPickerOpen = !weekPickerOpen;
+    if (weekPickerOpen) weekPickerMonth = new Date(selectedWeekStart);
     renderAthlete();
   });
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
