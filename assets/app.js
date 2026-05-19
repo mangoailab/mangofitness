@@ -235,17 +235,20 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("strength_movements")
-        .select("id, movement_key, name")
+        .select("id, movement_key, name, description, category, show_on_leaderboard")
         .order("name", { ascending: true });
       if (error) throw error;
-      return data || [];
+      return (data || []).map((movement) => ({
+        ...movement,
+        showOnLeaderboard: Boolean(movement.show_on_leaderboard)
+      }));
     },
 
     async saveStrengthMovement(movement) {
       const sb = client();
       if (!sb) {
         const movements = readLocal(localStrengthMovementKey);
-        const saved = { ...movement, id: uid("strength-movement") };
+        const saved = { ...movement, id: uid("strength-movement"), movement_key: movement.key || slugify(movement.name) };
         movements.push(saved);
         writeLocal(localStrengthMovementKey, movements.sort((a, b) => a.name.localeCompare(b.name)));
         return saved;
@@ -253,11 +256,18 @@ const MangoFitnessStore = (() => {
       const user = await requireUser();
       const { data, error } = await sb
         .from("strength_movements")
-        .insert({ name: movement.name, created_by: user?.id || null })
-        .select("id, movement_key, name")
+        .insert({
+          movement_key: movement.key || slugify(movement.name),
+          name: movement.name,
+          description: movement.description || null,
+          category: movement.category || "strength",
+          show_on_leaderboard: Boolean(movement.showOnLeaderboard),
+          created_by: user?.id || null
+        })
+        .select("id, movement_key, name, description, category, show_on_leaderboard")
         .single();
       if (error) throw error;
-      return data;
+      return { ...data, showOnLeaderboard: Boolean(data?.show_on_leaderboard) };
     },
 
     async updateStrengthMovement(id, movement) {
@@ -269,12 +279,17 @@ const MangoFitnessStore = (() => {
       }
       const { data, error } = await sb
         .from("strength_movements")
-        .update({ name: movement.name })
+        .update({
+          name: movement.name,
+          description: movement.description || null,
+          category: movement.category || "strength",
+          show_on_leaderboard: Boolean(movement.showOnLeaderboard)
+        })
         .eq("id", id)
-        .select("id, movement_key, name")
+        .select("id, movement_key, name, description, category, show_on_leaderboard")
         .single();
       if (error) throw error;
-      return data;
+      return { ...data, showOnLeaderboard: Boolean(data?.show_on_leaderboard) };
     },
 
     async deleteStrengthMovement(id) {
@@ -606,6 +621,14 @@ function escapeHtml(value) {
 
 function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function slugify(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || uid("movement");
 }
 
 const defaultWarmupTemplates = [
@@ -3152,6 +3175,151 @@ function initAthleteHistoryApp(options = {}) {
   });
 }
 
+function initCoachMovementsApp() {
+  const form = document.getElementById("movementForm");
+  const name = document.getElementById("movementName");
+  const category = document.getElementById("movementCategory");
+  const description = document.getElementById("movementDescription");
+  const showOnLeaderboard = document.getElementById("movementShowOnLeaderboard");
+  const saveBtn = document.getElementById("saveMovementPageBtn");
+  const clearBtn = document.getElementById("clearMovementPageBtn");
+  const list = document.getElementById("movementList");
+  const message = document.getElementById("movementPageMessage");
+  const search = document.getElementById("movementSearch");
+  const categoryFilter = document.getElementById("movementCategoryFilter");
+  if (!form || !list) return;
+
+  let movements = [];
+
+  function setMovementMessage(text, isError = false) {
+    if (!message) return;
+    message.textContent = text || "";
+    message.classList.toggle("hidden", !text);
+    message.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function resetMovementForm() {
+    form.dataset.editId = "";
+    name.value = "";
+    category.value = "strength";
+    description.value = "";
+    showOnLeaderboard.checked = false;
+    if (saveBtn) saveBtn.textContent = "Save Movement";
+  }
+
+  function movementCategoryLabel(value) {
+    return {
+      strength: "Strength",
+      cardio: "Cardio",
+      wod: "WOD",
+      gymnastics: "Gymnastics",
+      accessory: "Accessory",
+      other: "Other"
+    }[value] || "Other";
+  }
+
+  function filteredMovements() {
+    const term = (search?.value || "").trim().toLowerCase();
+    const selectedCategory = categoryFilter?.value || "all";
+    return movements.filter((movement) => {
+      const movementCategory = movement.category || "strength";
+      const matchesCategory = selectedCategory === "all" || movementCategory === selectedCategory;
+      const haystack = [movement.name, movement.description, movementCategory].join(" ").toLowerCase();
+      return matchesCategory && (!term || haystack.includes(term));
+    });
+  }
+
+  function renderMovementList() {
+    const rows = filteredMovements().sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+    list.innerHTML = rows.length ? rows.map((movement) => `
+      <article class="item-card movement-library-card">
+        <div class="item-head">
+          <div>
+            <strong>${escapeHtml(movement.name)}</strong>
+            <p class="muted">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}${movement.showOnLeaderboard ? " · Leaderboard" : ""}</p>
+          </div>
+          <div class="actions item-actions">
+            <button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button>
+            <button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button>
+          </div>
+        </div>
+        ${movement.description ? `<p>${escapeHtml(movement.description)}</p>` : `<p class="muted">No description yet.</p>`}
+      </article>
+    `).join("") : `<p class="muted empty-state">No movements found.</p>`;
+  }
+
+  async function loadMovementPage() {
+    try {
+      movements = (await MangoFitnessStore.strengthMovements()).filter((movement) => movementId(movement) && movementId(movement) !== "custom");
+      renderMovementList();
+    } catch (error) {
+      list.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const payload = {
+      name: name.value.trim(),
+      category: category.value || "strength",
+      description: description.value.trim(),
+      showOnLeaderboard: showOnLeaderboard.checked
+    };
+    if (!payload.name) return setMovementMessage("Add a movement name first.", true);
+    try {
+      if (saveBtn) saveBtn.disabled = true;
+      const editId = form.dataset.editId || "";
+      if (editId) await MangoFitnessStore.updateStrengthMovement(editId, payload);
+      else await MangoFitnessStore.saveStrengthMovement(payload);
+      resetMovementForm();
+      await loadMovementPage();
+      setMovementMessage(editId ? "Movement updated." : "Movement saved.");
+    } catch (error) {
+      setMovementMessage(friendlyError(error), true);
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+    }
+  });
+
+  clearBtn?.addEventListener("click", resetMovementForm);
+  search?.addEventListener("input", renderMovementList);
+  categoryFilter?.addEventListener("change", renderMovementList);
+
+  list.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-edit-movement-page]");
+    if (editButton) {
+      const movement = movements.find((item) => item.id === editButton.dataset.editMovementPage);
+      if (!movement) return;
+      form.dataset.editId = movement.id;
+      name.value = movement.name || "";
+      category.value = movement.category || "strength";
+      description.value = movement.description || "";
+      showOnLeaderboard.checked = Boolean(movement.showOnLeaderboard);
+      if (saveBtn) saveBtn.textContent = "Save Changes";
+      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const deleteButton = event.target.closest("[data-delete-movement-page]");
+    if (deleteButton) {
+      const movement = movements.find((item) => item.id === deleteButton.dataset.deleteMovementPage);
+      if (!movement) return;
+      if (!confirm(`Delete movement “${movement.name}”? This cannot be undone.`)) return;
+      try {
+        await MangoFitnessStore.deleteStrengthMovement(movement.id);
+        await loadMovementPage();
+        setMovementMessage("Movement deleted.");
+      } catch (error) {
+        setMovementMessage(friendlyError(error), true);
+      }
+    }
+  });
+
+  loadMovementPage();
+  MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
+    if (session?.user) loadMovementPage();
+  });
+}
+
 function initAthleteLeaderboardApp() {
   const list = document.getElementById("athleteLeaderboardList");
   const search = document.getElementById("leaderboardSearch");
@@ -3166,6 +3334,13 @@ function initAthleteLeaderboardApp() {
     if (/\b(angie|cindy|murph|fran|helen|grace|annie|death by|koko|wall ball|burpee|air ?squat)\b/.test(name)) {
       const lowerIsBetter = /\b(angie|murph|fran|helen|grace|annie|koko|wall ball)\b/.test(name) || String(result.score || "").includes(":");
       return { type: "wod", name: result.exerciseName || result.event_name || "CrossFit WOD", mode: lowerIsBetter ? "lower" : "higher" };
+    }
+    if (result.eventType) {
+      return {
+        type: result.eventType,
+        name: result.exerciseName || result.event_name || "Leaderboard Event",
+        mode: String(result.score || "").includes(":") || result.eventType === "cardio" ? "lower" : "higher"
+      };
     }
     return null;
   }
@@ -3253,7 +3428,8 @@ function initAthleteLeaderboardApp() {
         score: row.score_result,
         weight: row.working_weight,
         reps: row.reps_completed,
-        notes: row.notes || ""
+        notes: row.notes || "",
+        eventType: row.event_type || ""
       }));
       const term = (search?.value || "").trim().toLowerCase();
       const selectedType = typeFilter?.value || "all";
