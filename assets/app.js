@@ -597,6 +597,35 @@ const MangoFitnessStore = (() => {
       if (error) throw error;
     },
 
+    async saveHistoricalBenchmark(entry) {
+      const sb = client();
+      if (!sb) {
+        const results = readLocal(localResultKey);
+        results.push({
+          id: uid("historical-result"),
+          exerciseName: entry.benchmarkName || "Historical benchmark",
+          completedOn: entry.completedOn,
+          weight: entry.weight || "",
+          reps: entry.reps || "",
+          score: entry.score || "",
+          notes: `Self-reported historical benchmark.${entry.notes ? ` ${entry.notes}` : ""}`,
+          isPr: Boolean(entry.isPr)
+        });
+        writeLocal(localResultKey, results.sort((a, b) => b.completedOn.localeCompare(a.completedOn)));
+        return;
+      }
+      const { error } = await sb.rpc("save_historical_benchmark", {
+        p_movement_id: entry.movementId,
+        p_completed_on: entry.completedOn,
+        p_score_result: entry.score || null,
+        p_working_weight: entry.weight || null,
+        p_reps_completed: entry.reps || null,
+        p_notes: entry.notes || null,
+        p_is_pr: Boolean(entry.isPr)
+      });
+      if (error) throw error;
+    },
+
     async deleteResult(id) {
       const sb = client();
       if (!sb) {
@@ -2849,7 +2878,42 @@ function initAthleteHistoryApp(options = {}) {
   const resultsList = document.getElementById("coachResultsList");
   const search = document.getElementById("progressSearch");
   const typeFilter = document.getElementById("progressTypeFilter");
+  const historicalForm = document.getElementById("historicalBenchmarkForm");
+  const addHistoricalBtn = document.getElementById("addHistoricalBenchmarkBtn");
+  const clearHistoricalBtn = document.getElementById("clearHistoricalBenchmarkBtn");
+  const historicalSelect = document.getElementById("historicalBenchmarkSelect");
+  const historicalDate = document.getElementById("historicalBenchmarkDate");
+  const historicalWeight = document.getElementById("historicalBenchmarkWeight");
+  const historicalReps = document.getElementById("historicalBenchmarkReps");
+  const historicalScore = document.getElementById("historicalBenchmarkScore");
+  const historicalNotes = document.getElementById("historicalBenchmarkNotes");
+  const historicalPr = document.getElementById("historicalBenchmarkPr");
+  const historicalMessage = document.getElementById("historicalBenchmarkMessage");
   if (!history) return;
+
+  function setHistoricalMessage(text, isError = false) {
+    if (!historicalMessage) return;
+    historicalMessage.textContent = text || "";
+    historicalMessage.classList.toggle("hidden", !text);
+    historicalMessage.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function showHistoricalForm(show = true) {
+    historicalForm?.classList.toggle("hidden", !show);
+    addHistoricalBtn?.classList.toggle("hidden", show);
+    if (show) historicalSelect?.focus();
+  }
+
+  async function loadHistoricalBenchmarkOptions() {
+    if (!historicalSelect) return;
+    try {
+      const benchmarks = (await MangoFitnessStore.strengthMovements()).filter((movement) => movement.showOnLeaderboard);
+      historicalSelect.innerHTML = `<option value="">Select benchmark</option>${benchmarks.map((movement) => `<option value="${escapeHtml(movement.id)}">${escapeHtml(movement.name)}</option>`).join("")}`;
+    } catch (error) {
+      historicalSelect.innerHTML = `<option value="">Could not load benchmarks</option>`;
+      setHistoricalMessage(friendlyError(error), true);
+    }
+  }
 
   async function currentAthleteId() {
     const user = await MangoFitnessStore.currentUser();
@@ -3138,6 +3202,8 @@ function initAthleteHistoryApp(options = {}) {
       await loadAthleteOptionsForSelect(profileSelect, "Select athlete");
     } else {
       profileField?.classList.add("hidden");
+      if (historicalDate && !historicalDate.value) historicalDate.value = todayISO();
+      await loadHistoricalBenchmarkOptions();
     }
     await renderHistory();
   }
@@ -3146,6 +3212,44 @@ function initAthleteHistoryApp(options = {}) {
   profileSelect?.addEventListener("change", renderHistory);
   search?.addEventListener("input", renderHistory);
   typeFilter?.addEventListener("change", renderHistory);
+  addHistoricalBtn?.addEventListener("click", () => showHistoricalForm(true));
+  clearHistoricalBtn?.addEventListener("click", () => {
+    historicalForm?.reset();
+    if (historicalDate) historicalDate.value = todayISO();
+    if (historicalPr) historicalPr.checked = true;
+    setHistoricalMessage("");
+    showHistoricalForm(false);
+  });
+  historicalForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const selectedOption = historicalSelect?.selectedOptions?.[0];
+    const weight = numericWeight(historicalWeight?.value);
+    const score = historicalScore?.value.trim() || "";
+    const reps = historicalReps?.value.trim() || "";
+    if (!historicalSelect?.value) return setHistoricalMessage("Choose a benchmark first.", true);
+    if (!historicalDate?.value) return setHistoricalMessage("Choose the date achieved.", true);
+    if (weight == null && !score && !reps) return setHistoricalMessage("Enter a weight, reps, or time/score.", true);
+    try {
+      await MangoFitnessStore.saveHistoricalBenchmark({
+        movementId: historicalSelect.value,
+        benchmarkName: selectedOption?.textContent || "Historical benchmark",
+        completedOn: historicalDate.value,
+        weight,
+        reps,
+        score,
+        notes: historicalNotes?.value.trim() || "",
+        isPr: historicalPr?.checked !== false
+      });
+      historicalForm.reset();
+      if (historicalDate) historicalDate.value = todayISO();
+      if (historicalPr) historicalPr.checked = true;
+      showHistoricalForm(false);
+      setHistoricalMessage("Past benchmark saved as a self-reported historical entry.");
+      await renderHistory();
+    } catch (error) {
+      setHistoricalMessage(friendlyError(error), true);
+    }
+  });
   history.addEventListener("click", async (event) => {
     const deleteButton = event.target.closest("[data-delete-result]");
     if (deleteButton) {
