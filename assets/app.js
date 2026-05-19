@@ -3231,7 +3231,7 @@ function initAthleteHistoryApp(options = {}) {
       const selectedType = typeFilter?.value || "all";
       const selectedCategory = categoryFilter?.value || "all";
       const selectedMovement = movementFilter?.value || "all";
-      const selectedLimit = limitFilter?.value || "10";
+      const selectedLimit = limitFilter?.value || "all";
       const filteredResults = baseResults.filter((result) => {
         const category = progressGroupLabel(result);
         const movement = result.exerciseName || "Movement";
@@ -3241,7 +3241,7 @@ function initAthleteHistoryApp(options = {}) {
         const matchesMovement = selectedMovement === "all" || movement === selectedMovement;
         return matchesSearch && matchesType && matchesCategory && matchesMovement;
       });
-      const results = selectedLimit === "all" ? filteredResults : filteredResults.slice(0, Number(selectedLimit) || 10);
+      const results = selectedLimit === "all" ? filteredResults : filteredResults.slice(0, Number(selectedLimit) || filteredResults.length);
       if (filterSummary) {
         const showing = results.length;
         const total = filteredResults.length;
