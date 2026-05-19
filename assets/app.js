@@ -1705,7 +1705,7 @@ function initCoachApp() {
           detail.innerHTML = `
             <div class="section-head compact"><div><h3>${escapeHtml(calendarDayLabel(parseLocalDate(selectedDate)))}</h3><p class="muted">${workouts.length ? `${workouts.length} program${workouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div></div>
             <div data-inline-workout-editor></div>
-            <div class="list-stack">${workouts.length ? workouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : `<p class="muted empty-state">No program for this day.</p>`}</div>
+            <div class="list-stack">${workouts.length ? workouts.map((workout) => renderWorkoutProgramCard(workout, results)).join("") : ""}</div>
           `;
           detail.querySelectorAll("[data-edit]").forEach((editButton) => editButton.addEventListener("click", () => {
             const inlineContainer = editButton.closest("[data-program-card]")?.querySelector("[data-inline-workout-editor]") || detail.querySelector("[data-inline-workout-editor]");
