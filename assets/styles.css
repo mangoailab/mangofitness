@@ -1116,13 +1116,27 @@ body.is-reordering .exercise-row.dragging {
   min-height: 36px;
   padding: 0;
   border-radius: 10px;
-  font-size: 18px;
-  line-height: 1;
   color: var(--accent-dark);
 }
 .view-icon-button.active {
   background: var(--soft);
   border-color: var(--accent-green);
+}
+.view-icon-lines {
+  width: 20px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-radius: 5px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 3px;
+}
+.view-icon-lines span {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 @media (max-width: 760px) {
