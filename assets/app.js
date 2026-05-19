@@ -62,7 +62,7 @@ const MangoFitnessStore = (() => {
       benchmarkName: exercise.benchmark_name || "",
       movementKey: exercise.movement_key || "",
       movementName: exercise.movement_name || "",
-      completedOn: row.completed_on,
+      completedOn: isPlaceholderDate(row.completed_on) ? "" : row.completed_on,
       weight: row.working_weight ?? "",
       reps: row.reps_completed || "",
       notes: row.notes || "",
@@ -643,6 +643,14 @@ const MangoFitnessStore = (() => {
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function isPlaceholderDate(value) {
+  return String(value || "").startsWith("1900-01-01");
+}
+
+function displayDate(value) {
+  return value && !isPlaceholderDate(value) ? value : "—";
 }
 
 function escapeHtml(value) {
@@ -1514,7 +1522,7 @@ function initCoachApp() {
     return `
       <div class="coach-program-log-list">
         ${rows.map((result) => `
-          <p class="muted progress-note">${escapeHtml(result.completedOn || "-")}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""}${result.weight !== "" && result.weight != null ? ` · ${escapeHtml(result.weight)} lb` : ""}${result.reps ? ` · ${escapeHtml(result.reps)} reps` : ""}${result.setNumber ? ` · set ${escapeHtml(result.setNumber)}` : ""}${result.isPr ? " · PR" : ""}${result.notes ? ` · ${escapeHtml(result.notes)}` : ""}</p>
+          <p class="muted progress-note">${escapeHtml(displayDate(result.completedOn))}${result.score ? ` · Score: ${escapeHtml(result.score)}` : ""}${result.weight !== "" && result.weight != null ? ` · ${escapeHtml(result.weight)} lb` : ""}${result.reps ? ` · ${escapeHtml(result.reps)} reps` : ""}${result.setNumber ? ` · set ${escapeHtml(result.setNumber)}` : ""}${result.isPr ? " · PR" : ""}${result.notes ? ` · ${escapeHtml(result.notes)}` : ""}</p>
         `).join("")}
       </div>
     `;
@@ -2475,7 +2483,7 @@ function weightSuggestionForExercise(exercise, athleteResults = []) {
     return {
       value: numericWeight(latest.weight),
       label: `Last used: ${numericWeight(latest.weight)} lb`,
-      detail: `${latest.completedOn || "Previous log"}${latest.reps ? ` · ${latest.reps} reps` : ""}`
+      detail: `${displayDate(latest.completedOn)}${latest.reps ? ` · ${latest.reps} reps` : ""}`
     };
   }
   return null;
@@ -3083,7 +3091,7 @@ function initAthleteHistoryApp(options = {}) {
                     <tbody>
                       ${group.map((result) => `
                         <tr class="${result.isPr ? "is-pr" : ""}">
-                          <td>${escapeHtml(result.completedOn || "-")}</td>
+                          <td>${escapeHtml(displayDate(result.completedOn))}</td>
                           <td>${escapeHtml(athleteName(result.athleteId))}</td>
                           <td>${escapeHtml(result.score || "-")}</td>
                           <td>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</td>
@@ -3162,7 +3170,7 @@ function initAthleteHistoryApp(options = {}) {
             ${points.map((point, index) => `<circle cx="${x(index)}" cy="${y(point.value)}" r="5" fill="#ffb703" />`).join("")}
           </svg>
         </div>
-        <div class="progress-chart-dates">${points.map((point) => `<span>${escapeHtml(point.result.completedOn || "-")}</span>`).join("")}</div>
+        <div class="progress-chart-dates">${points.map((point) => `<span>${escapeHtml(displayDate(point.result.completedOn))}</span>`).join("")}</div>
       </div>
     `;
   }
@@ -3178,12 +3186,12 @@ function initAthleteHistoryApp(options = {}) {
             <tbody>
               ${rows.map((result) => `
                 <tr class="${result.isPr ? "is-pr" : ""}">
-                  <td>${escapeHtml(result.completedOn || "-")}</td>
+                  <td>${escapeHtml(displayDate(result.completedOn))}</td>
                   <td><strong>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</strong>${result.isPr ? ` <span class="pr-badge">PR</span>` : ""}</td>
                   <td>${escapeHtml(result.reps || "-")}</td>
                   <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
                   <td>${escapeHtml(result.notes || "")}</td>
-                  <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${result.completedOn || "this date"}`)}">Delete</button></td>
+                  <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${displayDate(result.completedOn)}`)}">Delete</button></td>
                 </tr>
               `).join("")}
             </tbody>
@@ -3198,10 +3206,10 @@ function initAthleteHistoryApp(options = {}) {
           <tbody>
             ${rows.map((result) => `
               <tr class="${result.isPr ? "is-pr" : ""}">
-                <td>${escapeHtml(result.completedOn || "-")}</td>
+                <td>${escapeHtml(displayDate(result.completedOn))}</td>
                 <td><strong>${escapeHtml(progressDisplayValue(result))}</strong>${result.isPr ? ` <span class="pr-badge">PR</span>` : ""}</td>
                 <td>${escapeHtml(result.notes || "")}</td>
-                <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${result.completedOn || "this date"}`)}">Delete</button></td>
+                <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${displayDate(result.completedOn)}`)}">Delete</button></td>
               </tr>
             `).join("")}
           </tbody>
@@ -3267,7 +3275,7 @@ function initAthleteHistoryApp(options = {}) {
                   const latest = group[0];
                   const prCount = group.filter((result) => result.isPr).length;
                   const latestValue = progressDisplayValue(latest);
-                  const subtitle = [coachMode ? athleteName(latest.athleteId) : "", latest.completedOn || "-"].filter(Boolean).join(" · ");
+                  const subtitle = [coachMode ? athleteName(latest.athleteId) : "", displayDate(latest.completedOn)].filter(Boolean).join(" · ");
                   return `
                     <tr class="progress-overview-row ${prCount ? "has-pr" : ""}">
                       <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false" aria-label="Show ${escapeHtml(latest.exerciseName)} details">▸</button></td>
@@ -3749,7 +3757,7 @@ function initAthleteLeaderboardApp() {
                   <td><strong>#${index + 1}</strong></td>
                   <td>${escapeHtml(leaderboardAthleteName(result))}</td>
                   <td><strong>${escapeHtml(leaderboardDisplayValue(result))}</strong></td>
-                  <td>${escapeHtml(result.completedOn || "-")}</td>
+                  <td>${escapeHtml(displayDate(result.completedOn))}</td>
                   <td>${escapeHtml(result.notes || "")}</td>
                 </tr>
               `).join("")}
@@ -3770,7 +3778,7 @@ function initAthleteLeaderboardApp() {
         athleteId: row.athlete_id,
         athlete_name: row.athlete_name,
         exerciseName: row.event_name,
-        completedOn: row.completed_on,
+        completedOn: isPlaceholderDate(row.completed_on) ? "" : row.completed_on,
         score: row.score_result,
         weight: row.working_weight,
         reps: row.reps_completed,
