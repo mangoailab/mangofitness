@@ -607,11 +607,7 @@ as $$
   where
     awr.score_result is not null
     and btrim(awr.score_result) <> ''
-    and (
-      coalesce(sm.show_on_leaderboard, false)
-      or lower(coalesce(we.benchmark_name, we.movement_name, we.exercise_name, '')) ~ '(angie|cindy|murph|fran|helen|grace|annie|death by|koko|wall ball|burpee|air ?squat)'
-      or lower(coalesce(we.benchmark_name, we.movement_name, we.exercise_name, '')) ~ '(row 2k|2k row|2000m row|row 2000m|row 3k|3k row|3000m row|row 3000m|row 4k|4k row|4000m row|row 4000m)'
-    );
+    and coalesce(sm.show_on_leaderboard, false);
 $$;
 
 grant execute on function public.leaderboard_results() to authenticated;
