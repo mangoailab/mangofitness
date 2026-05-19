@@ -554,9 +554,20 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .leaderboard-event-card { background: var(--soft); }
 .leaderboard-table { min-width: 720px; }
 .leaderboard-table td:nth-child(5) { min-width: 180px; white-space: normal; }
-.movement-library-table { min-width: 860px; }
-.movement-library-table td:nth-child(3) { min-width: 240px; white-space: normal; }
-.movement-library-table td:nth-child(5) { white-space: normal; }
+.movement-table-wrap { touch-action: auto; }
+.movement-library-table { min-width: 760px; }
+.movement-library-table td:nth-child(3) { min-width: 220px; white-space: normal; }
+.movement-library-table th:nth-child(5),
+.movement-library-table td:nth-child(5) {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: white;
+  box-shadow: -8px 0 12px rgba(15, 122, 59, .08);
+  white-space: normal;
+}
+.movement-library-table th:nth-child(5) { z-index: 2; }
+.movement-library-table tr.is-editing td:nth-child(5) { background: var(--soft); }
 .table-actions {
   flex-wrap: nowrap;
   gap: 6px;
