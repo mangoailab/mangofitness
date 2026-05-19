@@ -20,59 +20,36 @@
           <span class="nav-separator">|</span>
           <a href="coach-clients.html" class="nav-link">Clients</a>
           <span class="nav-separator">|</span>
+          <a href="coach-benchmarks.html" class="nav-link">Benchmarks</a>
+          <span class="nav-separator">|</span>
           <a href="coach-movements.html" class="nav-link active" aria-current="page">Movements</a>
           <span class="nav-separator">|</span>
           <a href="coach-history.html" class="nav-link">Progress history</a>
-          <span id="coachMovementsSignOutSeparator" class="nav-separator hidden">|</span>
-          <button type="button" id="coachMovementsSignOutBtn" class="nav-link link-button hidden">Sign out</button>
+          <span id="coachMovementLibrarySignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="coachMovementLibrarySignOutBtn" class="nav-link link-button hidden">Sign out</button>
         </nav>
-        <div id="coachMovementsHeaderAuth" class="header-auth hidden"><p id="coachMovementsDashboardMessage" class="muted"></p></div>
+        <div id="coachMovementLibraryHeaderAuth" class="header-auth hidden"><p id="coachMovementLibraryDashboardMessage" class="muted"></p></div>
       </div>
-      <p class="muted hero-description">Edit movement details, categories, and leaderboard visibility.</p>
+      <p class="muted hero-description">Build the full exercise library used inside workouts and programs.</p>
     </section>
 
-    <section id="coachMovementsAuthCard" class="card auth-card">
+    <section id="coachMovementLibraryAuthCard" class="card auth-card">
       <h2>Coach Sign In</h2>
-      <div class="field"><label for="coachMovementsEmail">Email</label><input id="coachMovementsEmail" type="email" placeholder="Email" /></div>
-      <div class="field"><label for="coachMovementsPassword">Password</label><input id="coachMovementsPassword" type="password" placeholder="Password" /></div>
-      <div class="actions" style="margin-top:14px;"><button type="button" id="coachMovementsSignInBtn" class="primary">Sign In</button><button type="button" id="coachMovementsForgotBtn">Forgot Password</button></div>
-      <p id="coachMovementsAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
+      <div class="field"><label for="coachMovementLibraryEmail">Email</label><input id="coachMovementLibraryEmail" type="email" placeholder="Email" /></div>
+      <div class="field"><label for="coachMovementLibraryPassword">Password</label><input id="coachMovementLibraryPassword" type="password" placeholder="Password" /></div>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="coachMovementLibrarySignInBtn" class="primary">Sign In</button><button type="button" id="coachMovementLibraryForgotBtn">Forgot Password</button></div>
+      <p id="coachMovementLibraryAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
     </section>
 
-    <section id="coachMovementsDashboard" class="dashboard-stack hidden">
+    <section id="coachMovementLibraryDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="actions form-actions" id="addMovementActions">
-          <button type="button" id="addMovementBtn" class="primary wide-add-button">Add Movement</button>
+        <div class="section-head compact">
+          <div>
+            <h2>Movement Library</h2>
+            <p class="muted">This will be the full exercise database for workout building. Benchmarks now live on their own page.</p>
+          </div>
         </div>
-
-        <form id="movementForm" class="builder-form movement-library-form hidden">
-          <div class="section-head compact">
-            <div>
-              <h2 id="movementFormTitle">Create Movement</h2>
-              <p class="muted">Create and update movements used in programs and progress tracking.</p>
-            </div>
-          </div>
-          <div class="grid-2 form-grid">
-            <div class="field"><label for="movementName">Movement name</label><input id="movementName" type="text" placeholder="2K Row, Back Squat, Fran" required /></div>
-            <div class="field"><label for="movementCategory">Category</label><select id="movementCategory"><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
-          </div>
-          <div class="field"><label for="movementDescription">Description / details</label><textarea id="movementDescription" rows="4" placeholder="Standards, scoring, distance, or notes for this movement"></textarea></div>
-          <label class="check-field"><input id="movementShowOnLeaderboard" type="checkbox" /> Show this movement on the athlete leaderboard page</label>
-          <div class="actions form-actions">
-            <button type="submit" id="saveMovementPageBtn" class="primary">Save Movement</button>
-            <button type="button" id="clearMovementPageBtn">Clear form</button>
-          </div>
-        </form>
-        <p id="movementPageMessage" class="muted hidden"></p>
-      </div>
-
-      <div class="card dashboard-card">
-        <div class="section-head compact"><div><h2>Movement List</h2><p class="muted">Edit names, categories, details, and leaderboard settings.</p></div></div>
-        <div class="saved-filter-grid">
-          <div class="field search-field"><label for="movementSearch">Search movements</label><input id="movementSearch" type="search" placeholder="Search name, category, description" /></div>
-          <div class="field"><label for="movementCategoryFilter">Category</label><select id="movementCategoryFilter"><option value="all">All categories</option><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
-        </div>
-        <div id="movementList" class="list-stack"></div>
+        <p class="muted empty-state">Next step: add movement CRUD here without leaderboard settings.</p>
       </div>
     </section>
   </main>
@@ -80,18 +57,17 @@
   <script src="assets/app.js"></script>
   <script>
     initLoginPage({
-      emailId: "coachMovementsEmail",
-      passwordId: "coachMovementsPassword",
-      signInBtnId: "coachMovementsSignInBtn",
-      forgotBtnId: "coachMovementsForgotBtn",
-      signOutBtnId: "coachMovementsSignOutBtn",
-      messageId: "coachMovementsAuthMessage",
-      dashboardMessageId: "coachMovementsDashboardMessage",
-      authCardId: "coachMovementsAuthCard",
-      dashboardId: "coachMovementsDashboard",
+      emailId: "coachMovementLibraryEmail",
+      passwordId: "coachMovementLibraryPassword",
+      signInBtnId: "coachMovementLibrarySignInBtn",
+      forgotBtnId: "coachMovementLibraryForgotBtn",
+      signOutBtnId: "coachMovementLibrarySignOutBtn",
+      messageId: "coachMovementLibraryAuthMessage",
+      dashboardMessageId: "coachMovementLibraryDashboardMessage",
+      authCardId: "coachMovementLibraryAuthCard",
+      dashboardId: "coachMovementLibraryDashboard",
       requiredRole: "coach"
     });
-    initCoachMovementsApp();
   </script>
 </body>
 </html>

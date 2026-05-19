@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Benchmarks — Mango Fitness</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+</head>
+<body>
+  <main class="container">
+    <section class="card hero topbar">
+      <div class="hero-main">
+        <div class="brand-heading"><div class="brand-mark"><img src="assets/mango-fitness-logo.png" alt="Mango Fitness" /></div><h1>Benchmarks</h1></div>
+        <nav class="actions top-actions coach-nav">
+          <a href="index.html" class="nav-link">Home</a>
+          <span class="nav-separator">|</span>
+          <a href="admin.html" class="nav-link">Coach portal</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-clients.html" class="nav-link">Clients</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-benchmarks.html" class="nav-link active" aria-current="page">Benchmarks</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-movements.html" class="nav-link">Movements</a>
+          <span class="nav-separator">|</span>
+          <a href="coach-history.html" class="nav-link">Progress history</a>
+          <span id="coachMovementsSignOutSeparator" class="nav-separator hidden">|</span>
+          <button type="button" id="coachMovementsSignOutBtn" class="nav-link link-button hidden">Sign out</button>
+        </nav>
+        <div id="coachMovementsHeaderAuth" class="header-auth hidden"><p id="coachMovementsDashboardMessage" class="muted"></p></div>
+      </div>
+      <p class="muted hero-description">Manage benchmark tests, categories, and leaderboard visibility.</p>
+    </section>
+
+    <section id="coachMovementsAuthCard" class="card auth-card">
+      <h2>Coach Sign In</h2>
+      <div class="field"><label for="coachMovementsEmail">Email</label><input id="coachMovementsEmail" type="email" placeholder="Email" /></div>
+      <div class="field"><label for="coachMovementsPassword">Password</label><input id="coachMovementsPassword" type="password" placeholder="Password" /></div>
+      <div class="actions" style="margin-top:14px;"><button type="button" id="coachMovementsSignInBtn" class="primary">Sign In</button><button type="button" id="coachMovementsForgotBtn">Forgot Password</button></div>
+      <p id="coachMovementsAuthMessage" class="muted hidden" style="margin:12px 0 0;"></p>
+    </section>
+
+    <section id="coachMovementsDashboard" class="dashboard-stack hidden">
+      <div class="card dashboard-card">
+        <div class="actions form-actions" id="addMovementActions">
+          <button type="button" id="addMovementBtn" class="primary wide-add-button">Add Benchmark</button>
+        </div>
+
+        <form id="movementForm" class="builder-form movement-library-form hidden">
+          <div class="section-head compact">
+            <div>
+              <h2 id="movementFormTitle">Create Benchmark</h2>
+              <p class="muted">Create and update benchmark tests used for progress tracking and leaderboards.</p>
+            </div>
+          </div>
+          <div class="grid-2 form-grid">
+            <div class="field"><label for="movementName">Benchmark name</label><input id="movementName" type="text" placeholder="2K Row, Back Squat, Fran" required /></div>
+            <div class="field"><label for="movementCategory">Category</label><select id="movementCategory"><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
+          </div>
+          <div class="field"><label for="movementDescription">Standards / details</label><textarea id="movementDescription" rows="4" placeholder="Standards, scoring, distance, or notes for this benchmark"></textarea></div>
+          <label class="check-field"><input id="movementShowOnLeaderboard" type="checkbox" /> Show this benchmark on the athlete leaderboard page</label>
+          <div class="actions form-actions">
+            <button type="submit" id="saveMovementPageBtn" class="primary">Save Benchmark</button>
+            <button type="button" id="clearMovementPageBtn">Clear form</button>
+          </div>
+        </form>
+        <p id="movementPageMessage" class="muted hidden"></p>
+      </div>
+
+      <div class="card dashboard-card">
+        <div class="section-head compact"><div><h2>Benchmark List</h2><p class="muted">Edit benchmark names, categories, standards, and leaderboard settings.</p></div></div>
+        <div class="saved-filter-grid">
+          <div class="field search-field"><label for="movementSearch">Search benchmarks</label><input id="movementSearch" type="search" placeholder="Search name, category, description" /></div>
+          <div class="field"><label for="movementCategoryFilter">Category</label><select id="movementCategoryFilter"><option value="all">All categories</option><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
+        </div>
+        <div id="movementList" class="list-stack"></div>
+      </div>
+    </section>
+  </main>
+  <script src="assets/auth.js"></script>
+  <script src="assets/app.js"></script>
+  <script>
+    initLoginPage({
+      emailId: "coachMovementsEmail",
+      passwordId: "coachMovementsPassword",
+      signInBtnId: "coachMovementsSignInBtn",
+      forgotBtnId: "coachMovementsForgotBtn",
+      signOutBtnId: "coachMovementsSignOutBtn",
+      messageId: "coachMovementsAuthMessage",
+      dashboardMessageId: "coachMovementsDashboardMessage",
+      authCardId: "coachMovementsAuthCard",
+      dashboardId: "coachMovementsDashboard",
+      requiredRole: "coach"
+    });
+    initCoachMovementsApp();
+  </script>
+</body>
+</html>

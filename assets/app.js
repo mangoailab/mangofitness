@@ -3212,8 +3212,8 @@ function initCoachMovementsApp() {
     category.value = "strength";
     description.value = "";
     showOnLeaderboard.checked = false;
-    if (saveBtn) saveBtn.textContent = "Save Movement";
-    if (movementFormTitle) movementFormTitle.textContent = "Create Movement";
+    if (saveBtn) saveBtn.textContent = "Save Benchmark";
+    if (movementFormTitle) movementFormTitle.textContent = "Create Benchmark";
     setMovementMessage("");
     showMovementForm(false);
   }
@@ -3245,7 +3245,7 @@ function initCoachMovementsApp() {
     list.innerHTML = rows.length ? `
       <div class="progress-table-wrap movement-table-wrap">
         <table class="progress-table movement-library-table">
-          <thead><tr><th>Movement</th><th>Category</th><th>Description</th><th>Leaderboard</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Benchmark</th><th>Category</th><th>Standards</th><th>Leaderboard</th><th>Actions</th></tr></thead>
           <tbody>
             ${rows.map((movement) => `
               <tr data-movement-row="${escapeHtml(movement.id)}">
@@ -3259,7 +3259,7 @@ function initCoachMovementsApp() {
           </tbody>
         </table>
       </div>
-    ` : `<p class="muted empty-state">No movements found.</p>`;
+    ` : `<p class="muted empty-state">No benchmarks found.</p>`;
   }
 
   async function loadMovementPage() {
@@ -3279,7 +3279,7 @@ function initCoachMovementsApp() {
       description: description.value.trim(),
       showOnLeaderboard: showOnLeaderboard.checked
     };
-    if (!payload.name) return setMovementMessage("Add a movement name first.", true);
+    if (!payload.name) return setMovementMessage("Add a benchmark name first.", true);
     try {
       if (saveBtn) saveBtn.disabled = true;
       const editId = form.dataset.editId || "";
@@ -3287,7 +3287,7 @@ function initCoachMovementsApp() {
       else await MangoFitnessStore.saveStrengthMovement(payload);
       resetMovementForm();
       await loadMovementPage();
-      setMovementMessage(editId ? "Movement updated." : "Movement saved.");
+      setMovementMessage(editId ? "Benchmark updated." : "Benchmark saved.");
     } catch (error) {
       setMovementMessage(friendlyError(error), true);
     } finally {
@@ -3353,7 +3353,7 @@ function initCoachMovementsApp() {
         saveEditButton.disabled = true;
         await MangoFitnessStore.updateStrengthMovement(saveEditButton.dataset.saveMovementPage, payload);
         await loadMovementPage();
-        setMovementMessage("Movement updated.");
+        setMovementMessage("Benchmark updated.");
       } catch (error) {
         setMovementMessage(friendlyError(error), true);
       } finally {
@@ -3365,11 +3365,11 @@ function initCoachMovementsApp() {
     if (deleteButton) {
       const movement = movements.find((item) => item.id === deleteButton.dataset.deleteMovementPage);
       if (!movement) return;
-      if (!confirm(`Delete movement “${movement.name}”? This cannot be undone.`)) return;
+      if (!confirm(`Delete benchmark “${movement.name}”? This cannot be undone.`)) return;
       try {
         await MangoFitnessStore.deleteStrengthMovement(movement.id);
         await loadMovementPage();
-        setMovementMessage("Movement deleted.");
+        setMovementMessage("Benchmark deleted.");
       } catch (error) {
         setMovementMessage(friendlyError(error), true);
       }

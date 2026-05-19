@@ -12,3 +12,4 @@
 - Add a secure Supabase Edge Function or backend endpoint for coaches to create/invite athlete Auth users from the Clients page without exposing a service-role key in the browser.
 - Add lightweight browser/manual test checklist before every push.
 - Improve InBody PDF parsing further using actual PDF text/layout, especially scan date, weight, SMM, and PBF.
+- Build out the new coach Movements page as the full exercise library; Benchmarks now owns leaderboard/test standards.
