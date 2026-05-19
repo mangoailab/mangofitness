@@ -3252,7 +3252,7 @@ function initCoachMovementsApp() {
                 <td data-movement-cell="name"><strong>${escapeHtml(movement.name)}</strong></td>
                 <td data-movement-cell="category">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
                 <td data-movement-cell="description">${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
-                <td data-movement-cell="showOnLeaderboard">${movement.showOnLeaderboard ? "Yes" : "No"}</td>
+                <td data-movement-cell="showOnLeaderboard">${movement.showOnLeaderboard ? "✓" : ""}</td>
                 <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
               </tr>
             `).join("")}
@@ -3322,7 +3322,7 @@ function initCoachMovementsApp() {
     freshRow.querySelector('[data-movement-cell="name"]').innerHTML = `<input data-movement-edit-field="name" value="${escapeHtml(movement.name || "")}" />`;
     freshRow.querySelector('[data-movement-cell="category"]').innerHTML = `<select data-movement-edit-field="category">${categoryOptions(movement.category || "strength")}</select>`;
     freshRow.querySelector('[data-movement-cell="description"]').innerHTML = `<textarea data-movement-edit-field="description" rows="2">${escapeHtml(movement.description || "")}</textarea>`;
-    freshRow.querySelector('[data-movement-cell="showOnLeaderboard"]').innerHTML = `<label class="table-check"><input data-movement-edit-field="showOnLeaderboard" type="checkbox"${movement.showOnLeaderboard ? " checked" : ""} /> Yes</label>`;
+    freshRow.querySelector('[data-movement-cell="showOnLeaderboard"]').innerHTML = `<label class="table-check"><input data-movement-edit-field="showOnLeaderboard" type="checkbox"${movement.showOnLeaderboard ? " checked" : ""} /></label>`;
     freshRow.querySelector(".table-actions").innerHTML = `<button type="button" class="primary" data-save-movement-page="${escapeHtml(id)}">Save</button><button type="button" data-cancel-movement-edit="${escapeHtml(id)}">Cancel</button>`;
     freshRow.querySelector('[data-movement-edit-field="name"]')?.focus();
   }
