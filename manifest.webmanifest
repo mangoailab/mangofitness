@@ -4,7 +4,7 @@
   "description": "Mango Fitness athlete and coach portal.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#fff7ed",
+  "background_color": "#ffffff",
   "theme_color": "#f59e0b",
   "icons": [
     {
