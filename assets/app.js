@@ -2881,7 +2881,8 @@ function initAthleteHistoryApp(options = {}) {
   const historicalForm = document.getElementById("historicalBenchmarkForm");
   const addHistoricalBtn = document.getElementById("addHistoricalBenchmarkBtn");
   const clearHistoricalBtn = document.getElementById("clearHistoricalBenchmarkBtn");
-  const historicalSelect = document.getElementById("historicalBenchmarkSelect");
+  const historicalInput = document.getElementById("historicalBenchmarkInput");
+  const historicalSuggestions = document.getElementById("historicalBenchmarkSuggestions");
   const historicalDate = document.getElementById("historicalBenchmarkDate");
   const historicalWeight = document.getElementById("historicalBenchmarkWeight");
   const historicalReps = document.getElementById("historicalBenchmarkReps");
@@ -2890,6 +2891,7 @@ function initAthleteHistoryApp(options = {}) {
   const historicalPr = document.getElementById("historicalBenchmarkPr");
   const historicalMessage = document.getElementById("historicalBenchmarkMessage");
   if (!history) return;
+  let historicalBenchmarks = [];
 
   function setHistoricalMessage(text, isError = false) {
     if (!historicalMessage) return;
@@ -2901,16 +2903,55 @@ function initAthleteHistoryApp(options = {}) {
   function showHistoricalForm(show = true) {
     historicalForm?.classList.toggle("hidden", !show);
     addHistoricalBtn?.classList.toggle("hidden", show);
-    if (show) historicalSelect?.focus();
+    if (show) historicalInput?.focus();
+  }
+
+  function historicalBenchmarkById(id) {
+    return historicalBenchmarks.find((movement) => movement.id === id) || null;
+  }
+
+  function historicalBenchmarkByName(name) {
+    const normalized = String(name || "").trim().toLowerCase();
+    return historicalBenchmarks.find((movement) => movement.name.toLowerCase() === normalized) || null;
+  }
+
+  function hideHistoricalSuggestions() {
+    historicalSuggestions?.classList.add("hidden");
+  }
+
+  function positionHistoricalSuggestions() {
+    if (!historicalInput || !historicalSuggestions || historicalSuggestions.classList.contains("hidden")) return;
+    const box = historicalInput.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const offsetLeft = viewport?.offsetLeft || 0;
+    const offsetTop = viewport?.offsetTop || 0;
+    const viewportWidth = viewport?.width || window.innerWidth;
+    const viewportHeight = viewport?.height || window.innerHeight;
+    const suggestionHeight = Math.min(220, historicalSuggestions.scrollHeight || 160);
+    const left = Math.max(8 + offsetLeft, Math.min(box.left + offsetLeft, viewportWidth + offsetLeft - box.width - 8));
+    let top = box.bottom + offsetTop + 4;
+    if (top + suggestionHeight > viewportHeight + offsetTop - 8) {
+      top = Math.max(8 + offsetTop, box.top + offsetTop - suggestionHeight - 4);
+    }
+    historicalSuggestions.style.left = `${left}px`;
+    historicalSuggestions.style.top = `${top}px`;
+    historicalSuggestions.style.width = `${Math.min(box.width, viewportWidth - 16)}px`;
+    historicalSuggestions.style.maxHeight = `${suggestionHeight}px`;
+  }
+
+  function applyHistoricalBenchmark(movement) {
+    if (!historicalInput || !movement) return;
+    historicalInput.value = movement.name;
+    historicalInput.dataset.movementId = movement.id;
+    hideHistoricalSuggestions();
   }
 
   async function loadHistoricalBenchmarkOptions() {
-    if (!historicalSelect) return;
+    if (!historicalInput) return;
     try {
-      const benchmarks = (await MangoFitnessStore.strengthMovements()).filter((movement) => movement.showOnLeaderboard);
-      historicalSelect.innerHTML = `<option value="">Select benchmark</option>${benchmarks.map((movement) => `<option value="${escapeHtml(movement.id)}">${escapeHtml(movement.name)}</option>`).join("")}`;
+      historicalBenchmarks = (await MangoFitnessStore.strengthMovements()).filter((movement) => movement.showOnLeaderboard);
     } catch (error) {
-      historicalSelect.innerHTML = `<option value="">Could not load benchmarks</option>`;
+      historicalBenchmarks = [];
       setHistoricalMessage(friendlyError(error), true);
     }
   }
@@ -3215,24 +3256,49 @@ function initAthleteHistoryApp(options = {}) {
   addHistoricalBtn?.addEventListener("click", () => showHistoricalForm(true));
   clearHistoricalBtn?.addEventListener("click", () => {
     historicalForm?.reset();
+    if (historicalInput) historicalInput.dataset.movementId = "";
     if (historicalDate) historicalDate.value = todayISO();
     if (historicalPr) historicalPr.checked = true;
+    hideHistoricalSuggestions();
     setHistoricalMessage("");
     showHistoricalForm(false);
   });
+  historicalInput?.addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    const exactBenchmark = historicalBenchmarkByName(event.target.value);
+    event.target.dataset.movementId = exactBenchmark ? exactBenchmark.id : "";
+    if (!historicalSuggestions) return;
+    const matches = query ? historicalBenchmarks
+      .filter((movement) => movement.name.toLowerCase().includes(query))
+      .slice(0, 8) : [];
+    historicalSuggestions.innerHTML = matches.map((movement) => `<button type="button" data-historical-benchmark-id="${escapeHtml(movement.id)}">${escapeHtml(movement.name)}</button>`).join("");
+    historicalSuggestions.classList.toggle("hidden", !matches.length);
+    if (matches.length) positionHistoricalSuggestions();
+  });
+  historicalSuggestions?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-historical-benchmark-id]");
+    if (!button) return;
+    applyHistoricalBenchmark(historicalBenchmarkById(button.dataset.historicalBenchmarkId));
+  });
+  historicalInput?.addEventListener("blur", () => setTimeout(hideHistoricalSuggestions, 150));
+  historicalInput?.addEventListener("focus", () => historicalInput.dispatchEvent(new Event("input")));
+  window.addEventListener("scroll", positionHistoricalSuggestions, true);
+  window.addEventListener("resize", positionHistoricalSuggestions);
+  window.visualViewport?.addEventListener("resize", positionHistoricalSuggestions);
+  window.visualViewport?.addEventListener("scroll", positionHistoricalSuggestions);
   historicalForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const selectedOption = historicalSelect?.selectedOptions?.[0];
+    const selectedBenchmark = historicalBenchmarkById(historicalInput?.dataset.movementId || "") || historicalBenchmarkByName(historicalInput?.value || "");
     const weight = numericWeight(historicalWeight?.value);
     const score = historicalScore?.value.trim() || "";
     const reps = historicalReps?.value.trim() || "";
-    if (!historicalSelect?.value) return setHistoricalMessage("Choose a benchmark first.", true);
+    if (!selectedBenchmark) return setHistoricalMessage("Choose a benchmark from the suggestions first.", true);
     if (!historicalDate?.value) return setHistoricalMessage("Choose the date achieved.", true);
     if (weight == null && !score && !reps) return setHistoricalMessage("Enter a weight, reps, or time/score.", true);
     try {
       await MangoFitnessStore.saveHistoricalBenchmark({
-        movementId: historicalSelect.value,
-        benchmarkName: selectedOption?.textContent || "Historical benchmark",
+        movementId: selectedBenchmark.id,
+        benchmarkName: selectedBenchmark.name || "Historical benchmark",
         completedOn: historicalDate.value,
         weight,
         reps,
@@ -3241,8 +3307,10 @@ function initAthleteHistoryApp(options = {}) {
         isPr: historicalPr?.checked !== false
       });
       historicalForm.reset();
+      if (historicalInput) historicalInput.dataset.movementId = "";
       if (historicalDate) historicalDate.value = todayISO();
       if (historicalPr) historicalPr.checked = true;
+      hideHistoricalSuggestions();
       showHistoricalForm(false);
       setHistoricalMessage("Past benchmark saved as a self-reported historical entry.");
       await renderHistory();
