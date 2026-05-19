@@ -3183,6 +3183,8 @@ function initCoachMovementsApp() {
   const showOnLeaderboard = document.getElementById("movementShowOnLeaderboard");
   const saveBtn = document.getElementById("saveMovementPageBtn");
   const clearBtn = document.getElementById("clearMovementPageBtn");
+  const addMovementBtn = document.getElementById("addMovementBtn");
+  const movementFormTitle = document.getElementById("movementFormTitle");
   const list = document.getElementById("movementList");
   const message = document.getElementById("movementPageMessage");
   const search = document.getElementById("movementSearch");
@@ -3198,6 +3200,12 @@ function initCoachMovementsApp() {
     message.classList.toggle("error-text", Boolean(isError));
   }
 
+  function showMovementForm(show = true) {
+    form.classList.toggle("hidden", !show);
+    addMovementBtn?.classList.toggle("hidden", show);
+    if (show) name?.focus();
+  }
+
   function resetMovementForm() {
     form.dataset.editId = "";
     name.value = "";
@@ -3205,6 +3213,9 @@ function initCoachMovementsApp() {
     description.value = "";
     showOnLeaderboard.checked = false;
     if (saveBtn) saveBtn.textContent = "Save Movement";
+    if (movementFormTitle) movementFormTitle.textContent = "Create Movement";
+    setMovementMessage("");
+    showMovementForm(false);
   }
 
   function movementCategoryLabel(value) {
@@ -3281,6 +3292,7 @@ function initCoachMovementsApp() {
     }
   });
 
+  addMovementBtn?.addEventListener("click", () => showMovementForm(true));
   clearBtn?.addEventListener("click", resetMovementForm);
   search?.addEventListener("input", renderMovementList);
   categoryFilter?.addEventListener("change", renderMovementList);
@@ -3296,6 +3308,9 @@ function initCoachMovementsApp() {
       description.value = movement.description || "";
       showOnLeaderboard.checked = Boolean(movement.showOnLeaderboard);
       if (saveBtn) saveBtn.textContent = "Save Changes";
+      if (movementFormTitle) movementFormTitle.textContent = "Edit Movement";
+      setMovementMessage("");
+      showMovementForm(true);
       form.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }

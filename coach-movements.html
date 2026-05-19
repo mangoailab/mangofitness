@@ -41,14 +41,17 @@
 
     <section id="coachMovementsDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="section-head compact">
-          <div>
-            <h2>Movement Library</h2>
-            <p class="muted">Create and update movements used in programs and progress tracking.</p>
-          </div>
+        <div class="actions form-actions" id="addMovementActions">
+          <button type="button" id="addMovementBtn" class="primary wide-add-button">Add Movement</button>
         </div>
 
-        <form id="movementForm" class="builder-form movement-library-form">
+        <form id="movementForm" class="builder-form movement-library-form hidden">
+          <div class="section-head compact">
+            <div>
+              <h2 id="movementFormTitle">Create Movement</h2>
+              <p class="muted">Create and update movements used in programs and progress tracking.</p>
+            </div>
+          </div>
           <div class="grid-2 form-grid">
             <div class="field"><label for="movementName">Movement name</label><input id="movementName" type="text" placeholder="2K Row, Back Squat, Fran" required /></div>
             <div class="field"><label for="movementCategory">Category</label><select id="movementCategory"><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
@@ -57,7 +60,7 @@
           <label class="check-field"><input id="movementShowOnLeaderboard" type="checkbox" /> Show this movement on the athlete leaderboard page</label>
           <div class="actions form-actions">
             <button type="submit" id="saveMovementPageBtn" class="primary">Save Movement</button>
-            <button type="button" id="clearMovementPageBtn">Clear</button>
+            <button type="button" id="clearMovementPageBtn">Clear form</button>
           </div>
         </form>
         <p id="movementPageMessage" class="muted hidden"></p>
