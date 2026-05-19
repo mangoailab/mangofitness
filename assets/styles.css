@@ -586,95 +586,30 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   color: var(--text);
   font-weight: 600;
 }
-
-/* Portrait movement library: use readable list rows instead of a sideways table. */
 @media (max-width: 640px) and (orientation: portrait) {
-  .movement-table-wrap {
-    overflow-x: visible;
-    padding: 0;
-    border: 0;
-    background: transparent;
-  }
-  .movement-library-table,
-  .movement-library-table tbody,
-  .movement-library-table tr,
-  .movement-library-table td {
-    display: block;
-    min-width: 0;
-    width: 100%;
-  }
-  .movement-library-table thead { display: none; }
-  .movement-library-table tr[data-movement-row] {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "name leaderboard"
-      "category actions"
-      "description actions";
-    gap: 6px 10px;
-    margin-bottom: 10px;
-    padding: 12px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: white;
-  }
-  .movement-library-table tr[data-movement-row].is-editing { background: var(--soft); }
-  .movement-library-table td {
-    border-bottom: 0;
-    padding: 0;
-    white-space: normal !important;
-  }
-  .movement-library-table td[data-movement-cell="name"] { grid-area: name; }
-  .movement-library-table td[data-movement-cell="category"] {
-    grid-area: category;
-    color: var(--muted);
-    font-size: 13px;
-  }
-  .movement-library-table td[data-movement-cell="description"] {
-    grid-area: description;
-    color: var(--text);
-    font-size: 13px;
-    line-height: 1.35;
-  }
-  .movement-library-table td[data-movement-cell="showOnLeaderboard"] {
-    grid-area: leaderboard;
-    justify-self: end;
-    width: auto;
-    min-width: 0;
-  }
+  .movement-library-table { min-width: 680px; }
+  .movement-library-table th:nth-child(5),
   .movement-library-table td:nth-child(5) {
-    grid-area: actions;
-    position: static;
-    width: auto;
-    min-width: 0;
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
+    min-width: 78px;
+    width: 78px;
+    padding: 8px 6px;
+    box-shadow: -4px 0 8px rgba(15, 122, 59, .06);
   }
   .movement-library-table .table-actions {
-    width: auto;
-    min-width: 70px;
+    width: 100%;
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
   }
   .movement-library-table .table-actions button {
     width: 100%;
-    min-height: 32px;
+    min-height: 34px;
     padding: 6px 8px;
     border-radius: 10px;
     font-size: 12px;
     line-height: 1;
   }
-  .movement-library-table tr.is-editing input,
-  .movement-library-table tr.is-editing select,
-  .movement-library-table tr.is-editing textarea {
-    min-width: 0;
-    font-size: 14px;
-    padding: 9px 10px;
-  }
 }
-
 .leaderboard-winner td {
   background: rgba(255, 183, 3, .14);
 }
