@@ -11,8 +11,8 @@
 - `index.html` — public landing page
 - `admin.html` — coach portal / workout builder
 - `coach-history.html` — coach progress history for all athletes
-- `coach-benchmarks.html` — coach benchmark manager for test standards, categories, and leaderboard visibility
-- `coach-movements.html` — coach movement library placeholder for the full exercise database used in workouts/programs
+- `coach-benchmarks.html` — coach benchmark manager for test standards, categories, and leaderboard-visible items only
+- `coach-movements.html` — coach movement library for non-benchmark exercises used in workouts/programs
 - `athlete.html` — athlete portal / workouts and logging
 - `athlete-history.html` — athlete progress history, scoped to signed-in athlete
 - `athlete-metrics.html` — athlete body scan upload/history/charts
@@ -40,7 +40,7 @@
 
 ## Coach client management
 
-- Coach portal Add Workout and Clients create flows use the collapsed full-width Add button pattern. Add Workout opens the workout builder; Add Client opens Create Client + Login, which creates the athlete profile and creates/links the Supabase Auth login in one step. Client edits happen inline inside each athlete card with its own Edit/Save controls. Client rows stay collapsed by default and include search to keep the page clean. Athlete Results are the single coach Progress page result view: tables grouped by movement, not stacked cards; the Progress Search/filter card sits at the top and filters those tables. Coach Saved Workouts show programs as the primary view: choose an athlete inside a program card to see that athlete’s logged reps, weights, scores, and notes in the same program layout. Coach Benchmarks manages leaderboard/test standards. Coach Movements is reserved for the broader exercise library used by workouts/programs.
+- Coach portal Add Workout and Clients create flows use the collapsed full-width Add button pattern. Add Workout opens the workout builder; Add Client opens Create Client + Login, which creates the athlete profile and creates/links the Supabase Auth login in one step. Client edits happen inline inside each athlete card with its own Edit/Save controls. Client rows stay collapsed by default and include search to keep the page clean. Athlete Results are the single coach Progress page result view: tables grouped by movement, not stacked cards; the Progress Search/filter card sits at the top and filters those tables. Coach Saved Workouts show programs as the primary view: choose an athlete inside a program card to see that athlete’s logged reps, weights, scores, and notes in the same program layout. Coach Benchmarks manages leaderboard/test standards. Coach Movements manages non-benchmark exercises like Back Squat, Bench Press, and Deadlift for workouts/programs, with a Make Benchmark action when an exercise should move to benchmarks.
 - Client cards include athlete login tools, similar to Mango Loan borrower portal tools: Create Login, Find & Link Existing User, and Set Temporary Password. These call the deployed `create-athlete-user` Supabase Edge Function so coaches do not need to manually copy Auth user IDs for normal setup.
 
 ## Progress history behavior

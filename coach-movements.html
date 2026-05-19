@@ -30,7 +30,7 @@
         </nav>
         <div id="coachMovementLibraryHeaderAuth" class="header-auth hidden"><p id="coachMovementLibraryDashboardMessage" class="muted"></p></div>
       </div>
-      <p class="muted hero-description">Build the full exercise library used inside workouts and programs.</p>
+      <p class="muted hero-description">Manage the full exercise library used inside workouts and programs.</p>
     </section>
 
     <section id="coachMovementLibraryAuthCard" class="card auth-card">
@@ -43,13 +43,37 @@
 
     <section id="coachMovementLibraryDashboard" class="dashboard-stack hidden">
       <div class="card dashboard-card">
-        <div class="section-head compact">
-          <div>
-            <h2>Movement Library</h2>
-            <p class="muted">This will be the full exercise database for workout building. Benchmarks now live on their own page.</p>
-          </div>
+        <div class="actions form-actions" id="addMovementActions">
+          <button type="button" id="addMovementBtn" class="primary wide-add-button">Add Movement</button>
         </div>
-        <p class="muted empty-state">Next step: add movement CRUD here without leaderboard settings.</p>
+
+        <form id="movementForm" class="builder-form movement-library-form hidden">
+          <div class="section-head compact">
+            <div>
+              <h2 id="movementFormTitle">Create Movement</h2>
+              <p class="muted">Create and update exercises used in workout building.</p>
+            </div>
+          </div>
+          <div class="grid-2 form-grid">
+            <div class="field"><label for="movementName">Movement name</label><input id="movementName" type="text" placeholder="Back Squat, Bench Press, Deadlift" required /></div>
+            <div class="field"><label for="movementCategory">Category</label><select id="movementCategory"><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
+          </div>
+          <div class="field"><label for="movementDescription">Description / coaching notes</label><textarea id="movementDescription" rows="4" placeholder="Setup, cues, standards, or notes for this movement"></textarea></div>
+          <div class="actions form-actions">
+            <button type="submit" id="saveMovementPageBtn" class="primary">Save Movement</button>
+            <button type="button" id="clearMovementPageBtn">Clear form</button>
+          </div>
+        </form>
+        <p id="movementPageMessage" class="muted hidden"></p>
+      </div>
+
+      <div class="card dashboard-card">
+        <div class="section-head compact"><div><h2>Movement List</h2><p class="muted">Exercises like Back Squat, Bench Press, and Deadlift live here. Use “Make Benchmark” only when an item should appear on the benchmark page.</p></div></div>
+        <div class="saved-filter-grid">
+          <div class="field search-field"><label for="movementSearch">Search movements</label><input id="movementSearch" type="search" placeholder="Search name, category, description" /></div>
+          <div class="field"><label for="movementCategoryFilter">Category</label><select id="movementCategoryFilter"><option value="all">All categories</option><option value="strength">Strength</option><option value="cardio">Cardio</option><option value="wod">WOD</option><option value="gymnastics">Gymnastics</option><option value="accessory">Accessory</option><option value="other">Other</option></select></div>
+        </div>
+        <div id="movementList" class="list-stack"></div>
       </div>
     </section>
   </main>
@@ -68,6 +92,7 @@
       dashboardId: "coachMovementLibraryDashboard",
       requiredRole: "coach"
     });
+    initCoachMovementsApp();
   </script>
 </body>
 </html>

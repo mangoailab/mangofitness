@@ -3191,6 +3191,9 @@ function initCoachMovementsApp() {
   const categoryFilter = document.getElementById("movementCategoryFilter");
   if (!form || !list) return;
 
+  const isBenchmarkPage = Boolean(showOnLeaderboard);
+  const noun = isBenchmarkPage ? "Benchmark" : "Movement";
+  const nounLower = noun.toLowerCase();
   let movements = [];
 
   function setMovementMessage(text, isError = false) {
@@ -3211,9 +3214,9 @@ function initCoachMovementsApp() {
     name.value = "";
     category.value = "strength";
     description.value = "";
-    showOnLeaderboard.checked = false;
-    if (saveBtn) saveBtn.textContent = "Save Benchmark";
-    if (movementFormTitle) movementFormTitle.textContent = "Create Benchmark";
+    if (showOnLeaderboard) showOnLeaderboard.checked = true;
+    if (saveBtn) saveBtn.textContent = `Save ${noun}`;
+    if (movementFormTitle) movementFormTitle.textContent = `Create ${noun}`;
     setMovementMessage("");
     showMovementForm(false);
   }
@@ -3242,29 +3245,33 @@ function initCoachMovementsApp() {
 
   function renderMovementList() {
     const rows = filteredMovements().sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+    const heading = isBenchmarkPage
+      ? `<thead><tr><th>Benchmark</th><th>Category</th><th>Standards</th><th>Leaderboard</th><th>Actions</th></tr></thead>`
+      : `<thead><tr><th>Movement</th><th>Category</th><th>Description</th><th>Actions</th></tr></thead>`;
     list.innerHTML = rows.length ? `
       <div class="progress-table-wrap movement-table-wrap">
         <table class="progress-table movement-library-table">
-          <thead><tr><th>Benchmark</th><th>Category</th><th>Standards</th><th>Leaderboard</th><th>Actions</th></tr></thead>
+          ${heading}
           <tbody>
             ${rows.map((movement) => `
               <tr data-movement-row="${escapeHtml(movement.id)}">
                 <td data-movement-cell="name"><strong>${escapeHtml(movement.name)}</strong></td>
                 <td data-movement-cell="category">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
                 <td data-movement-cell="description">${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
-                <td data-movement-cell="showOnLeaderboard"><input type="checkbox" disabled${movement.showOnLeaderboard ? " checked" : ""} aria-label="${movement.showOnLeaderboard ? "Shown on leaderboard" : "Not shown on leaderboard"}" /></td>
-                <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
+                ${isBenchmarkPage ? `<td data-movement-cell="showOnLeaderboard"><input type="checkbox" disabled checked aria-label="Shown on leaderboard" /></td>` : ""}
+                <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" data-toggle-benchmark-page="${escapeHtml(movement.id)}">${isBenchmarkPage ? "Move to Movements" : "Make Benchmark"}</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
               </tr>
             `).join("")}
           </tbody>
         </table>
       </div>
-    ` : `<p class="muted empty-state">No benchmarks found.</p>`;
+    ` : `<p class="muted empty-state">No ${nounLower}s found.</p>`;
   }
 
   async function loadMovementPage() {
     try {
-      movements = (await MangoFitnessStore.strengthMovements()).filter((movement) => movementId(movement) && movementId(movement) !== "custom");
+      const allMovements = (await MangoFitnessStore.strengthMovements()).filter((movement) => movementId(movement) && movementId(movement) !== "custom");
+      movements = allMovements.filter((movement) => isBenchmarkPage ? movement.showOnLeaderboard : !movement.showOnLeaderboard);
       renderMovementList();
     } catch (error) {
       list.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
@@ -3277,9 +3284,9 @@ function initCoachMovementsApp() {
       name: name.value.trim(),
       category: category.value || "strength",
       description: description.value.trim(),
-      showOnLeaderboard: showOnLeaderboard.checked
+      showOnLeaderboard: isBenchmarkPage ? Boolean(showOnLeaderboard?.checked) : false
     };
-    if (!payload.name) return setMovementMessage("Add a benchmark name first.", true);
+    if (!payload.name) return setMovementMessage(`Add a ${nounLower} name first.`, true);
     try {
       if (saveBtn) saveBtn.disabled = true;
       const editId = form.dataset.editId || "";
@@ -3287,7 +3294,7 @@ function initCoachMovementsApp() {
       else await MangoFitnessStore.saveStrengthMovement(payload);
       resetMovementForm();
       await loadMovementPage();
-      setMovementMessage(editId ? "Benchmark updated." : "Benchmark saved.");
+      setMovementMessage(editId ? `${noun} updated.` : `${noun} saved.`);
     } catch (error) {
       setMovementMessage(friendlyError(error), true);
     } finally {
@@ -3322,7 +3329,9 @@ function initCoachMovementsApp() {
     freshRow.querySelector('[data-movement-cell="name"]').innerHTML = `<input data-movement-edit-field="name" value="${escapeHtml(movement.name || "")}" />`;
     freshRow.querySelector('[data-movement-cell="category"]').innerHTML = `<select data-movement-edit-field="category">${categoryOptions(movement.category || "strength")}</select>`;
     freshRow.querySelector('[data-movement-cell="description"]').innerHTML = `<textarea data-movement-edit-field="description" rows="2">${escapeHtml(movement.description || "")}</textarea>`;
-    freshRow.querySelector('[data-movement-cell="showOnLeaderboard"]').innerHTML = `<label class="table-check"><input data-movement-edit-field="showOnLeaderboard" type="checkbox"${movement.showOnLeaderboard ? " checked" : ""} /></label>`;
+    if (isBenchmarkPage) {
+      freshRow.querySelector('[data-movement-cell="showOnLeaderboard"]').innerHTML = `<label class="table-check"><input data-movement-edit-field="showOnLeaderboard" type="checkbox" checked /></label>`;
+    }
     freshRow.querySelector(".table-actions").innerHTML = `<button type="button" class="primary" data-save-movement-page="${escapeHtml(id)}">Save</button><button type="button" data-cancel-movement-edit="${escapeHtml(id)}">Cancel</button>`;
     freshRow.querySelector('[data-movement-edit-field="name"]')?.focus();
   }
@@ -3346,14 +3355,14 @@ function initCoachMovementsApp() {
         name: row.querySelector('[data-movement-edit-field="name"]')?.value.trim() || "",
         category: row.querySelector('[data-movement-edit-field="category"]')?.value || "strength",
         description: row.querySelector('[data-movement-edit-field="description"]')?.value.trim() || "",
-        showOnLeaderboard: Boolean(row.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked)
+        showOnLeaderboard: isBenchmarkPage ? Boolean(row.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked) : false
       };
-      if (!payload.name) return setMovementMessage("Add a movement name first.", true);
+      if (!payload.name) return setMovementMessage(`Add a ${nounLower} name first.`, true);
       try {
         saveEditButton.disabled = true;
         await MangoFitnessStore.updateStrengthMovement(saveEditButton.dataset.saveMovementPage, payload);
         await loadMovementPage();
-        setMovementMessage("Benchmark updated.");
+        setMovementMessage(`${noun} updated.`);
       } catch (error) {
         setMovementMessage(friendlyError(error), true);
       } finally {
@@ -3361,21 +3370,38 @@ function initCoachMovementsApp() {
       }
       return;
     }
+    const toggleButton = event.target.closest("[data-toggle-benchmark-page]");
+    if (toggleButton) {
+      const movement = movements.find((item) => item.id === toggleButton.dataset.toggleBenchmarkPage);
+      if (!movement) return;
+      try {
+        toggleButton.disabled = true;
+        await MangoFitnessStore.updateStrengthMovement(movement.id, { ...movement, showOnLeaderboard: !isBenchmarkPage });
+        await loadMovementPage();
+        setMovementMessage(isBenchmarkPage ? "Moved to Movements." : "Moved to Benchmarks.");
+      } catch (error) {
+        setMovementMessage(friendlyError(error), true);
+      } finally {
+        toggleButton.disabled = false;
+      }
+      return;
+    }
     const deleteButton = event.target.closest("[data-delete-movement-page]");
     if (deleteButton) {
       const movement = movements.find((item) => item.id === deleteButton.dataset.deleteMovementPage);
       if (!movement) return;
-      if (!confirm(`Delete benchmark “${movement.name}”? This cannot be undone.`)) return;
+      if (!confirm(`Delete ${nounLower} “${movement.name}”? This cannot be undone.`)) return;
       try {
         await MangoFitnessStore.deleteStrengthMovement(movement.id);
         await loadMovementPage();
-        setMovementMessage("Benchmark deleted.");
+        setMovementMessage(`${noun} deleted.`);
       } catch (error) {
         setMovementMessage(friendlyError(error), true);
       }
     }
   });
 
+  resetMovementForm();
   loadMovementPage();
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
     if (session?.user) loadMovementPage();
