@@ -1147,6 +1147,7 @@ function initCoachApp() {
   let savedWorkoutView = "vertical";
   let coachWeekPickerOpen = false;
   let coachWeekPickerMonth = null;
+  let selectedCoachProgramDate = "";
 
 
   function renderCoachWeekPicker(workoutsForDots) {
@@ -1159,7 +1160,7 @@ function initCoachApp() {
     const calendarStart = startOfWeek(monthStart);
     const calendarEnd = addDays(startOfWeek(monthEnd), 6);
     const workoutDates = new Set(workoutsForDots.map((item) => item.date));
-    const selectedDate = isoDate(selectedWeekStart);
+    const selectedDate = selectedCoachProgramDate || isoDate(selectedWeekStart);
     const dayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
     coachWeekPicker.innerHTML = `
       <div class="week-picker-head">
@@ -1189,7 +1190,8 @@ function initCoachApp() {
     });
     coachWeekPicker.querySelectorAll("[data-coach-week-picker-date]").forEach((button) => {
       button.addEventListener("click", () => {
-        selectedWeekStart = startOfWeek(parseLocalDate(button.dataset.coachWeekPickerDate));
+        selectedCoachProgramDate = button.dataset.coachWeekPickerDate;
+        selectedWeekStart = startOfWeek(parseLocalDate(selectedCoachProgramDate));
         coachWeekPickerOpen = false;
         coachWeekPickerMonth = null;
         if (workoutSearch) workoutSearch.value = "";
@@ -1709,7 +1711,8 @@ function initCoachApp() {
           return map;
         }, new Map());
         list.className = savedWorkoutView === "horizontal" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar" : "workout-calendar";
-        let selectedHorizontalDate = "";
+        const preferredHorizontalDate = selectedCoachProgramDate && parseLocalDate(selectedCoachProgramDate) >= weekStart && parseLocalDate(selectedCoachProgramDate) <= weekEnd ? selectedCoachProgramDate : "";
+        let selectedHorizontalDate = preferredHorizontalDate;
         list.innerHTML = Array.from({ length: 7 }, (_, index) => {
           const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
@@ -1740,6 +1743,7 @@ function initCoachApp() {
           `;
         }).join("");
         if (savedWorkoutView === "horizontal") {
+          if (!selectedHorizontalDate) selectedHorizontalDate = isoDate(weekStart);
           const selectedWorkouts = workoutsByDate.get(selectedHorizontalDate) || [];
           list.insertAdjacentHTML("beforeend", `
             <section class="coach-horizontal-detail" data-coach-horizontal-detail>
@@ -1755,6 +1759,7 @@ function initCoachApp() {
 
       list.querySelectorAll("[data-coach-horizontal-toggle]").forEach((button) => button.addEventListener("click", () => {
         const selectedDate = button.dataset.coachHorizontalToggle;
+        selectedCoachProgramDate = selectedDate;
         const workouts = visibleWorkouts.filter((workout) => workout.date === selectedDate);
         list.querySelectorAll("[data-coach-horizontal-day]").forEach((item) => item.classList.remove("is-selected"));
         list.querySelectorAll("[data-coach-horizontal-toggle]").forEach((item) => item.setAttribute("aria-expanded", "false"));
@@ -1801,16 +1806,19 @@ function initCoachApp() {
 
   prevWeekBtn?.addEventListener("click", () => {
     selectedWeekStart = addDays(selectedWeekStart, -7);
+    selectedCoachProgramDate = "";
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
   thisWeekBtn?.addEventListener("click", () => {
     selectedWeekStart = startOfWeek(new Date());
+    selectedCoachProgramDate = todayISO();
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
   nextWeekBtn?.addEventListener("click", () => {
     selectedWeekStart = addDays(selectedWeekStart, 7);
+    selectedCoachProgramDate = "";
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
