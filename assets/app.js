@@ -2879,7 +2879,6 @@ function initAthleteHistoryApp(options = {}) {
   const search = document.getElementById("progressSearch");
   const typeFilter = document.getElementById("progressTypeFilter");
   const categoryFilter = document.getElementById("progressCategoryFilter");
-  const limitFilter = document.getElementById("progressLimitFilter");
   const filterSummary = document.getElementById("progressFilterSummary");
   const historicalForm = document.getElementById("historicalBenchmarkForm");
   const addHistoricalBtn = document.getElementById("addHistoricalBenchmarkBtn");
@@ -3219,7 +3218,6 @@ function initAthleteHistoryApp(options = {}) {
       updateProgressFilterOptions(baseResults);
       const selectedType = typeFilter?.value || "all";
       const selectedCategory = categoryFilter?.value || "all";
-      const selectedLimit = limitFilter?.value || "all";
       const filteredResults = baseResults.filter((result) => {
         const category = progressGroupLabel(result);
         const matchesSearch = !term || resultSearchText(result).includes(term);
@@ -3227,7 +3225,7 @@ function initAthleteHistoryApp(options = {}) {
         const matchesCategory = selectedCategory === "all" || category === selectedCategory;
         return matchesSearch && matchesType && matchesCategory;
       });
-      const results = selectedLimit === "all" ? filteredResults : filteredResults.slice(0, Number(selectedLimit) || filteredResults.length);
+      const results = filteredResults;
       if (filterSummary) {
         const showing = results.length;
         const total = filteredResults.length;
@@ -3308,7 +3306,6 @@ function initAthleteHistoryApp(options = {}) {
   search?.addEventListener("input", renderHistory);
   typeFilter?.addEventListener("change", renderHistory);
   categoryFilter?.addEventListener("change", renderHistory);
-  limitFilter?.addEventListener("change", renderHistory);
   addHistoricalBtn?.addEventListener("click", () => showHistoricalForm(true));
   clearHistoricalBtn?.addEventListener("click", () => {
     historicalForm?.reset();
