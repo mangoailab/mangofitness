@@ -22,7 +22,7 @@ values
   ('strict-pull-up', 'Strict Pull-Up', 'Strict bodyweight pull-up.', 'gymnastics', true, false),
   ('kipping-pull-up', 'Kipping Pull-Up', 'Kipping bodyweight pull-up.', 'gymnastics', true, false),
   ('chest-to-bar-pull-up', 'Chest-to-Bar Pull-Up', 'Pull-up with chest contact standard.', 'gymnastics', true, false),
-  ('chin-up', 'Chin-Up', 'Supinated-grip pull-up.', 'gymnastics', true, false),
+  ('chin-up', 'Pull-Up Supinated Grip', 'Supinated-grip pull-up.', 'gymnastics', true, false),
   ('toes-to-bar', 'Toes-to-Bar', 'Hanging gymnastics movement bringing toes to the bar.', 'gymnastics', true, false),
   ('knees-to-elbows', 'Knees-to-Elbows', 'Hanging gymnastics movement bringing knees to elbows.', 'gymnastics', true, false),
   ('hanging-knee-raise', 'Hanging Knee Raise', 'Hanging core movement raising knees.', 'gymnastics', true, false),
