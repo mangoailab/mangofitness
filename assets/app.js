@@ -580,6 +580,16 @@ const MangoFitnessStore = (() => {
         is_pr: result.isPr
       });
       if (error) throw error;
+    },
+
+    async deleteResult(id) {
+      const sb = client();
+      if (!sb) {
+        writeLocal(localResultKey, readLocal(localResultKey).filter((item) => item.id !== id));
+        return;
+      }
+      const { error } = await sb.from("athlete_workout_results").delete().eq("id", id);
+      if (error) throw error;
     }
   };
 })();
@@ -2993,7 +3003,7 @@ function initAthleteHistoryApp(options = {}) {
       return `
         <div class="progress-table-wrap">
           <table class="progress-table strength-progress-table">
-            <thead><tr><th>Date</th><th>Weight</th><th>Reps</th><th>Set</th><th>Notes</th></tr></thead>
+            <thead><tr><th>Date</th><th>Weight</th><th>Reps</th><th>Set</th><th>Notes</th><th></th></tr></thead>
             <tbody>
               ${rows.map((result) => `
                 <tr class="${result.isPr ? "is-pr" : ""}">
@@ -3002,6 +3012,7 @@ function initAthleteHistoryApp(options = {}) {
                   <td>${escapeHtml(result.reps || "-")}</td>
                   <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
                   <td>${escapeHtml(result.notes || "")}</td>
+                  <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${result.completedOn || "this date"}`)}">Delete</button></td>
                 </tr>
               `).join("")}
             </tbody>
@@ -3012,13 +3023,14 @@ function initAthleteHistoryApp(options = {}) {
     return `
       <div class="progress-table-wrap">
         <table class="progress-table">
-          <thead><tr><th>Date</th><th>Score</th><th>Notes</th></tr></thead>
+          <thead><tr><th>Date</th><th>Score</th><th>Notes</th><th></th></tr></thead>
           <tbody>
             ${rows.map((result) => `
               <tr class="${result.isPr ? "is-pr" : ""}">
                 <td>${escapeHtml(result.completedOn || "-")}</td>
                 <td><strong>${escapeHtml(progressDisplayValue(result))}</strong>${result.isPr ? ` <span class="pr-badge">PR</span>` : ""}</td>
                 <td>${escapeHtml(result.notes || "")}</td>
+                <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${result.completedOn || "this date"}`)}">Delete</button></td>
               </tr>
             `).join("")}
           </tbody>
@@ -3111,7 +3123,21 @@ function initAthleteHistoryApp(options = {}) {
   profileSelect?.addEventListener("change", renderHistory);
   search?.addEventListener("input", renderHistory);
   typeFilter?.addEventListener("change", renderHistory);
-  history.addEventListener("click", (event) => {
+  history.addEventListener("click", async (event) => {
+    const deleteButton = event.target.closest("[data-delete-result]");
+    if (deleteButton) {
+      const label = deleteButton.dataset.deleteResultLabel || "this progress result";
+      if (!confirm(`Delete ${label}? This cannot be undone.`)) return;
+      deleteButton.disabled = true;
+      try {
+        await MangoFitnessStore.deleteResult(deleteButton.dataset.deleteResult);
+        await renderHistory();
+      } catch (error) {
+        deleteButton.disabled = false;
+        history.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+      }
+      return;
+    }
     const button = event.target.closest("[data-progress-toggle]");
     if (!button) return;
     const key = button.dataset.progressToggle;

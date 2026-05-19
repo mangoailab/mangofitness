@@ -2626,3 +2626,10 @@ body.is-reordering .exercise-row.dragging {
   top: 100%;
   left: 0;
 }
+.progress-delete-button {
+  min-height: 30px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
