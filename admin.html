@@ -169,9 +169,10 @@
 
       <div class="card dashboard-card">
         <div class="section-head compact">
-          <div>
+          <div class="coach-week-head">
             <h2>Saved Workouts</h2>
-            <p id="workoutWeekLabel" class="muted">This week</p>
+            <button type="button" id="workoutWeekLabel" class="muted week-picker-button">This week</button>
+            <div id="coachWeekPicker" class="week-picker-popover hidden"></div>
           </div>
           <span id="workoutCount" class="pill hidden">0 workouts</span>
           <button type="button" id="savedWorkoutViewToggleBtn" class="view-icon-button saved-workout-view-corner" aria-label="Switch to horizontal calendar view" title="Switch view">

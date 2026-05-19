@@ -1133,6 +1133,7 @@ function initCoachApp() {
   const list = document.getElementById("coachWorkoutList");
   const count = document.getElementById("workoutCount");
   const weekLabel = document.getElementById("workoutWeekLabel");
+  const coachWeekPicker = document.getElementById("coachWeekPicker");
   const workoutSearch = document.getElementById("workoutSearch");
   const savedWorkoutAthleteFilter = document.getElementById("savedWorkoutAthleteFilter");
   const prevWeekBtn = document.getElementById("prevWeekBtn");
@@ -1144,6 +1145,44 @@ function initCoachApp() {
   form.after(formHome);
   let selectedWeekStart = startOfWeek(new Date());
   let savedWorkoutView = "vertical";
+  let coachWeekPickerOpen = false;
+
+
+  function renderCoachWeekPicker(workoutsForDots) {
+    if (!coachWeekPicker) return;
+    coachWeekPicker.classList.toggle("hidden", !coachWeekPickerOpen);
+    if (!coachWeekPickerOpen) return;
+    const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
+    const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = addDays(startOfWeek(monthEnd), 6);
+    const workoutDates = new Set(workoutsForDots.map((item) => item.date));
+    const selectedDate = isoDate(selectedWeekStart);
+    const dayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
+    coachWeekPicker.innerHTML = `
+      <div class="week-picker-head"><strong>${escapeHtml(monthLabel(monthStart))}</strong><button type="button" data-close-coach-week-picker aria-label="Close calendar">×</button></div>
+      <div class="week-picker-weekdays">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => `<span>${day}</span>`).join("")}</div>
+      <div class="week-picker-grid">
+        ${Array.from({ length: dayCount }, (_, index) => {
+          const day = addDays(calendarStart, index);
+          const dayIso = isoDate(day);
+          return `<button type="button" class="week-picker-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === selectedDate ? " is-selected" : ""}" data-coach-week-picker-date="${escapeHtml(dayIso)}"><span>${escapeHtml(String(day.getDate()))}</span><i class="athlete-program-dot${workoutDates.has(dayIso) ? " has-program" : ""}" aria-hidden="true"></i></button>`;
+        }).join("")}
+      </div>
+    `;
+    coachWeekPicker.querySelector("[data-close-coach-week-picker]")?.addEventListener("click", () => {
+      coachWeekPickerOpen = false;
+      renderCoachWeekPicker(workoutsForDots);
+    });
+    coachWeekPicker.querySelectorAll("[data-coach-week-picker-date]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedWeekStart = startOfWeek(parseLocalDate(button.dataset.coachWeekPickerDate));
+        coachWeekPickerOpen = false;
+        if (workoutSearch) workoutSearch.value = "";
+        renderCoach();
+      });
+    });
+  }
 
   function updateSavedWorkoutViewToggle() {
     if (!savedWorkoutViewToggleBtn) return;
@@ -1623,12 +1662,14 @@ function initCoachApp() {
       const selectedScheduleAthlete = athleteProfiles.find((athlete) => athlete.id === selectedScheduleAthleteId);
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
-      const visibleWorkouts = workouts.filter((workout) => {
+      const matchingWorkouts = workouts.filter((workout) => {
         const matchesAthlete = selectedScheduleAthleteId
           ? (workout.assignmentType || "everyone") === "individual" && (workout.assignedAthleteIds || []).includes(selectedScheduleAthleteId)
           : (workout.assignmentType || "everyone") === "everyone";
         const matchesSearch = !searchQuery || workoutSearchText(workout).includes(searchQuery);
-        if (!matchesAthlete || !matchesSearch) return false;
+        return matchesAthlete && matchesSearch;
+      });
+      const visibleWorkouts = matchingWorkouts.filter((workout) => {
         if (searchQuery) return true;
         const workoutDate = parseLocalDate(workout.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
@@ -1642,6 +1683,7 @@ function initCoachApp() {
           ? `Search results${selectedScheduleAthlete ? ` for ${selectedScheduleAthlete.name}` : ""}`
           : `${selectedScheduleAthlete ? `${selectedScheduleAthlete.name} · ` : ""}Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       }
+      renderCoachWeekPicker(matchingWorkouts);
 
       if (searchQuery) {
         list.className = "list-stack";
@@ -1758,8 +1800,18 @@ function initCoachApp() {
     if (workoutSearch) workoutSearch.value = "";
     renderCoach();
   });
-  workoutSearch?.addEventListener("input", renderCoach);
-  savedWorkoutAthleteFilter?.addEventListener("change", renderCoach);
+  workoutSearch?.addEventListener("input", () => {
+    coachWeekPickerOpen = false;
+    renderCoach();
+  });
+  savedWorkoutAthleteFilter?.addEventListener("change", () => {
+    coachWeekPickerOpen = false;
+    renderCoach();
+  });
+  weekLabel?.addEventListener("click", () => {
+    coachWeekPickerOpen = !coachWeekPickerOpen;
+    renderCoach();
+  });
   savedWorkoutViewToggleBtn?.addEventListener("click", () => {
     savedWorkoutView = savedWorkoutView === "horizontal" ? "vertical" : "horizontal";
     updateSavedWorkoutViewToggle();
