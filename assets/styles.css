@@ -554,6 +554,18 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 .leaderboard-event-card { background: var(--soft); }
 .leaderboard-table { min-width: 720px; }
 .leaderboard-table td:nth-child(5) { min-width: 180px; white-space: normal; }
+.movement-library-table { min-width: 860px; }
+.movement-library-table td:nth-child(3) { min-width: 240px; white-space: normal; }
+.movement-library-table td:nth-child(5) { white-space: normal; }
+.table-actions {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+.inline-movement-editor {
+  display: grid;
+  gap: 12px;
+  padding: 10px 2px;
+}
 .leaderboard-winner td {
   background: rgba(255, 183, 3, .14);
 }

@@ -3242,21 +3242,37 @@ function initCoachMovementsApp() {
 
   function renderMovementList() {
     const rows = filteredMovements().sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
-    list.innerHTML = rows.length ? rows.map((movement) => `
-      <article class="item-card movement-library-card">
-        <div class="item-head">
-          <div>
-            <strong>${escapeHtml(movement.name)}</strong>
-            <p class="muted">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}${movement.showOnLeaderboard ? " · Leaderboard" : ""}</p>
-          </div>
-          <div class="actions item-actions">
-            <button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button>
-            <button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button>
-          </div>
-        </div>
-        ${movement.description ? `<p>${escapeHtml(movement.description)}</p>` : `<p class="muted">No description yet.</p>`}
-      </article>
-    `).join("") : `<p class="muted empty-state">No movements found.</p>`;
+    list.innerHTML = rows.length ? `
+      <div class="progress-table-wrap movement-table-wrap">
+        <table class="progress-table movement-library-table">
+          <thead><tr><th>Movement</th><th>Category</th><th>Description</th><th>Leaderboard</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${rows.map((movement) => `
+              <tr data-movement-row="${escapeHtml(movement.id)}">
+                <td><strong>${escapeHtml(movement.name)}</strong></td>
+                <td>${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
+                <td>${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
+                <td>${movement.showOnLeaderboard ? "Yes" : "No"}</td>
+                <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
+              </tr>
+              <tr class="movement-edit-row hidden" data-movement-editor="${escapeHtml(movement.id)}">
+                <td colspan="5">
+                  <div class="inline-movement-editor">
+                    <div class="grid-2 form-grid">
+                      <div class="field"><label>Name</label><input data-movement-edit-field="name" value="${escapeHtml(movement.name || "")}" /></div>
+                      <div class="field"><label>Category</label><select data-movement-edit-field="category"><option value="strength"${(movement.category || "strength") === "strength" ? " selected" : ""}>Strength</option><option value="cardio"${movement.category === "cardio" ? " selected" : ""}>Cardio</option><option value="wod"${movement.category === "wod" ? " selected" : ""}>WOD</option><option value="gymnastics"${movement.category === "gymnastics" ? " selected" : ""}>Gymnastics</option><option value="accessory"${movement.category === "accessory" ? " selected" : ""}>Accessory</option><option value="other"${movement.category === "other" ? " selected" : ""}>Other</option></select></div>
+                    </div>
+                    <div class="field"><label>Description / details</label><textarea data-movement-edit-field="description" rows="3">${escapeHtml(movement.description || "")}</textarea></div>
+                    <label class="check-field"><input data-movement-edit-field="showOnLeaderboard" type="checkbox"${movement.showOnLeaderboard ? " checked" : ""} /> Show this movement on the athlete leaderboard page</label>
+                    <div class="actions form-actions"><button type="button" class="primary" data-save-movement-page="${escapeHtml(movement.id)}">Save</button><button type="button" data-cancel-movement-edit="${escapeHtml(movement.id)}">Cancel</button></div>
+                  </div>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    ` : `<p class="muted empty-state">No movements found.</p>`;
   }
 
   async function loadMovementPage() {
@@ -3300,18 +3316,37 @@ function initCoachMovementsApp() {
   list.addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-edit-movement-page]");
     if (editButton) {
-      const movement = movements.find((item) => item.id === editButton.dataset.editMovementPage);
-      if (!movement) return;
-      form.dataset.editId = movement.id;
-      name.value = movement.name || "";
-      category.value = movement.category || "strength";
-      description.value = movement.description || "";
-      showOnLeaderboard.checked = Boolean(movement.showOnLeaderboard);
-      if (saveBtn) saveBtn.textContent = "Save Changes";
-      if (movementFormTitle) movementFormTitle.textContent = "Edit Movement";
-      setMovementMessage("");
-      showMovementForm(true);
-      form.scrollIntoView({ behavior: "smooth", block: "start" });
+      const editor = list.querySelector(`[data-movement-editor="${CSS.escape(editButton.dataset.editMovementPage)}"]`);
+      if (!editor) return;
+      list.querySelectorAll("[data-movement-editor]").forEach((row) => row.classList.toggle("hidden", row !== editor));
+      return;
+    }
+    const cancelEditButton = event.target.closest("[data-cancel-movement-edit]");
+    if (cancelEditButton) {
+      list.querySelector(`[data-movement-editor="${CSS.escape(cancelEditButton.dataset.cancelMovementEdit)}"]`)?.classList.add("hidden");
+      return;
+    }
+    const saveEditButton = event.target.closest("[data-save-movement-page]");
+    if (saveEditButton) {
+      const editor = list.querySelector(`[data-movement-editor="${CSS.escape(saveEditButton.dataset.saveMovementPage)}"]`);
+      if (!editor) return;
+      const payload = {
+        name: editor.querySelector('[data-movement-edit-field="name"]')?.value.trim() || "",
+        category: editor.querySelector('[data-movement-edit-field="category"]')?.value || "strength",
+        description: editor.querySelector('[data-movement-edit-field="description"]')?.value.trim() || "",
+        showOnLeaderboard: Boolean(editor.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked)
+      };
+      if (!payload.name) return setMovementMessage("Add a movement name first.", true);
+      try {
+        saveEditButton.disabled = true;
+        await MangoFitnessStore.updateStrengthMovement(saveEditButton.dataset.saveMovementPage, payload);
+        await loadMovementPage();
+        setMovementMessage("Movement updated.");
+      } catch (error) {
+        setMovementMessage(friendlyError(error), true);
+      } finally {
+        saveEditButton.disabled = false;
+      }
       return;
     }
     const deleteButton = event.target.closest("[data-delete-movement-page]");
