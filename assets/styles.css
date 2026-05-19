@@ -1357,6 +1357,32 @@ body.is-reordering .exercise-row.dragging {
   }
 }
 
+.historical-benchmark-top-grid,
+.historical-benchmark-top-grid > .field {
+  min-width: 0;
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .historical-benchmark-top-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+  .historical-benchmark-top-grid > .field,
+  #historicalBenchmarkInput,
+  #historicalBenchmarkDate {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  #historicalBenchmarkDate {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
 /* Keep the date field compact so it does not feel pushed too far right. */
 .form-grid {
   grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
