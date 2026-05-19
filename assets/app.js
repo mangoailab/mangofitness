@@ -235,12 +235,13 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("strength_movements")
-        .select("id, movement_key, name, description, category, show_on_leaderboard")
+        .select("id, movement_key, name, description, category, show_on_leaderboard, is_benchmark")
         .order("name", { ascending: true });
       if (error) throw error;
       return (data || []).map((movement) => ({
         ...movement,
-        showOnLeaderboard: Boolean(movement.show_on_leaderboard)
+        showOnLeaderboard: Boolean(movement.show_on_leaderboard),
+        isBenchmark: Boolean(movement.is_benchmark)
       }));
     },
 
@@ -262,12 +263,13 @@ const MangoFitnessStore = (() => {
           description: movement.description || null,
           category: movement.category || "strength",
           show_on_leaderboard: Boolean(movement.showOnLeaderboard),
+          is_benchmark: Boolean(movement.isBenchmark),
           created_by: user?.id || null
         })
-        .select("id, movement_key, name, description, category, show_on_leaderboard")
+        .select("id, movement_key, name, description, category, show_on_leaderboard, is_benchmark")
         .single();
       if (error) throw error;
-      return { ...data, showOnLeaderboard: Boolean(data?.show_on_leaderboard) };
+      return { ...data, showOnLeaderboard: Boolean(data?.show_on_leaderboard), isBenchmark: Boolean(data?.is_benchmark) };
     },
 
     async updateStrengthMovement(id, movement) {
@@ -283,13 +285,14 @@ const MangoFitnessStore = (() => {
           name: movement.name,
           description: movement.description || null,
           category: movement.category || "strength",
-          show_on_leaderboard: Boolean(movement.showOnLeaderboard)
+          show_on_leaderboard: Boolean(movement.showOnLeaderboard),
+          is_benchmark: Boolean(movement.isBenchmark)
         })
         .eq("id", id)
-        .select("id, movement_key, name, description, category, show_on_leaderboard")
+        .select("id, movement_key, name, description, category, show_on_leaderboard, is_benchmark")
         .single();
       if (error) throw error;
-      return { ...data, showOnLeaderboard: Boolean(data?.show_on_leaderboard) };
+      return { ...data, showOnLeaderboard: Boolean(data?.show_on_leaderboard), isBenchmark: Boolean(data?.is_benchmark) };
     },
 
     async deleteStrengthMovement(id) {
@@ -3473,6 +3476,10 @@ function initCoachMovementsApp() {
     });
   }
 
+  function isBenchmarkRecord(movement) {
+    return Boolean(movement?.isBenchmark || movement?.showOnLeaderboard);
+  }
+
   function renderMovementList() {
     const rows = filteredMovements().sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
     const heading = isBenchmarkPage
@@ -3488,7 +3495,7 @@ function initCoachMovementsApp() {
                 <td data-movement-cell="name"><strong>${escapeHtml(movement.name)}</strong></td>
                 <td data-movement-cell="category">${escapeHtml(movementCategoryLabel(movement.category || "strength"))}</td>
                 <td data-movement-cell="description">${movement.description ? escapeHtml(movement.description) : `<span class="muted">No description yet.</span>`}</td>
-                ${isBenchmarkPage ? `<td data-movement-cell="showOnLeaderboard"><input type="checkbox" disabled checked aria-label="Shown on leaderboard" /></td>` : ""}
+                ${isBenchmarkPage ? `<td data-movement-cell="showOnLeaderboard"><input type="checkbox" data-leaderboard-toggle="${escapeHtml(movement.id)}"${movement.showOnLeaderboard ? " checked" : ""} aria-label="${movement.showOnLeaderboard ? "Shown on leaderboard" : "Not shown on leaderboard"}" /></td>` : ""}
                 <td><div class="actions table-actions"><button type="button" data-edit-movement-page="${escapeHtml(movement.id)}">Edit</button><button type="button" data-toggle-benchmark-page="${escapeHtml(movement.id)}">${isBenchmarkPage ? "Move to Movements" : "Make Benchmark"}</button><button type="button" class="danger-button" data-delete-movement-page="${escapeHtml(movement.id)}">Delete</button></div></td>
               </tr>
             `).join("")}
@@ -3501,7 +3508,7 @@ function initCoachMovementsApp() {
   async function loadMovementPage() {
     try {
       const allMovements = (await MangoFitnessStore.strengthMovements()).filter((movement) => movementId(movement) && movementId(movement) !== "custom");
-      movements = allMovements.filter((movement) => isBenchmarkPage ? movement.showOnLeaderboard : !movement.showOnLeaderboard);
+      movements = allMovements.filter((movement) => isBenchmarkPage ? isBenchmarkRecord(movement) : !isBenchmarkRecord(movement));
       renderMovementList();
     } catch (error) {
       list.innerHTML = `<p class="muted empty-state">${escapeHtml(friendlyError(error))}</p>`;
@@ -3514,7 +3521,8 @@ function initCoachMovementsApp() {
       name: name.value.trim(),
       category: category.value || "strength",
       description: description.value.trim(),
-      showOnLeaderboard: isBenchmarkPage ? Boolean(showOnLeaderboard?.checked) : false
+      showOnLeaderboard: isBenchmarkPage ? Boolean(showOnLeaderboard?.checked) : false,
+      isBenchmark: isBenchmarkPage
     };
     if (!payload.name) return setMovementMessage(`Add a ${nounLower} name first.`, true);
     try {
@@ -3566,6 +3574,25 @@ function initCoachMovementsApp() {
     freshRow.querySelector('[data-movement-edit-field="name"]')?.focus();
   }
 
+  list.addEventListener("change", async (event) => {
+    const checkbox = event.target.closest("[data-leaderboard-toggle]");
+    if (!checkbox) return;
+    const movement = movements.find((item) => item.id === checkbox.dataset.leaderboardToggle);
+    if (!movement) return;
+    try {
+      checkbox.disabled = true;
+      await MangoFitnessStore.updateStrengthMovement(movement.id, { ...movement, showOnLeaderboard: checkbox.checked, isBenchmark: true });
+      movement.showOnLeaderboard = checkbox.checked;
+      renderMovementList();
+      setMovementMessage(checkbox.checked ? "Leaderboard checked." : "Leaderboard unchecked.");
+    } catch (error) {
+      checkbox.checked = !checkbox.checked;
+      setMovementMessage(friendlyError(error), true);
+    } finally {
+      checkbox.disabled = false;
+    }
+  });
+
   list.addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-edit-movement-page]");
     if (editButton) {
@@ -3585,7 +3612,8 @@ function initCoachMovementsApp() {
         name: row.querySelector('[data-movement-edit-field="name"]')?.value.trim() || "",
         category: row.querySelector('[data-movement-edit-field="category"]')?.value || "strength",
         description: row.querySelector('[data-movement-edit-field="description"]')?.value.trim() || "",
-        showOnLeaderboard: isBenchmarkPage ? Boolean(row.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked) : false
+        showOnLeaderboard: isBenchmarkPage ? Boolean(row.querySelector('[data-movement-edit-field="showOnLeaderboard"]')?.checked) : false,
+        isBenchmark: isBenchmarkPage
       };
       if (!payload.name) return setMovementMessage(`Add a ${nounLower} name first.`, true);
       try {
@@ -3606,7 +3634,7 @@ function initCoachMovementsApp() {
       if (!movement) return;
       try {
         toggleButton.disabled = true;
-        await MangoFitnessStore.updateStrengthMovement(movement.id, { ...movement, showOnLeaderboard: !isBenchmarkPage });
+        await MangoFitnessStore.updateStrengthMovement(movement.id, { ...movement, isBenchmark: !isBenchmarkPage, showOnLeaderboard: false });
         await loadMovementPage();
         setMovementMessage(isBenchmarkPage ? "Moved to Movements." : "Moved to Benchmarks.");
       } catch (error) {

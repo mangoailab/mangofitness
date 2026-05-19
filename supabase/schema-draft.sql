@@ -47,6 +47,7 @@ create table if not exists strength_movements (
   description text,
   category text not null default 'strength',
   show_on_leaderboard boolean not null default false,
+  is_benchmark boolean not null default false,
   is_builtin boolean not null default false,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
@@ -561,6 +562,7 @@ grant execute on function public.leaderboard_results() to authenticated;
 alter table strength_movements add column if not exists description text;
 alter table strength_movements add column if not exists category text not null default 'strength';
 alter table strength_movements add column if not exists show_on_leaderboard boolean not null default false;
+alter table strength_movements add column if not exists is_benchmark boolean not null default false;
 
 -- Include coach-selected leaderboard movements in the athlete leaderboard RPC.
 create or replace function public.leaderboard_results()

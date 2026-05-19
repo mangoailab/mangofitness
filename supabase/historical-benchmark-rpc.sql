@@ -41,7 +41,7 @@ begin
   select id, movement_key, name, category into v_movement
   from public.strength_movements
   where id = p_movement_id
-    and show_on_leaderboard = true;
+    and is_benchmark = true;
 
   if v_movement.id is null then
     raise exception 'Choose an existing benchmark.';
