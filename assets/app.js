@@ -1160,7 +1160,12 @@ function initCoachApp() {
     const selectedDate = isoDate(selectedWeekStart);
     const dayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
     coachWeekPicker.innerHTML = `
-      <div class="week-picker-head"><strong>${escapeHtml(monthLabel(monthStart))}</strong><button type="button" data-close-coach-week-picker aria-label="Close calendar">×</button></div>
+      <div class="week-picker-head">
+        <button type="button" data-coach-week-picker-month="prev" aria-label="Previous month">‹</button>
+        <strong>${escapeHtml(monthLabel(monthStart))}</strong>
+        <button type="button" data-coach-week-picker-month="next" aria-label="Next month">›</button>
+        <button type="button" data-close-coach-week-picker aria-label="Close calendar">×</button>
+      </div>
       <div class="week-picker-weekdays">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => `<span>${day}</span>`).join("")}</div>
       <div class="week-picker-grid">
         ${Array.from({ length: dayCount }, (_, index) => {
@@ -1173,6 +1178,12 @@ function initCoachApp() {
     coachWeekPicker.querySelector("[data-close-coach-week-picker]")?.addEventListener("click", () => {
       coachWeekPickerOpen = false;
       renderCoachWeekPicker(workoutsForDots);
+    });
+    coachWeekPicker.querySelectorAll("[data-coach-week-picker-month]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedWeekStart = startOfWeek(new Date(monthStart.getFullYear(), monthStart.getMonth() + (button.dataset.coachWeekPickerMonth === "next" ? 1 : -1), 1));
+        renderCoach();
+      });
     });
     coachWeekPicker.querySelectorAll("[data-coach-week-picker-date]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -2466,7 +2477,12 @@ function initAthleteApp() {
     const selectedDate = date.value;
     const dayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
     weekPicker.innerHTML = `
-      <div class="week-picker-head"><strong>${escapeHtml(monthLabel(monthStart))}</strong><button type="button" data-close-week-picker aria-label="Close calendar">×</button></div>
+      <div class="week-picker-head">
+        <button type="button" data-week-picker-month="prev" aria-label="Previous month">‹</button>
+        <strong>${escapeHtml(monthLabel(monthStart))}</strong>
+        <button type="button" data-week-picker-month="next" aria-label="Next month">›</button>
+        <button type="button" data-close-week-picker aria-label="Close calendar">×</button>
+      </div>
       <div class="week-picker-weekdays">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => `<span>${day}</span>`).join("")}</div>
       <div class="week-picker-grid">
         ${Array.from({ length: dayCount }, (_, index) => {
@@ -2479,6 +2495,12 @@ function initAthleteApp() {
     weekPicker.querySelector("[data-close-week-picker]")?.addEventListener("click", () => {
       weekPickerOpen = false;
       renderWeekPicker(visibleWorkouts);
+    });
+    weekPicker.querySelectorAll("[data-week-picker-month]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedWeekStart = startOfWeek(new Date(monthStart.getFullYear(), monthStart.getMonth() + (button.dataset.weekPickerMonth === "next" ? 1 : -1), 1));
+        renderAthlete();
+      });
     });
     weekPicker.querySelectorAll("[data-week-picker-date]").forEach((button) => {
       button.addEventListener("click", () => {
