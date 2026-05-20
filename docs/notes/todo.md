@@ -13,3 +13,7 @@
 - Add lightweight browser/manual test checklist before every push.
 - Improve InBody PDF parsing further using actual PDF text/layout, especially scan date, weight, SMM, and PBF.
 - Continue refining the split between coach Movements and Benchmarks; Movements now owns non-benchmark exercises, while Benchmarks owns leaderboard/test standards.
+
+## Security follow-up
+
+- After applying `supabase/loggable-result-rls.sql` in Supabase, manually verify: athlete can log an assigned/everyone workout, athlete cannot log a workout exercise from another athlete's individual workout, and coach result management still works.
