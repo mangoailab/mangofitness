@@ -2871,3 +2871,15 @@ body.is-reordering .exercise-row.dragging {
     grid-template-columns: 1fr;
   }
 }
+.self-workout-empty-hint {
+  background: rgba(99, 102, 241, .08);
+  border: 1px dashed rgba(99, 102, 241, .28);
+  border-radius: 16px;
+  margin: 0;
+  padding: 12px;
+  text-align: center;
+}
+.self-piece-remove {
+  min-height: 32px;
+  padding: 6px 10px;
+}

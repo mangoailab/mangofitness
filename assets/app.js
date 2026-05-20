@@ -2629,6 +2629,7 @@ function initAthleteApp() {
   const cancelSelfWorkoutBtn = document.getElementById("cancelSelfWorkoutBtn");
   const selfWorkoutForm = document.getElementById("selfWorkoutForm");
   const selfWorkoutPieces = document.getElementById("selfWorkoutPieces");
+  const selfWorkoutEmptyHint = document.getElementById("selfWorkoutEmptyHint");
   const addSelfStrengthPieceBtn = document.getElementById("addSelfStrengthPieceBtn");
   const addSelfCardioPieceBtn = document.getElementById("addSelfCardioPieceBtn");
   if (!date || !view) return;
@@ -3010,7 +3011,7 @@ function initAthleteApp() {
     const isStrength = section === "lifting";
     return `
       <section class="self-workout-piece" data-self-piece="${escapeHtml(pieceId)}" data-section="${escapeHtml(section)}">
-        <div class="item-head compact"><div><strong>${isStrength ? "Strength piece" : "Cardio / WOD piece"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log one time or score."}</p></div></div>
+        <div class="item-head compact"><div><strong>${isStrength ? "Strength movement" : "Cardio / WOD"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log one time or score."}</p></div><button type="button" class="danger-button self-piece-remove" data-remove-self-piece>Remove</button></div>
         <input type="hidden" name="piece_${pieceId}_section" value="${escapeHtml(section)}" />
         <div class="field"><label>Movement / workout</label><input name="piece_${pieceId}_exercise" type="text" placeholder="${isStrength ? "Hotel DB press" : "Row 5K or 20 min AMRAP"}" required /></div>
         ${isStrength ? `
@@ -3025,15 +3026,19 @@ function initAthleteApp() {
       </section>
     `;
   };
+  const updateSelfWorkoutEmptyHint = () => {
+    selfWorkoutEmptyHint?.classList.toggle("hidden", Boolean(selfWorkoutPieces?.children.length));
+  };
   const resetSelfWorkoutPieces = () => {
-    if (selfWorkoutPieces) selfWorkoutPieces.innerHTML = renderSelfWorkoutPiece("lifting") + renderSelfWorkoutPiece("cardio");
+    if (selfWorkoutPieces) selfWorkoutPieces.innerHTML = "";
+    updateSelfWorkoutEmptyHint();
   };
   showSelfWorkoutBtn?.addEventListener("click", () => {
     selfWorkoutForm?.classList.remove("hidden");
     showSelfWorkoutBtn.classList.add("hidden");
     const titleInput = selfWorkoutForm?.querySelector('[name="title"]');
     if (titleInput && !titleInput.value) titleInput.value = "Self-created workout";
-    if (selfWorkoutPieces && !selfWorkoutPieces.children.length) resetSelfWorkoutPieces();
+    updateSelfWorkoutEmptyHint();
   });
   cancelSelfWorkoutBtn?.addEventListener("click", () => {
     selfWorkoutForm?.reset();
@@ -3041,9 +3046,19 @@ function initAthleteApp() {
     selfWorkoutForm?.classList.add("hidden");
     showSelfWorkoutBtn?.classList.remove("hidden");
   });
-  addSelfStrengthPieceBtn?.addEventListener("click", () => selfWorkoutPieces?.insertAdjacentHTML("beforeend", renderSelfWorkoutPiece("lifting")));
-  addSelfCardioPieceBtn?.addEventListener("click", () => selfWorkoutPieces?.insertAdjacentHTML("beforeend", renderSelfWorkoutPiece("cardio")));
+  const addSelfWorkoutPiece = (section) => {
+    selfWorkoutPieces?.insertAdjacentHTML("beforeend", renderSelfWorkoutPiece(section));
+    updateSelfWorkoutEmptyHint();
+  };
+  addSelfStrengthPieceBtn?.addEventListener("click", () => addSelfWorkoutPiece("lifting"));
+  addSelfCardioPieceBtn?.addEventListener("click", () => addSelfWorkoutPiece("cardio"));
   selfWorkoutPieces?.addEventListener("click", (event) => {
+    const removePieceButton = event.target.closest("[data-remove-self-piece]");
+    if (removePieceButton) {
+      removePieceButton.closest("[data-self-piece]")?.remove();
+      updateSelfWorkoutEmptyHint();
+      return;
+    }
     const addSetButton = event.target.closest("[data-add-self-set]");
     if (!addSetButton) return;
     const piece = addSetButton.closest("[data-self-piece]");
@@ -3079,6 +3094,7 @@ function initAthleteApp() {
       };
     }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
+      if (!pieces.length) throw new Error("Add at least one strength movement or cardio/WOD piece.");
       await MangoFitnessStore.saveAthleteSelfWorkout({
         completedOn: date.value || todayISO(),
         title: data.get("title"),
