@@ -1,11 +1,11 @@
--- Track whether an athlete completed or skipped a programmed/self-created workout.
+-- Track whether an athlete completed a programmed/self-created workout.
 
 create table if not exists public.athlete_workout_statuses (
   id uuid primary key default gen_random_uuid(),
   athlete_id uuid not null references public.athletes(id) on delete cascade,
   auth_user_id uuid references auth.users(id) on delete set null,
   workout_id uuid not null references public.workouts(id) on delete cascade,
-  status text not null check (status in ('done', 'skipped')),
+  status text not null check (status = 'done'),
   notes text,
   marked_on date not null default current_date,
   created_at timestamptz not null default now(),
@@ -18,6 +18,38 @@ create index if not exists athlete_workout_statuses_workout_idx on public.athlet
 
 alter table public.athlete_workout_statuses enable row level security;
 
+alter table public.athlete_workout_statuses
+  drop constraint if exists athlete_workout_statuses_status_check;
+alter table public.athlete_workout_statuses
+  add constraint athlete_workout_statuses_status_check check (status = 'done');
+
+create or replace function public.can_mark_workout_status(p_workout_id uuid, p_athlete_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select public.is_coach()
+    or (
+      p_athlete_id in (select public.current_athlete_ids())
+      and exists (
+        select 1
+        from public.workouts w
+        where w.id = p_workout_id
+          and (
+            coalesce(w.assignment_type, 'everyone') = 'everyone'
+            or exists (
+              select 1
+              from public.workout_assignments wa
+              where wa.workout_id = w.id
+                and wa.athlete_id = p_athlete_id
+            )
+          )
+      )
+    )
+$$;
+
 drop policy if exists "read own athlete workout statuses" on public.athlete_workout_statuses;
 create policy "read own athlete workout statuses" on public.athlete_workout_statuses for select to authenticated using (
   public.is_coach()
@@ -28,16 +60,30 @@ create policy "read own athlete workout statuses" on public.athlete_workout_stat
 drop policy if exists "insert own athlete workout statuses" on public.athlete_workout_statuses;
 create policy "insert own athlete workout statuses" on public.athlete_workout_statuses for insert to authenticated with check (
   public.is_coach()
-  or (auth_user_id = auth.uid() and athlete_id in (select public.current_athlete_ids()))
+  or (
+    auth_user_id = auth.uid()
+    and athlete_id in (select public.current_athlete_ids())
+    and public.can_mark_workout_status(workout_id, athlete_id)
+    and status = 'done'
+  )
 );
 
 drop policy if exists "update own athlete workout statuses" on public.athlete_workout_statuses;
 create policy "update own athlete workout statuses" on public.athlete_workout_statuses for update to authenticated using (
   public.is_coach()
-  or (auth_user_id = auth.uid() and athlete_id in (select public.current_athlete_ids()))
+  or (
+    auth_user_id = auth.uid()
+    and athlete_id in (select public.current_athlete_ids())
+    and public.can_mark_workout_status(workout_id, athlete_id)
+  )
 ) with check (
   public.is_coach()
-  or (auth_user_id = auth.uid() and athlete_id in (select public.current_athlete_ids()))
+  or (
+    auth_user_id = auth.uid()
+    and athlete_id in (select public.current_athlete_ids())
+    and public.can_mark_workout_status(workout_id, athlete_id)
+    and status = 'done'
+  )
 );
 
 drop policy if exists "delete own athlete workout statuses" on public.athlete_workout_statuses;
@@ -76,8 +122,11 @@ begin
     raise exception 'Workout is required.';
   end if;
   v_status := lower(trim(coalesce(p_status, '')));
-  if v_status not in ('done', 'skipped') then
-    raise exception 'Status must be done or skipped.';
+  if v_status <> 'done' then
+    raise exception 'Status must be done.';
+  end if;
+  if not public.can_mark_workout_status(p_workout_id, v_athlete_id) then
+    raise exception 'You cannot mark this workout status.';
   end if;
 
   insert into public.athlete_workout_statuses (athlete_id, auth_user_id, workout_id, status, notes, marked_on, updated_at)
@@ -110,6 +159,12 @@ begin
 
   if v_athlete_id is null then
     raise exception 'Athlete profile not found.';
+  end if;
+  if p_workout_id is null then
+    raise exception 'Workout is required.';
+  end if;
+  if not public.can_mark_workout_status(p_workout_id, v_athlete_id) then
+    raise exception 'You cannot clear this workout status.';
   end if;
 
   delete from public.athlete_workout_statuses

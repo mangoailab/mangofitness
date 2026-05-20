@@ -44,3 +44,7 @@
 ## PR trust boundary
 
 - Athlete-facing workout result saves use `public.save_athlete_workout_result(...)` so the server calculates `is_pr` from prior same-movement history instead of trusting a browser-provided PR flag. Direct athlete insert/update policies require `is_pr is not true`; coaches can still manage PR flags directly.
+
+## Workout status integrity
+
+- Athlete workout status stays binary: `done` or no status. `public.set_athlete_workout_status(...)` rejects anything except `done` and checks `public.can_mark_workout_status(workout_id, athlete_id)` so athletes can only mark workouts that are class/everyone or assigned to them.

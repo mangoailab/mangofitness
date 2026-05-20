@@ -129,7 +129,7 @@ create table if not exists athlete_workout_statuses (
   athlete_id uuid not null references athletes(id) on delete cascade,
   auth_user_id uuid references auth.users(id) on delete set null,
   workout_id uuid not null references workouts(id) on delete cascade,
-  status text not null check (status in ('done', 'skipped')),
+  status text not null check (status = 'done'),
   notes text,
   marked_on date not null default current_date,
   created_at timestamptz not null default now(),

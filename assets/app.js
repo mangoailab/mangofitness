@@ -2844,7 +2844,7 @@ function initAthleteApp() {
                 ${dayWorkouts.length ? dayWorkouts.map((item) => `
                   <button type="button" class="calendar-workout-card athlete-schedule-card${item.isAthleteCreated ? " self-workout-card" : ""}" data-athlete-date="${escapeHtml(item.date)}" data-athlete-workout-id="${escapeHtml(item.id)}">
                     <strong>${escapeHtml(item.title)}</strong>
-                    <p class="muted">${item.exercises.length} items · ${workoutAssignmentLabel(item)}${(() => { const status = statuses.find((entry) => entry.workout_id === item.id && entry.athlete_id === selectedAthleteId); return status ? ` · ${status.status === "skipped" ? "Skipped" : "Done"}` : ""; })()}</p>
+                    <p class="muted">${item.exercises.length} items · ${workoutAssignmentLabel(item)}${(() => { const status = statuses.find((entry) => entry.workout_id === item.id && entry.athlete_id === selectedAthleteId); return status?.status === "done" ? " · Done" : ""; })()}</p>
                   </button>
                 `).join("") : `<p class="muted calendar-empty">No workout</p>`}
               </div>

@@ -25,3 +25,7 @@
 ## PR verification follow-up
 
 - Manually verify programmed workout logging still autosaves, a clear same-movement strength/time PR is marked by the server, and a direct athlete table write with `is_pr = true` is rejected.
+
+## Workout status verification follow-up
+
+- Manually verify an athlete can mark/clear Done on an assigned/everyone workout, cannot mark an unassigned individual workout by UUID, and direct `athlete_workout_statuses` writes with `status = 'skipped'` are rejected.
