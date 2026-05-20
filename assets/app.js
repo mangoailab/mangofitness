@@ -2515,11 +2515,13 @@ function exerciseLoggedResults(exercise, athleteResults = [], selectedDate = "")
 
 function renderSetLogRow(setNumber, exercise, suggestion = null, logged = null) {
   return `
-    <div class="set-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="${escapeHtml(logged?.id || "")}">
-      <strong>${escapeHtml(setNumber)}</strong>
-      <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" value="${escapeHtml(logged?.reps || "")}" />
-      <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" value="${logged?.weight !== "" && logged?.weight != null ? escapeHtml(logged.weight) : ""}" />
-      <button type="button" class="set-remove-button icon-set-button" data-remove-set aria-label="Remove set ${escapeHtml(setNumber)}">×</button>
+    <div class="set-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="${escapeHtml(logged?.id || "")}" data-swipe-delete-row>
+      <div class="set-log-row-content">
+        <strong>${escapeHtml(setNumber)}</strong>
+        <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" value="${escapeHtml(logged?.reps || "")}" />
+        <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" value="${logged?.weight !== "" && logged?.weight != null ? escapeHtml(logged.weight) : ""}" />
+      </div>
+      <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
     </div>`;
 }
 
@@ -2554,6 +2556,19 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
       }).join("")}
     </div>
     <button type="button" class="set-add-button" data-add-set><span aria-hidden="true">+</span> Add set</button>
+  `;
+}
+
+function renderAddedSetRow(setNumber, repsPlaceholder = "reps", weightPlaceholder = "lb") {
+  return `
+    <div class="set-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="" data-swipe-delete-row>
+      <div class="set-log-row-content">
+        <strong>${escapeHtml(setNumber)}</strong>
+        <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(repsPlaceholder)}" />
+        <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${escapeHtml(weightPlaceholder)}" />
+      </div>
+      <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
+    </div>
   `;
 }
 
@@ -2776,6 +2791,17 @@ function initAthleteApp() {
         `;
       }
 
+      async function deleteSetRow(row) {
+        const existingId = row?.dataset.existingResultId || "";
+        if (existingId) {
+          row.classList.add("is-deleting");
+          await MangoFitnessStore.deleteResult(existingId);
+          await renderAthlete();
+        } else {
+          row?.remove();
+        }
+      }
+
       view.querySelectorAll(".result-form").forEach((form) => {
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
         const setGhostWeight = (input, value) => {
@@ -2804,33 +2830,47 @@ function initAthleteApp() {
           });
           input.addEventListener("focus", () => confirmGhostWeight(input));
         });
+        const attachSetSwipe = (row) => {
+          if (!row) return;
+          let startX = 0;
+          let startY = 0;
+          let dragging = false;
+          row.addEventListener("touchstart", (event) => {
+            const touch = event.touches?.[0];
+            if (!touch || event.target.closest("input, button, textarea, select")) return;
+            startX = touch.clientX;
+            startY = touch.clientY;
+            dragging = true;
+            row.classList.remove("is-delete-ready");
+          }, { passive: true });
+          row.addEventListener("touchmove", (event) => {
+            if (!dragging) return;
+            const touch = event.touches?.[0];
+            if (!touch) return;
+            const dx = Math.min(0, touch.clientX - startX);
+            const dy = Math.abs(touch.clientY - startY);
+            if (dy > Math.abs(dx)) return;
+            row.style.setProperty("--swipe-x", `${Math.max(dx, -96)}px`);
+            row.classList.toggle("is-delete-ready", dx < -72);
+          }, { passive: true });
+          row.addEventListener("touchend", async () => {
+            if (!dragging) return;
+            dragging = false;
+            const currentX = Number(String(row.style.getPropertyValue("--swipe-x")).replace("px", "")) || 0;
+            row.style.setProperty("--swipe-x", "0px");
+            if (currentX < -72) await deleteSetRow(row);
+            else row.classList.remove("is-delete-ready");
+          });
+        };
+        form.querySelectorAll("[data-swipe-delete-row]").forEach(attachSetSwipe);
         form.addEventListener("click", async (event) => {
           const addSetButton = event.target.closest("[data-add-set]");
           if (addSetButton) {
             const table = form.querySelector("[data-set-log-table]");
             if (!table) return;
             const nextSet = Math.max(0, ...[...table.querySelectorAll(".set-log-row")].map((row) => Number(row.dataset.setNumber || 0))) + 1;
-            table.insertAdjacentHTML("beforeend", `
-              <div class="set-log-row" data-set-number="${escapeHtml(nextSet)}" data-existing-result-id="">
-                <strong>${escapeHtml(nextSet)}</strong>
-                <input name="set_${nextSet}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(table.dataset.repsPlaceholder || "reps")}" />
-                <input name="set_${nextSet}_weight" type="text" inputmode="decimal" placeholder="${escapeHtml(table.dataset.weightPlaceholder || "lb")}" />
-                <button type="button" class="set-remove-button icon-set-button" data-remove-set aria-label="Remove set ${escapeHtml(nextSet)}">×</button>
-              </div>
-            `);
-            return;
-          }
-          const removeSetButton = event.target.closest("[data-remove-set]");
-          if (removeSetButton) {
-            const row = removeSetButton.closest(".set-log-row");
-            const existingId = row?.dataset.existingResultId || "";
-            if (existingId) {
-              removeSetButton.disabled = true;
-              await MangoFitnessStore.deleteResult(existingId);
-              await renderAthlete();
-            } else {
-              row?.remove();
-            }
+            table.insertAdjacentHTML("beforeend", renderAddedSetRow(nextSet, table.dataset.repsPlaceholder || "reps", table.dataset.weightPlaceholder || "lb"));
+            attachSetSwipe(table.querySelector(`[data-set-number="${CSS.escape(String(nextSet))}"]`));
             return;
           }
           const button = event.target.closest("[data-apply-weight]");

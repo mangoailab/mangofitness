@@ -1945,9 +1945,9 @@ body.is-reordering .exercise-row.dragging {
   margin-top: 4px;
 }
 .set-log-head,
-.set-log-row {
+.set-log-row-content {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1fr) 34px;
+  grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
   align-items: center;
 }
@@ -1960,10 +1960,40 @@ body.is-reordering .exercise-row.dragging {
   padding: 0 2px;
 }
 .set-log-row {
+  --swipe-x: 0px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+.set-log-row-content {
   border: 1px solid rgba(15, 122, 59, .08);
   border-radius: 16px;
-  background: rgba(255, 255, 255, .72);
+  background: rgba(255, 255, 255, .92);
   padding: 6px;
+  position: relative;
+  transform: translateX(var(--swipe-x));
+  transition: transform .18s ease;
+  z-index: 1;
+}
+.set-swipe-delete-label {
+  align-items: center;
+  background: #dc2626;
+  color: white;
+  display: flex;
+  font-size: 12px;
+  font-weight: 900;
+  inset: 0 0 0 auto;
+  justify-content: center;
+  letter-spacing: .02em;
+  position: absolute;
+  text-transform: uppercase;
+  width: 92px;
+}
+.set-log-row.is-delete-ready .set-log-row-content {
+  transform: translateX(-96px);
+}
+.set-log-row.is-deleting {
+  opacity: .55;
 }
 .set-log-row strong {
   display: grid;
@@ -1977,23 +2007,6 @@ body.is-reordering .exercise-row.dragging {
 .set-log-row input {
   min-height: 38px;
   padding: 8px 9px;
-}
-.icon-set-button {
-  align-items: center;
-  border-radius: 999px;
-  display: inline-flex;
-  font-size: 18px;
-  font-weight: 900;
-  justify-content: center;
-  line-height: 1;
-  min-height: 30px;
-  min-width: 30px;
-  padding: 0;
-}
-.set-remove-button {
-  background: rgba(185, 28, 28, .07);
-  border-color: rgba(185, 28, 28, .16);
-  color: #b91c1c;
 }
 .set-add-button {
   align-items: center;
@@ -2032,11 +2045,11 @@ body.is-reordering .exercise-row.dragging {
 }
 @media (max-width: 420px) {
   .set-log-head,
-  .set-log-row {
-    grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 30px;
+  .set-log-row-content {
+    grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr);
     gap: 5px;
   }
-  .set-log-row {
+  .set-log-row-content {
     padding: 5px;
   }
   .set-log-row input {
