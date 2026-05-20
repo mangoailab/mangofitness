@@ -1,5 +1,5 @@
 -- Allow athletes to log a self-created workout without granting broad workout table writes.
--- Creates a private workout assigned only to the signed-in athlete, then saves one result.
+-- Creates a private workout assigned only to the signed-in athlete, then saves cardio/WOD score or strength sets.
 
 create or replace function public.save_athlete_self_workout(
   p_completed_on date,
@@ -10,7 +10,8 @@ create or replace function public.save_athlete_self_workout(
   p_working_weight numeric default null,
   p_reps_completed text default null,
   p_notes text default null,
-  p_is_pr boolean default false
+  p_is_pr boolean default false,
+  p_sets jsonb default null
 )
 returns uuid
 language plpgsql
@@ -23,6 +24,11 @@ declare
   v_exercise_id uuid;
   v_result_id uuid;
   v_section text;
+  v_set jsonb;
+  v_set_number integer;
+  v_weight numeric;
+  v_reps text;
+  v_saved_sets integer := 0;
 begin
   select id into v_athlete_id
   from public.athletes
@@ -83,32 +89,103 @@ begin
     0
   ) returning id into v_exercise_id;
 
-  insert into public.athlete_workout_results (
-    athlete_id,
-    auth_user_id,
-    workout_exercise_id,
-    completed_on,
-    working_weight,
-    reps_completed,
-    score_result,
-    notes,
-    set_number,
-    is_pr
-  ) values (
-    v_athlete_id,
-    auth.uid(),
-    v_exercise_id,
-    p_completed_on,
-    p_working_weight,
-    nullif(trim(coalesce(p_reps_completed, '')), ''),
-    nullif(trim(coalesce(p_score_result, '')), ''),
-    nullif(trim(coalesce(p_notes, '')), ''),
-    case when v_section = 'lifting' then 1 else null end,
-    coalesce(p_is_pr, false)
-  ) returning id into v_result_id;
+  if v_section = 'lifting' then
+    if p_sets is not null and jsonb_typeof(p_sets) = 'array' then
+      for v_set in select * from jsonb_array_elements(p_sets)
+      loop
+        v_set_number := coalesce(nullif(v_set ->> 'setNumber', '')::integer, v_saved_sets + 1);
+        v_weight := nullif(v_set ->> 'weight', '')::numeric;
+        v_reps := nullif(trim(coalesce(v_set ->> 'reps', '')), '');
+        if v_weight is not null or v_reps is not null then
+          insert into public.athlete_workout_results (
+            athlete_id,
+            auth_user_id,
+            workout_exercise_id,
+            completed_on,
+            working_weight,
+            reps_completed,
+            score_result,
+            notes,
+            set_number,
+            is_pr
+          ) values (
+            v_athlete_id,
+            auth.uid(),
+            v_exercise_id,
+            p_completed_on,
+            v_weight,
+            v_reps,
+            null,
+            nullif(trim(coalesce(p_notes, '')), ''),
+            v_set_number,
+            coalesce(p_is_pr, false) and v_saved_sets = 0
+          ) returning id into v_result_id;
+          v_saved_sets := v_saved_sets + 1;
+        end if;
+      end loop;
+    end if;
+
+    if v_saved_sets = 0 then
+      v_weight := p_working_weight;
+      v_reps := nullif(trim(coalesce(p_reps_completed, '')), '');
+      if v_weight is null and v_reps is null then
+        raise exception 'Enter reps or weight for at least one set.';
+      end if;
+      insert into public.athlete_workout_results (
+        athlete_id,
+        auth_user_id,
+        workout_exercise_id,
+        completed_on,
+        working_weight,
+        reps_completed,
+        score_result,
+        notes,
+        set_number,
+        is_pr
+      ) values (
+        v_athlete_id,
+        auth.uid(),
+        v_exercise_id,
+        p_completed_on,
+        v_weight,
+        v_reps,
+        null,
+        nullif(trim(coalesce(p_notes, '')), ''),
+        1,
+        coalesce(p_is_pr, false)
+      ) returning id into v_result_id;
+    end if;
+  else
+    if nullif(trim(coalesce(p_score_result, '')), '') is null then
+      raise exception 'Time or score is required.';
+    end if;
+    insert into public.athlete_workout_results (
+      athlete_id,
+      auth_user_id,
+      workout_exercise_id,
+      completed_on,
+      working_weight,
+      reps_completed,
+      score_result,
+      notes,
+      set_number,
+      is_pr
+    ) values (
+      v_athlete_id,
+      auth.uid(),
+      v_exercise_id,
+      p_completed_on,
+      null,
+      null,
+      nullif(trim(coalesce(p_score_result, '')), ''),
+      nullif(trim(coalesce(p_notes, '')), ''),
+      null,
+      coalesce(p_is_pr, false)
+    ) returning id into v_result_id;
+  end if;
 
   return v_result_id;
 end;
 $$;
 
-grant execute on function public.save_athlete_self_workout(date, text, text, text, text, numeric, text, text, boolean) to authenticated;
+grant execute on function public.save_athlete_self_workout(date, text, text, text, text, numeric, text, text, boolean, jsonb) to authenticated;

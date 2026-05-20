@@ -618,7 +618,8 @@ const MangoFitnessStore = (() => {
         p_working_weight: entry.weight || null,
         p_reps_completed: entry.reps || null,
         p_notes: entry.notes || null,
-        p_is_pr: Boolean(entry.isPr)
+        p_is_pr: Boolean(entry.isPr),
+        p_sets: entry.sets || null
       });
       if (error) throw error;
     },
@@ -2627,6 +2628,8 @@ function initAthleteApp() {
   const cancelSelfWorkoutBtn = document.getElementById("cancelSelfWorkoutBtn");
   const selfWorkoutForm = document.getElementById("selfWorkoutForm");
   const selfWorkoutType = document.getElementById("selfWorkoutType");
+  const selfWorkoutSetRows = document.getElementById("selfWorkoutSetRows");
+  const addSelfWorkoutSetBtn = document.getElementById("addSelfWorkoutSetBtn");
   if (!date || !view) return;
 
   date.value = todayISO();
@@ -2992,6 +2995,18 @@ function initAthleteApp() {
     if (weekPickerOpen) weekPickerMonth = new Date(selectedWeekStart);
     renderWeekPicker(weekPickerWorkouts);
   });
+  const renderSelfWorkoutSetRow = (setNumber) => `
+    <div class="set-log-row self-set-row" data-set-number="${escapeHtml(setNumber)}">
+      <div class="set-log-row-content">
+        <strong>${escapeHtml(setNumber)}</strong>
+        <input name="self_set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="reps" />
+        <input name="self_set_${setNumber}_weight" type="number" step="0.1" inputmode="decimal" placeholder="lb" />
+      </div>
+    </div>
+  `;
+  const resetSelfWorkoutSets = () => {
+    if (selfWorkoutSetRows) selfWorkoutSetRows.innerHTML = renderSelfWorkoutSetRow(1);
+  };
   const updateSelfWorkoutFields = () => {
     const isStrength = selfWorkoutType?.value === "lifting";
     selfWorkoutForm?.querySelectorAll(".self-strength-field").forEach((field) => field.classList.toggle("hidden", !isStrength));
@@ -3006,15 +3021,31 @@ function initAthleteApp() {
   });
   cancelSelfWorkoutBtn?.addEventListener("click", () => {
     selfWorkoutForm?.reset();
+    resetSelfWorkoutSets();
     selfWorkoutForm?.classList.add("hidden");
     showSelfWorkoutBtn?.classList.remove("hidden");
     updateSelfWorkoutFields();
+  });
+  addSelfWorkoutSetBtn?.addEventListener("click", () => {
+    if (!selfWorkoutSetRows) return;
+    const nextSet = Math.max(0, ...[...selfWorkoutSetRows.querySelectorAll(".self-set-row")].map((row) => Number(row.dataset.setNumber || 0))) + 1;
+    selfWorkoutSetRows.insertAdjacentHTML("beforeend", renderSelfWorkoutSetRow(nextSet));
   });
   selfWorkoutType?.addEventListener("change", updateSelfWorkoutFields);
   selfWorkoutForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(selfWorkoutForm);
     const section = String(data.get("section") || "cardio");
+    const sets = [...(selfWorkoutSetRows?.querySelectorAll(".self-set-row") || [])]
+      .map((row) => {
+        const setNumber = Number(row.dataset.setNumber || 0);
+        return {
+          setNumber,
+          reps: data.get(`self_set_${setNumber}_reps`) || "",
+          weight: numericWeight(data.get(`self_set_${setNumber}_weight`))
+        };
+      })
+      .filter((set) => set.reps || set.weight != null);
     try {
       await MangoFitnessStore.saveAthleteSelfWorkout({
         completedOn: date.value || todayISO(),
@@ -3022,12 +3053,14 @@ function initAthleteApp() {
         exerciseName: data.get("exerciseName"),
         section,
         score: section === "lifting" ? "" : data.get("score"),
-        weight: section === "lifting" ? numericWeight(data.get("weight")) : null,
-        reps: section === "lifting" ? data.get("reps") : "",
+        weight: null,
+        reps: "",
+        sets: section === "lifting" ? sets : null,
         notes: data.get("notes"),
         isPr: data.get("isPr") === "on"
       });
       selfWorkoutForm.reset();
+      resetSelfWorkoutSets();
       selfWorkoutForm.classList.add("hidden");
       showSelfWorkoutBtn?.classList.remove("hidden");
       await renderAthlete();
