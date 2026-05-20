@@ -781,6 +781,9 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   gap: 14px;
   padding-top: 10px;
 }
+.athlete-workout-section + .athlete-workout-section {
+  margin-top: 16px;
+}
 .athlete-workout-section:first-child {
   padding-top: 0;
 }
