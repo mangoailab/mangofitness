@@ -2900,15 +2900,42 @@ body.is-reordering .exercise-row.dragging {
 .workout-status-form button {
   width: 100%;
 }
+.strength-progress-sessions {
+  display: grid;
+  gap: 10px;
+}
+.strength-progress-session {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+.strength-progress-session.is-pr {
+  background: rgba(255, 183, 3, .08);
+}
+.strength-progress-session-head {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
 .strength-set-summary {
   display: grid;
   gap: 6px;
 }
 .strength-set-line {
   align-items: center;
+  border-top: 1px solid var(--line);
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(150px, 1fr) auto;
+  padding-top: 6px;
+}
+.strength-set-line:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 .strength-set-line span,
 .strength-set-line .progress-delete-button {
@@ -2917,33 +2944,12 @@ body.is-reordering .exercise-row.dragging {
 .strength-set-line .progress-delete-button {
   padding: 6px 9px;
 }
+.strength-session-notes {
+  margin: 0;
+}
 @media (max-width: 640px) {
-  .strength-progress-table {
-    min-width: 0;
-  }
-  .strength-progress-table thead {
-    display: none;
-  }
-  .strength-progress-table,
-  .strength-progress-table tbody,
-  .strength-progress-table tr,
-  .strength-progress-table td {
-    display: block;
-    width: 100%;
-  }
-  .strength-progress-table tr {
-    border-bottom: 1px solid var(--line);
-    padding: 10px 0;
-  }
-  .strength-progress-table td {
-    border-bottom: 0;
-    padding: 4px 0;
-    white-space: normal !important;
-  }
-  .strength-progress-table td:first-child {
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 800;
+  .strength-progress-session {
+    padding: 10px;
   }
   .strength-set-line {
     grid-template-columns: minmax(0, 1fr) auto;

@@ -3726,30 +3726,30 @@ function initAthleteHistoryApp(options = {}) {
     if (strengthGroup) {
       const sessions = [...strengthSessionGroups(group).values()];
       return `
-        <div class="progress-table-wrap">
-          <table class="progress-table strength-progress-table">
-            <thead><tr><th>Date</th><th>Sets</th><th>Notes</th></tr></thead>
-            <tbody>
-              ${sessions.map((sessionRows) => {
-                const first = sessionRows[0];
-                const notes = [...new Set(sessionRows.map((result) => result.notes).filter(Boolean))].join(" · ");
-                const sortedRows = [...sessionRows].sort((a, b) => Number(a.setNumber || 0) - Number(b.setNumber || 0));
-                return `
-                  <tr class="${sessionRows.some((result) => result.isPr) ? "is-pr" : ""}">
-                    <td>${escapeHtml(displayDate(first.completedOn))}</td>
-                    <td><div class="strength-set-summary">${sortedRows.map((result, index) => {
-                      const setLabel = result.setNumber || index + 1;
-                      const value = result.weight !== "" && result.weight != null ? `${result.weight} lb` : "—";
-                      const reps = result.reps ? ` × ${result.reps}` : "";
-                      const line = `Set ${setLabel}: ${value}${reps}${result.isPr ? " PR" : ""}`;
-                      return `<div class="strength-set-line"><span>${escapeHtml(line)}</span><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} set ${setLabel} on ${displayDate(result.completedOn)}`)}">Delete set ${escapeHtml(setLabel)}</button></div>`;
-                    }).join("")}</div></td>
-                    <td>${escapeHtml(notes)}</td>
-                  </tr>
-                `;
-              }).join("")}
-            </tbody>
-          </table>
+        <div class="strength-progress-sessions">
+          ${sessions.map((sessionRows) => {
+            const first = sessionRows[0];
+            const notes = [...new Set(sessionRows.map((result) => result.notes).filter(Boolean))].join(" · ");
+            const sortedRows = [...sessionRows].sort((a, b) => Number(a.setNumber || 0) - Number(b.setNumber || 0));
+            return `
+              <section class="strength-progress-session${sessionRows.some((result) => result.isPr) ? " is-pr" : ""}">
+                <div class="strength-progress-session-head">
+                  <strong>${escapeHtml(displayDate(first.completedOn))}</strong>
+                  <span class="muted">${sortedRows.length} set${sortedRows.length === 1 ? "" : "s"}</span>
+                </div>
+                <div class="strength-set-summary">
+                  ${sortedRows.map((result, index) => {
+                    const setLabel = result.setNumber || index + 1;
+                    const value = result.weight !== "" && result.weight != null ? `${result.weight} lb` : "—";
+                    const reps = result.reps ? ` × ${result.reps}` : "";
+                    const line = `Set ${setLabel}: ${value}${reps}${result.isPr ? " PR" : ""}`;
+                    return `<div class="strength-set-line"><span>${escapeHtml(line)}</span><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} set ${setLabel} on ${displayDate(result.completedOn)}`)}">Delete set ${escapeHtml(setLabel)}</button></div>`;
+                  }).join("")}
+                </div>
+                ${notes ? `<p class="muted strength-session-notes">${escapeHtml(notes)}</p>` : ""}
+              </section>
+            `;
+          }).join("")}
         </div>
       `;
     }
