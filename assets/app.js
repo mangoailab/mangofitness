@@ -381,6 +381,29 @@ const MangoFitnessStore = (() => {
       return (data || []).map(normalizeWorkout);
     },
 
+    async workoutStatuses() {
+      const sb = client();
+      if (!sb) return [];
+      const { data, error } = await sb
+        .from("athlete_workout_statuses")
+        .select("id, athlete_id, workout_id, status, notes, marked_on, updated_at")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async setWorkoutStatus(entry) {
+      const sb = client();
+      if (!sb) return;
+      const { error } = await sb.rpc("set_athlete_workout_status", {
+        p_workout_id: entry.workoutId,
+        p_status: entry.status,
+        p_notes: entry.notes || null,
+        p_marked_on: entry.markedOn || todayISO()
+      });
+      if (error) throw error;
+    },
+
     async results() {
       const sb = client();
       if (!sb) return readLocal(localResultKey);
@@ -2772,6 +2795,7 @@ function initAthleteApp() {
     try {
       const workouts = await MangoFitnessStore.workouts();
       const selectedAthleteId = signedInAthleteId;
+      const statuses = selectedAthleteId ? await MangoFitnessStore.workoutStatuses() : [];
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
       const visibleWorkouts = workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
@@ -2781,6 +2805,7 @@ function initAthleteApp() {
       });
       const selectedDateWorkouts = visibleWorkouts.filter((item) => item.date === date.value);
       const workout = selectedDateWorkouts.find((item) => item.id === selectedWorkoutId) || selectedDateWorkouts[0];
+      const workoutStatus = statuses.find((item) => item.workout_id === workout?.id && item.athlete_id === selectedAthleteId);
       selectedWorkoutId = workout?.id || "";
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
@@ -2809,7 +2834,7 @@ function initAthleteApp() {
                 ${dayWorkouts.length ? dayWorkouts.map((item) => `
                   <button type="button" class="calendar-workout-card athlete-schedule-card${item.isAthleteCreated ? " self-workout-card" : ""}" data-athlete-date="${escapeHtml(item.date)}" data-athlete-workout-id="${escapeHtml(item.id)}">
                     <strong>${escapeHtml(item.title)}</strong>
-                    <p class="muted">${item.exercises.length} items · ${workoutAssignmentLabel(item)}</p>
+                    <p class="muted">${item.exercises.length} items · ${workoutAssignmentLabel(item)}${(() => { const status = statuses.find((entry) => entry.workout_id === item.id && entry.athlete_id === selectedAthleteId); return status ? ` · ${status.status === "skipped" ? "Skipped" : "Done"}` : ""; })()}</p>
                   </button>
                 `).join("") : `<p class="muted calendar-empty">No workout</p>`}
               </div>
@@ -2836,7 +2861,16 @@ function initAthleteApp() {
         view.innerHTML = `
           <article class="item-card workout-detail${workout.isAthleteCreated ? " self-workout-detail" : ""}">
             <h3>${escapeHtml(workout.title)}${workout.isAthleteCreated ? ` <span class="self-workout-badge">Athlete-created</span>` : ""}</h3>
-            <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}</p>
+            <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}${workoutStatus ? ` · ${workoutStatus.status === "skipped" ? "Skipped" : "Done"}` : ""}</p>
+            ${!workout.isAthleteCreated ? `
+              <form class="workout-status-form" data-workout-status-form data-workout-id="${escapeHtml(workout.id)}">
+                <div class="actions workout-status-actions">
+                  <button type="button" class="${workoutStatus?.status === "done" ? "primary" : ""}" data-workout-status="done">Mark done</button>
+                  <button type="button" class="${workoutStatus?.status === "skipped" ? "primary" : ""}" data-workout-status="skipped">Skip workout</button>
+                </div>
+                <div class="field${workoutStatus?.status === "skipped" ? "" : " hidden"}" data-skip-reason-field><label>Skip reason</label><input name="statusNotes" type="text" placeholder="Vacation, sick, no equipment..." value="${escapeHtml(workoutStatus?.notes || "")}" /></div>
+              </form>
+            ` : ""}
             ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
             ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
             <div class="list-stack athlete-workout-sections">
@@ -2894,6 +2928,31 @@ function initAthleteApp() {
           row?.remove();
         }
       }
+
+      view.querySelectorAll("[data-workout-status-form]").forEach((form) => {
+        form.addEventListener("click", async (event) => {
+          const button = event.target.closest("[data-workout-status]");
+          if (!button) return;
+          const status = button.dataset.workoutStatus;
+          const reasonField = form.querySelector("[data-skip-reason-field]");
+          if (status === "skipped" && reasonField?.classList.contains("hidden")) {
+            reasonField.classList.remove("hidden");
+            reasonField.querySelector("input")?.focus();
+            return;
+          }
+          try {
+            await MangoFitnessStore.setWorkoutStatus({
+              workoutId: form.dataset.workoutId,
+              status,
+              notes: status === "skipped" ? new FormData(form).get("statusNotes") : "",
+              markedOn: date.value || todayISO()
+            });
+            await renderAthlete();
+          } catch (error) {
+            view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+          }
+        });
+      });
 
       view.querySelectorAll(".result-form").forEach((form) => {
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];

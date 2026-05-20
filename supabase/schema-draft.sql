@@ -124,6 +124,19 @@ create table if not exists workout_assignments (
   unique (workout_id, athlete_id)
 );
 
+create table if not exists athlete_workout_statuses (
+  id uuid primary key default gen_random_uuid(),
+  athlete_id uuid not null references athletes(id) on delete cascade,
+  auth_user_id uuid references auth.users(id) on delete set null,
+  workout_id uuid not null references workouts(id) on delete cascade,
+  status text not null check (status in ('done', 'skipped')),
+  notes text,
+  marked_on date not null default current_date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (athlete_id, workout_id)
+);
+
 create table if not exists athlete_workout_results (
   id uuid primary key default gen_random_uuid(),
   athlete_id uuid references athletes(id) on delete cascade,
