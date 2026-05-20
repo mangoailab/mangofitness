@@ -2553,7 +2553,7 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
         return renderSetLogRow(setNumber, exercise, suggestion, loggedBySet.get(setNumber) || null);
       }).join("")}
     </div>
-    <button type="button" class="set-add-button icon-set-button" data-add-set aria-label="Add set">+</button>
+    <button type="button" class="set-add-button" data-add-set><span aria-hidden="true">+</span> Add set</button>
   `;
 }
 

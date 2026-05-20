@@ -1935,54 +1935,77 @@ body.is-reordering .exercise-row.dragging {
 }
 .set-log-table {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin-top: 4px;
 }
 .set-log-head,
 .set-log-row {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1fr) 34px;
   gap: 8px;
   align-items: center;
 }
 .set-log-head {
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .05em;
+  padding: 0 2px;
+}
+.set-log-row {
+  border: 1px solid rgba(15, 122, 59, .08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .72);
+  padding: 6px;
 }
 .set-log-row strong {
   display: grid;
   place-items: center;
-  min-height: 42px;
+  min-height: 38px;
   border-radius: 12px;
   background: var(--soft);
   color: var(--accent-dark);
+  font-size: 13px;
 }
 .set-log-row input {
-  min-height: 42px;
-  padding: 9px 10px;
+  min-height: 38px;
+  padding: 8px 9px;
 }
 .icon-set-button {
   align-items: center;
   border-radius: 999px;
   display: inline-flex;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 900;
   justify-content: center;
   line-height: 1;
-  min-height: 38px;
-  min-width: 38px;
+  min-height: 30px;
+  min-width: 30px;
   padding: 0;
 }
 .set-remove-button {
+  background: rgba(185, 28, 28, .07);
+  border-color: rgba(185, 28, 28, .16);
   color: #b91c1c;
 }
 .set-add-button {
+  align-items: center;
+  border-color: rgba(15, 122, 59, .22);
   color: var(--accent-dark);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 7px;
   justify-self: start;
   margin-top: 8px;
+  min-height: 38px;
+  padding: 8px 13px;
+}
+.set-add-button span {
+  display: inline-grid;
+  font-size: 20px;
+  line-height: 1;
+  place-items: center;
 }
 .set-log-row input.has-ghost-weight {
   background: rgba(15, 122, 59, .06);
@@ -2004,13 +2027,14 @@ body.is-reordering .exercise-row.dragging {
 @media (max-width: 420px) {
   .set-log-head,
   .set-log-row {
-    grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr);
-    gap: 6px;
+    grid-template-columns: 34px minmax(0, 1fr) minmax(0, 1fr) 30px;
+    gap: 5px;
   }
-  .set-log-head span:last-child { display: none; }
-  .set-remove-button {
-    grid-column: 2 / -1;
-    justify-self: start;
+  .set-log-row {
+    padding: 5px;
+  }
+  .set-log-row input {
+    padding: 7px;
   }
 }
 
