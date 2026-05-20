@@ -2837,7 +2837,7 @@ function initAthleteApp() {
           let dragging = false;
           row.addEventListener("touchstart", (event) => {
             const touch = event.touches?.[0];
-            if (!touch || event.target.closest("input, button, textarea, select")) return;
+            if (!touch) return;
             startX = touch.clientX;
             startY = touch.clientY;
             dragging = true;
@@ -2849,10 +2849,11 @@ function initAthleteApp() {
             if (!touch) return;
             const dx = Math.min(0, touch.clientX - startX);
             const dy = Math.abs(touch.clientY - startY);
-            if (dy > Math.abs(dx)) return;
+            if (Math.abs(dx) < 12 || dy > Math.abs(dx)) return;
+            event.preventDefault();
             row.style.setProperty("--swipe-x", `${Math.max(dx, -96)}px`);
             row.classList.toggle("is-delete-ready", dx < -72);
-          }, { passive: true });
+          }, { passive: false });
           row.addEventListener("touchend", async () => {
             if (!dragging) return;
             dragging = false;
