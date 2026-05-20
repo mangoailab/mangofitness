@@ -411,6 +411,13 @@ const MangoFitnessStore = (() => {
       if (error) throw error;
     },
 
+    async deleteAthleteSelfWorkout(workoutId) {
+      const sb = client();
+      if (!sb) return;
+      const { error } = await sb.rpc("delete_athlete_self_workout", { p_workout_id: workoutId });
+      if (error) throw error;
+    },
+
     async results() {
       const sb = client();
       if (!sb) return readLocal(localResultKey);
@@ -2916,7 +2923,11 @@ function initAthleteApp() {
               <form class="workout-status-form" data-workout-status-form data-workout-id="${escapeHtml(workout.id)}">
                 <button type="button" class="${workoutStatus?.status === "done" ? "primary" : ""}" data-workout-status="done" data-workout-status-active="${workoutStatus?.status === "done" ? "true" : "false"}">${workoutStatus?.status === "done" ? "Workout done" : "Mark workout done"}</button>
               </form>
-            ` : ""}
+            ` : `
+              <div class="workout-status-form">
+                <button type="button" class="danger-button" data-delete-self-workout="${escapeHtml(workout.id)}">Delete custom workout</button>
+              </div>
+            `}
           </article>
         `;
       }
@@ -2931,6 +2942,19 @@ function initAthleteApp() {
           row?.remove();
         }
       }
+
+      view.querySelectorAll("[data-delete-self-workout]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          if (!confirm("Delete this custom workout? This will remove its logged results too.")) return;
+          try {
+            await MangoFitnessStore.deleteAthleteSelfWorkout(button.dataset.deleteSelfWorkout);
+            selectedWorkoutId = "";
+            await renderAthlete();
+          } catch (error) {
+            view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+          }
+        });
+      });
 
       view.querySelectorAll("[data-workout-status-form]").forEach((form) => {
         form.addEventListener("click", async (event) => {

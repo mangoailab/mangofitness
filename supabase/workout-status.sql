@@ -119,3 +119,44 @@ end;
 $$;
 
 grant execute on function public.clear_athlete_workout_status(uuid) to authenticated;
+
+create or replace function public.delete_athlete_self_workout(p_workout_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_athlete_id uuid;
+  v_allowed boolean;
+begin
+  select id into v_athlete_id
+  from public.athletes
+  where auth_user_id = auth.uid()
+     or lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  order by created_at desc
+  limit 1;
+
+  if v_athlete_id is null then
+    raise exception 'Athlete profile not found.';
+  end if;
+
+  select exists (
+    select 1
+    from public.workouts w
+    join public.workout_assignments wa on wa.workout_id = w.id
+    where w.id = p_workout_id
+      and wa.athlete_id = v_athlete_id
+      and coalesce(w.assignment_type, '') = 'athlete_created'
+      and w.created_by = auth.uid()
+  ) into v_allowed;
+
+  if not coalesce(v_allowed, false) then
+    raise exception 'Only your own athlete-created workouts can be deleted.';
+  end if;
+
+  delete from public.workouts where id = p_workout_id;
+end;
+$$;
+
+grant execute on function public.delete_athlete_self_workout(uuid) to authenticated;
