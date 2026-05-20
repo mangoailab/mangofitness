@@ -3144,6 +3144,7 @@ function initAthleteApp() {
         <input name="piece_${pieceId}_set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="reps" />
         <input name="piece_${pieceId}_set_${setNumber}_weight" type="number" step="0.1" inputmode="decimal" placeholder="lb" />
       </div>
+      <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
     </div>
   `;
   const renderSelfWorkoutPiece = (section = "lifting") => {
@@ -3191,6 +3192,38 @@ function initAthleteApp() {
   };
   addSelfStrengthPieceBtn?.addEventListener("click", () => addSelfWorkoutPiece("lifting"));
   addSelfCardioPieceBtn?.addEventListener("click", () => addSelfWorkoutPiece("cardio"));
+  let selfSetSwipeRow = null;
+  let selfSetSwipeStartX = 0;
+  let selfSetSwipeStartY = 0;
+  selfWorkoutPieces?.addEventListener("touchstart", (event) => {
+    const row = event.target.closest(".self-set-row");
+    const touch = event.touches?.[0];
+    if (!row || !touch) return;
+    selfSetSwipeRow = row;
+    selfSetSwipeStartX = touch.clientX;
+    selfSetSwipeStartY = touch.clientY;
+    row.classList.remove("is-delete-ready");
+  }, { passive: true });
+  selfWorkoutPieces?.addEventListener("touchmove", (event) => {
+    if (!selfSetSwipeRow) return;
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    const dx = Math.min(0, touch.clientX - selfSetSwipeStartX);
+    const dy = Math.abs(touch.clientY - selfSetSwipeStartY);
+    if (Math.abs(dx) < 12 || dy > Math.abs(dx)) return;
+    event.preventDefault();
+    selfSetSwipeRow.style.setProperty("--swipe-x", `${Math.max(dx, -96)}px`);
+    selfSetSwipeRow.classList.toggle("is-delete-ready", dx < -72);
+  }, { passive: false });
+  selfWorkoutPieces?.addEventListener("touchend", () => {
+    if (!selfSetSwipeRow) return;
+    const currentX = Number(String(selfSetSwipeRow.style.getPropertyValue("--swipe-x")).replace("px", "")) || 0;
+    const row = selfSetSwipeRow;
+    row.style.setProperty("--swipe-x", "0px");
+    selfSetSwipeRow = null;
+    if (currentX < -72) row.remove();
+    else row.classList.remove("is-delete-ready");
+  });
   selfWorkoutPieces?.addEventListener("click", (event) => {
     const removePieceButton = event.target.closest("[data-remove-self-piece]");
     if (removePieceButton) {
