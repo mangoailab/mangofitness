@@ -3022,7 +3022,6 @@ function initAthleteApp() {
           </div>
         ` : `<div class="field"><label>Time / score</label><input name="piece_${pieceId}_score" type="text" placeholder="8:15 or 6+14" /></div>`}
         <div class="field"><label>Notes</label><input name="piece_${pieceId}_notes" type="text" placeholder="How it felt, scaling, location" /></div>
-        <label class="check-row"><input name="piece_${pieceId}_is_pr" type="checkbox" /> Mark as PR</label>
       </section>
     `;
   };
@@ -3090,7 +3089,7 @@ function initAthleteApp() {
         score: section === "lifting" ? "" : data.get(`piece_${pieceId}_score`) || "",
         sets: section === "lifting" ? sets : null,
         notes: data.get(`piece_${pieceId}_notes`) || "",
-        isPr: data.get(`piece_${pieceId}_is_pr`) === "on"
+        isPr: false
       };
     }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
