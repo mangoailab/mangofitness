@@ -2241,30 +2241,14 @@ function formatSplitTotal(seconds) {
   return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}` : `${minutes}:${String(secs).padStart(2, "0")}`;
 }
 
-function splitParts(value) {
-  const seconds = splitSeconds(value);
-  if (seconds == null) return { minutes: "", seconds: "" };
-  const rounded = Math.round(seconds);
-  return { minutes: String(Math.floor(rounded / 60)), seconds: String(rounded % 60).padStart(2, "0") };
-}
-
 function splitTimeFromForm(data, setNumber) {
-  const minutes = Number(data.get(`set_${setNumber}_minutes`) || 0);
-  const seconds = Number(data.get(`set_${setNumber}_seconds`) || 0);
-  if (!minutes && !seconds) return "";
-  if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return "";
-  return `${Math.max(0, Math.floor(minutes))}:${String(Math.max(0, Math.min(59, Math.floor(seconds)))).padStart(2, "0")}`;
+  return String(data.get(`set_${setNumber}_score`) || "").trim();
 }
 
 function splitTotalFromInputs(form) {
-  const values = [...form.querySelectorAll(".split-log-row")].map((row) => {
-    const setNumber = row.dataset.setNumber || "";
-    const minutes = Number(form.elements[`set_${setNumber}_minutes`]?.value || 0);
-    const seconds = Number(form.elements[`set_${setNumber}_seconds`]?.value || 0);
-    if (!minutes && !seconds) return null;
-    if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null;
-    return minutes * 60 + seconds;
-  }).filter((value) => value != null);
+  const values = [...form.querySelectorAll('[name^="set_"][name$="_score"]')]
+    .map((input) => splitSeconds(input.value))
+    .filter((value) => value != null);
   if (!values.length) return "";
   return formatSplitTotal(values.reduce((sum, value) => sum + value, 0));
 }
@@ -2718,15 +2702,11 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
             ${Array.from({ length: count }, (_, index) => {
               const setNumber = index + 1;
               const logged = loggedBySet.get(setNumber) || null;
-              const parts = splitParts(logged?.score || "");
               return `
                 <div class="set-log-row split-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="${escapeHtml(logged?.id || "")}" data-swipe-delete-row>
                   <div class="set-log-row-content split-log-row-content">
                     <strong>${escapeHtml(setNumber)}</strong>
-                    <div class="split-time-inputs">
-                      <label><span>Min</span><input name="set_${setNumber}_minutes" type="number" inputmode="numeric" min="0" step="1" placeholder="1" value="${escapeHtml(parts.minutes)}" /></label>
-                      <label><span>Sec</span><input name="set_${setNumber}_seconds" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="45" value="${escapeHtml(parts.seconds)}" /></label>
-                    </div>
+                    <input name="set_${setNumber}_score" type="text" inputmode="decimal" placeholder="1:45" value="${escapeHtml(logged?.score || "")}" />
                   </div>
                   <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
                 </div>`;
@@ -3096,7 +3076,7 @@ function initAthleteApp() {
           if (total) total.textContent = splitTotalFromInputs(form) || "—";
         };
         updateSplitTotal();
-        form.querySelectorAll('[name^="set_"][name$="_minutes"], [name^="set_"][name$="_seconds"]').forEach((input) => input.addEventListener("input", updateSplitTotal));
+        form.querySelectorAll('[name^="set_"][name$="_score"]').forEach((input) => input.addEventListener("input", updateSplitTotal));
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
         const setGhostWeight = (input, value) => {
           if (!input.dataset.basePlaceholder) input.dataset.basePlaceholder = input.getAttribute("placeholder") || "lb";
