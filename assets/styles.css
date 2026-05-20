@@ -2918,13 +2918,41 @@ body.is-reordering .exercise-row.dragging {
   padding: 6px 9px;
 }
 @media (max-width: 640px) {
+  .strength-progress-table {
+    min-width: 0;
+  }
+  .strength-progress-table thead {
+    display: none;
+  }
+  .strength-progress-table,
+  .strength-progress-table tbody,
+  .strength-progress-table tr,
+  .strength-progress-table td {
+    display: block;
+    width: 100%;
+  }
+  .strength-progress-table tr {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 0;
+  }
+  .strength-progress-table td {
+    border-bottom: 0;
+    padding: 4px 0;
+    white-space: normal !important;
+  }
+  .strength-progress-table td:first-child {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
   .strength-set-line {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
   .strength-set-line span {
     white-space: normal;
   }
   .strength-set-line .progress-delete-button {
-    justify-self: start;
+    justify-self: end;
+    padding: 6px 8px;
   }
 }
