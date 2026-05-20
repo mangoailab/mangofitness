@@ -48,3 +48,7 @@
 ## Workout status integrity
 
 - Athlete workout status stays binary: `done` or no status. `public.set_athlete_workout_status(...)` rejects anything except `done` and checks `public.can_mark_workout_status(workout_id, athlete_id)` so athletes can only mark workouts that are class/everyone or assigned to them.
+
+## Historical benchmark system workout
+
+- `public.save_historical_benchmark(...)` reuses one `Historical Benchmarks` system workout instead of inserting blindly. The placeholder workout uses `assignment_type = 'system_history'`, and normal app workout queries exclude `system_history` so it does not appear as a class/athlete workout.

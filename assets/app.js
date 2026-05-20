@@ -375,6 +375,7 @@ const MangoFitnessStore = (() => {
       const { data, error } = await sb
         .from("workouts")
         .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, assignment_type, workout_assignments (athlete_id, athletes (name, email)), workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, movement_key, movement_name, section_type, notes, sort_order)")
+        .neq("assignment_type", "system_history")
         .order("workout_date", { ascending: true });
 
       if (error) throw error;

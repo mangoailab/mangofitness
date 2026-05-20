@@ -47,9 +47,11 @@ begin
     raise exception 'Choose an existing benchmark.';
   end if;
 
-  insert into public.workouts (workout_date, title, notes, workout_format, assignment_type)
-  values ('1900-01-01', 'Historical Benchmarks', 'System workout for athlete-entered historical benchmark records.', 'Benchmark History', 'everyone')
-  on conflict do nothing;
+  update public.workouts
+  set assignment_type = 'system_history'
+  where title = 'Historical Benchmarks'
+    and workout_date = '1900-01-01'
+    and coalesce(assignment_type, '') <> 'system_history';
 
   select id into v_workout_id
   from public.workouts
@@ -57,6 +59,12 @@ begin
     and workout_date = '1900-01-01'
   order by created_at asc
   limit 1;
+
+  if v_workout_id is null then
+    insert into public.workouts (workout_date, title, notes, workout_format, assignment_type)
+    values ('1900-01-01', 'Historical Benchmarks', 'System workout for athlete-entered historical benchmark records.', 'Benchmark History', 'system_history')
+    returning id into v_workout_id;
+  end if;
 
   if v_workout_id is null then
     raise exception 'Could not prepare historical benchmark workout.';

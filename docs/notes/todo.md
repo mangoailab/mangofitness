@@ -29,3 +29,7 @@
 ## Workout status verification follow-up
 
 - Manually verify an athlete can mark/clear Done on an assigned/everyone workout, cannot mark an unassigned individual workout by UUID, and direct `athlete_workout_statuses` writes with `status = 'skipped'` are rejected.
+
+## Historical benchmark verification follow-up
+
+- Manually save two Add Past Benchmark entries and confirm only one `Historical Benchmarks` workout exists, with `assignment_type = 'system_history'`, and it does not appear in athlete or coach workout lists.
