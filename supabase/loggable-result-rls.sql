@@ -38,6 +38,7 @@ with check (
     auth_user_id = auth.uid()
     and athlete_id in (select public.current_athlete_ids())
     and public.can_log_workout_exercise(workout_exercise_id, athlete_id)
+    and is_pr is not true
   )
 );
 

@@ -40,3 +40,7 @@
 ## Body scan AI parser security
 
 - `parse-body-scan` must verify a valid Supabase user session inside the Edge Function before calling OpenAI. Anonymous requests and invalid bearer tokens should return 401 before any AI/API spend happens.
+
+## PR trust boundary
+
+- Athlete-facing workout result saves use `public.save_athlete_workout_result(...)` so the server calculates `is_pr` from prior same-movement history instead of trusting a browser-provided PR flag. Direct athlete insert/update policies require `is_pr is not true`; coaches can still manage PR flags directly.

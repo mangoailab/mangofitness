@@ -21,3 +21,7 @@
 ## Body scan parser follow-up
 
 - Confirm signed-in athlete body scan parsing still works from the UI after the `parse-body-scan` auth hardening deploy.
+
+## PR verification follow-up
+
+- Manually verify programmed workout logging still autosaves, a clear same-movement strength/time PR is marked by the server, and a direct athlete table write with `is_pr = true` is rejected.

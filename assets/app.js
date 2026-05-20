@@ -623,25 +623,20 @@ const MangoFitnessStore = (() => {
         return;
       }
 
-      const user = await requireUser();
-      const payload = {
-        athlete_id: result.athleteId || null,
-        auth_user_id: user?.id || null,
-        workout_exercise_id: result.exerciseId,
-        completed_on: result.completedOn,
-        working_weight: result.weight || null,
-        reps_completed: result.reps || null,
-        notes: result.notes || null,
-        score_result: result.score || null,
-        set_number: result.setNumber || null,
-        is_pr: result.isPr
-      };
-      const query = result.id
-        ? sb.from("athlete_workout_results").update(payload).eq("id", result.id).eq("auth_user_id", user?.id || "")
-        : sb.from("athlete_workout_results").insert(payload);
-      const { data, error } = await query.select("id").single();
+      await requireUser();
+      const { data, error } = await sb.rpc("save_athlete_workout_result", {
+        p_id: result.id || null,
+        p_athlete_id: result.athleteId || null,
+        p_workout_exercise_id: result.exerciseId,
+        p_completed_on: result.completedOn,
+        p_working_weight: result.weight || null,
+        p_reps_completed: result.reps || null,
+        p_score_result: result.score || null,
+        p_notes: result.notes || null,
+        p_set_number: result.setNumber || null
+      });
       if (error) throw error;
-      return data?.id || result.id;
+      return data || result.id;
     },
 
     async saveAthleteSelfWorkout(entry) {
