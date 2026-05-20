@@ -2468,6 +2468,56 @@ function numericReps(value) {
   return match ? Number(match[0]) : null;
 }
 
+function scoreNumber(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const timeMatch = text.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+  if (timeMatch) {
+    const first = Number(timeMatch[1]);
+    const second = Number(timeMatch[2]);
+    const third = timeMatch[3] == null ? null : Number(timeMatch[3]);
+    return third == null ? first * 60 + second : first * 3600 + second * 60 + third;
+  }
+  const rounds = text.toLowerCase().match(/(\d+(?:\.\d+)?)\s*round/);
+  const plusReps = text.match(/\+\s*(\d+(?:\.\d+)?)/);
+  if (rounds) return Number(rounds[1]) * 1000 + (plusReps ? Number(plusReps[1]) : 0);
+  const numeric = Number(text.replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function prComparisonMode(entry) {
+  const name = String(entry?.exerciseName || "").toLowerCase();
+  const score = String(entry?.score || "");
+  if (entry?.weight !== "" && entry?.weight != null && numericWeight(entry.weight) != null) return "higher-weight";
+  if (!score) return "";
+  if (score.includes(":") || /\b(row|run|mile|bike|ski|for time|time)\b/.test(name)) return "lower-score";
+  return "higher-score";
+}
+
+function autoPrCandidate(entry, priorResults = []) {
+  const token = String(entry?.movementKey || entry?.movementName || entry?.exerciseName || "").trim().toLowerCase();
+  if (!token) return false;
+  const mode = prComparisonMode(entry);
+  if (!mode) return false;
+  const candidateValue = mode === "higher-weight" ? numericWeight(entry.weight) : scoreNumber(entry.score);
+  if (candidateValue == null) return false;
+  const comparable = (priorResults || []).filter((result) => {
+    const resultToken = String(result.movementKey || result.movementName || result.exerciseName || "").trim().toLowerCase();
+    if (resultToken !== token) return false;
+    if (entry.id && result.id === entry.id) return false;
+    return mode === "higher-weight" ? numericWeight(result.weight) != null : scoreNumber(result.score) != null;
+  });
+  if (!comparable.length) return false;
+  const previousBest = comparable.reduce((best, result) => {
+    const value = mode === "higher-weight" ? numericWeight(result.weight) : scoreNumber(result.score);
+    if (value == null) return best;
+    if (best == null) return value;
+    return mode === "lower-score" ? Math.min(best, value) : Math.max(best, value);
+  }, null);
+  if (previousBest == null) return false;
+  return mode === "lower-score" ? candidateValue < previousBest : candidateValue > previousBest;
+}
+
 function matchingStrengthResults(results, exercise) {
   const token = exerciseMovementToken(exercise);
   return (results || []).filter((result) => {
@@ -2943,7 +2993,7 @@ function initAthleteApp() {
                 const existingId = row.dataset.existingResultId || "";
                 if (!reps && weight == null && !existingId) continue;
                 savedAnySet = true;
-                await MangoFitnessStore.saveResult({
+                const resultEntry = {
                   id: existingId,
                   workoutId: form.dataset.workoutId,
                   athleteId: signedInAthleteId,
@@ -2953,13 +3003,16 @@ function initAthleteApp() {
                   setNumber,
                   weight,
                   reps,
-                  notes: data.get("notes"),
-                  isPr: false
+                  notes: data.get("notes")
+                };
+                await MangoFitnessStore.saveResult({
+                  ...resultEntry,
+                  isPr: autoPrCandidate(resultEntry, athleteResults)
                 });
               }
               if (!savedAnySet) throw new Error("Enter reps or weight for at least one set.");
             } else {
-              await MangoFitnessStore.saveResult({
+              const resultEntry = {
                 id: form.dataset.existingResultId || "",
                 workoutId: form.dataset.workoutId,
                 athleteId: signedInAthleteId,
@@ -2969,8 +3022,11 @@ function initAthleteApp() {
                 score: data.get("score"),
                 weight: data.get("weight"),
                 reps: data.get("reps"),
-                notes: data.get("notes"),
-                isPr: data.get("isPr") === "on"
+                notes: data.get("notes")
+              };
+              await MangoFitnessStore.saveResult({
+                ...resultEntry,
+                isPr: data.get("isPr") === "on" || autoPrCandidate(resultEntry, athleteResults)
               });
             }
             await renderAthlete();
@@ -3070,6 +3126,7 @@ function initAthleteApp() {
   selfWorkoutForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(selfWorkoutForm);
+    const priorResults = signedInAthleteId ? (await MangoFitnessStore.results()).filter((result) => result.athleteId === signedInAthleteId) : [];
     const pieces = [...(selfWorkoutPieces?.querySelectorAll("[data-self-piece]") || [])].map((piece) => {
       const pieceId = piece.dataset.selfPiece;
       const section = String(data.get(`piece_${pieceId}_section`) || "cardio");
@@ -3083,14 +3140,18 @@ function initAthleteApp() {
           };
         })
         .filter((set) => set.reps || set.weight != null);
-      return {
+      const entry = {
         section,
         exerciseName: data.get(`piece_${pieceId}_exercise`) || "",
         score: section === "lifting" ? "" : data.get(`piece_${pieceId}_score`) || "",
         sets: section === "lifting" ? sets : null,
-        notes: data.get(`piece_${pieceId}_notes`) || "",
-        isPr: false
+        notes: data.get(`piece_${pieceId}_notes`) || ""
       };
+      const bestSet = sets.reduce((best, set) => numericWeight(set.weight) > numericWeight(best?.weight) ? set : best, null);
+      entry.isPr = section === "lifting"
+        ? autoPrCandidate({ exerciseName: entry.exerciseName, weight: bestSet?.weight }, priorResults)
+        : autoPrCandidate(entry, priorResults);
+      return entry;
     }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
       if (!pieces.length) throw new Error("Add at least one strength movement or cardio/WOD piece.");

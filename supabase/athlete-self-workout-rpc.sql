@@ -36,6 +36,7 @@ declare
   v_weight numeric;
   v_reps text;
   v_saved_sets integer;
+  v_best_weight numeric;
   v_sort integer := 0;
 begin
   select id into v_athlete_id
@@ -94,7 +95,11 @@ begin
 
     if v_section = 'lifting' then
       v_saved_sets := 0;
+      v_best_weight := null;
       if v_sets is not null and jsonb_typeof(v_sets) = 'array' then
+        select max(nullif(item ->> 'weight', '')::numeric) into v_best_weight
+        from jsonb_array_elements(v_sets) as item
+        where nullif(item ->> 'weight', '') is not null;
         for v_set in select * from jsonb_array_elements(v_sets)
         loop
           v_set_number := coalesce(nullif(v_set ->> 'setNumber', '')::integer, v_saved_sets + 1);
@@ -102,7 +107,7 @@ begin
           v_reps := nullif(trim(coalesce(v_set ->> 'reps', '')), '');
           if v_weight is not null or v_reps is not null then
             insert into public.athlete_workout_results (athlete_id, auth_user_id, workout_exercise_id, completed_on, working_weight, reps_completed, score_result, notes, set_number, is_pr)
-            values (v_athlete_id, auth.uid(), v_exercise_id, p_completed_on, v_weight, v_reps, null, v_notes, v_set_number, v_is_pr and v_saved_sets = 0)
+            values (v_athlete_id, auth.uid(), v_exercise_id, p_completed_on, v_weight, v_reps, null, v_notes, v_set_number, v_is_pr and v_weight is not distinct from v_best_weight)
             returning id into v_result_id;
             v_saved_sets := v_saved_sets + 1;
           end if;
