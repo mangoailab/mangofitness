@@ -3728,17 +3728,23 @@ function initAthleteHistoryApp(options = {}) {
       return `
         <div class="progress-table-wrap">
           <table class="progress-table strength-progress-table">
-            <thead><tr><th>Date</th><th>Sets</th><th>Notes</th><th></th></tr></thead>
+            <thead><tr><th>Date</th><th>Sets</th><th>Notes</th></tr></thead>
             <tbody>
               ${sessions.map((sessionRows) => {
                 const first = sessionRows[0];
                 const notes = [...new Set(sessionRows.map((result) => result.notes).filter(Boolean))].join(" · ");
+                const sortedRows = [...sessionRows].sort((a, b) => Number(a.setNumber || 0) - Number(b.setNumber || 0));
                 return `
                   <tr class="${sessionRows.some((result) => result.isPr) ? "is-pr" : ""}">
                     <td>${escapeHtml(displayDate(first.completedOn))}</td>
-                    <td><div class="strength-set-summary">${strengthSetSummary(sessionRows).map((line) => `<span>${escapeHtml(line)}</span>`).join("")}</div></td>
+                    <td><div class="strength-set-summary">${sortedRows.map((result, index) => {
+                      const setLabel = result.setNumber || index + 1;
+                      const value = result.weight !== "" && result.weight != null ? `${result.weight} lb` : "—";
+                      const reps = result.reps ? ` × ${result.reps}` : "";
+                      const line = `Set ${setLabel}: ${value}${reps}${result.isPr ? " PR" : ""}`;
+                      return `<div class="strength-set-line"><span>${escapeHtml(line)}</span><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} set ${setLabel} on ${displayDate(result.completedOn)}`)}">Delete set ${escapeHtml(setLabel)}</button></div>`;
+                    }).join("")}</div></td>
                     <td>${escapeHtml(notes)}</td>
-                    <td><div class="progress-set-delete-actions">${[...sessionRows].sort((a, b) => Number(a.setNumber || 0) - Number(b.setNumber || 0)).map((result) => `<button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} set ${result.setNumber || ""} on ${displayDate(result.completedOn)}`)}">Delete set ${escapeHtml(result.setNumber || "")}</button>`).join("")}</div></td>
                   </tr>
                 `;
               }).join("")}
