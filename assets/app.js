@@ -646,7 +646,7 @@ const MangoFitnessStore = (() => {
 })();
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return isoDate(new Date());
 }
 
 function isPlaceholderDate(value) {
