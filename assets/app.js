@@ -639,8 +639,9 @@ const MangoFitnessStore = (() => {
       const query = result.id
         ? sb.from("athlete_workout_results").update(payload).eq("id", result.id).eq("auth_user_id", user?.id || "")
         : sb.from("athlete_workout_results").insert(payload);
-      const { error } = await query;
+      const { data, error } = await query.select("id").single();
       if (error) throw error;
+      return data?.id || result.id;
     },
 
     async saveAthleteSelfWorkout(entry) {
@@ -3062,58 +3063,90 @@ function initAthleteApp() {
             }
           });
         });
-        form.addEventListener("submit", async (event) => {
-          event.preventDefault();
+        async function saveResultForm({ rerender = false, requireValue = false } = {}) {
           const data = new FormData(form);
-          try {
-            const setRows = [...form.querySelectorAll(".set-log-row")];
-            if (setRows.length) {
-              let savedAnySet = false;
-              for (const row of setRows) {
-                const setNumber = Number(row.dataset.setNumber || 0);
-                const reps = data.get(`set_${setNumber}_reps`);
-                const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
-                const weight = numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
-                const existingId = row.dataset.existingResultId || "";
-                if (!reps && weight == null && !existingId) continue;
-                savedAnySet = true;
-                const resultEntry = {
-                  id: existingId,
-                  workoutId: form.dataset.workoutId,
-                  athleteId: signedInAthleteId,
-                  exerciseId: form.dataset.exerciseId,
-                  exerciseName: form.dataset.exerciseName,
-                  completedOn: date.value || todayISO(),
-                  setNumber,
-                  weight,
-                  reps,
-                  notes: data.get("notes")
-                };
-                await MangoFitnessStore.saveResult({
-                  ...resultEntry,
-                  isPr: autoPrCandidate(resultEntry, athleteResults)
-                });
-              }
-              if (!savedAnySet) throw new Error("Enter reps or weight for at least one set.");
-            } else {
+          const setRows = [...form.querySelectorAll(".set-log-row")];
+          if (setRows.length) {
+            let savedAnySet = false;
+            for (const row of setRows) {
+              const setNumber = Number(row.dataset.setNumber || 0);
+              const reps = data.get(`set_${setNumber}_reps`);
+              const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
+              const weight = numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
+              const existingId = row.dataset.existingResultId || "";
+              if (!reps && weight == null && !existingId) continue;
+              savedAnySet = true;
               const resultEntry = {
-                id: form.dataset.existingResultId || "",
+                id: existingId,
                 workoutId: form.dataset.workoutId,
                 athleteId: signedInAthleteId,
                 exerciseId: form.dataset.exerciseId,
                 exerciseName: form.dataset.exerciseName,
                 completedOn: date.value || todayISO(),
-                score: data.get("score"),
-                weight: data.get("weight"),
-                reps: data.get("reps"),
+                setNumber,
+                weight,
+                reps,
                 notes: data.get("notes")
               };
-              await MangoFitnessStore.saveResult({
+              const savedId = await MangoFitnessStore.saveResult({
                 ...resultEntry,
-                isPr: data.get("isPr") === "on" || autoPrCandidate(resultEntry, athleteResults)
+                isPr: autoPrCandidate(resultEntry, athleteResults)
               });
+              if (savedId) row.dataset.existingResultId = savedId;
             }
-            await renderAthlete();
+            if (!savedAnySet && requireValue) throw new Error("Enter reps or weight for at least one set.");
+            if (!savedAnySet) return false;
+          } else {
+            const resultEntry = {
+              id: form.dataset.existingResultId || "",
+              workoutId: form.dataset.workoutId,
+              athleteId: signedInAthleteId,
+              exerciseId: form.dataset.exerciseId,
+              exerciseName: form.dataset.exerciseName,
+              completedOn: date.value || todayISO(),
+              score: data.get("score"),
+              weight: data.get("weight"),
+              reps: data.get("reps"),
+              notes: data.get("notes")
+            };
+            if (!resultEntry.score && !resultEntry.weight && !resultEntry.reps && !resultEntry.notes && !resultEntry.id) {
+              if (requireValue) throw new Error("Enter a score, reps, weight, or note.");
+              return false;
+            }
+            const savedId = await MangoFitnessStore.saveResult({
+              ...resultEntry,
+              isPr: data.get("isPr") === "on" || autoPrCandidate(resultEntry, athleteResults)
+            });
+            if (savedId) form.dataset.existingResultId = savedId;
+          }
+          if (rerender) await renderAthlete();
+          return true;
+        }
+        let autosaveTimer = null;
+        const submitButton = form.querySelector('button[type="submit"]');
+        const setSubmitText = (text) => {
+          if (submitButton) submitButton.textContent = text;
+        };
+        const scheduleAutosave = () => {
+          clearTimeout(autosaveTimer);
+          autosaveTimer = setTimeout(async () => {
+            try {
+              setSubmitText("Saving...");
+              const saved = await saveResultForm();
+              setSubmitText(saved ? "Saved" : "Log result");
+              setTimeout(() => setSubmitText(form.classList.contains("partner-score-form") ? "Log team result" : "Log result"), 1200);
+            } catch (error) {
+              setSubmitText("Save failed");
+            }
+          }, 900);
+        };
+        form.addEventListener("input", scheduleAutosave);
+        form.addEventListener("change", scheduleAutosave);
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          clearTimeout(autosaveTimer);
+          try {
+            await saveResultForm({ rerender: true, requireValue: true });
           } catch (error) {
             view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
           }
