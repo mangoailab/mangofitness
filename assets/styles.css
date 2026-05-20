@@ -2110,6 +2110,25 @@ body.is-reordering .exercise-row.dragging {
 .split-log-head {
   grid-template-columns: 42px minmax(0, 1fr);
 }
+.split-time-inputs {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.split-time-inputs label {
+  display: grid;
+  gap: 4px;
+}
+.split-time-inputs span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.split-time-inputs input {
+  width: 100%;
+}
 .split-total {
   align-items: center;
   background: rgba(15, 122, 59, .07);

@@ -60,3 +60,7 @@
 ## Athlete cardio option UI
 
 - When a workout has multiple cardio options, the athlete UI should be choose-first: show compact option cards with Choose/Selected buttons, expand only the selected option's logging fields, and keep any already-logged option selected when returning.
+
+## Split time mobile entry
+
+- Athlete split logging should use separate minute and second number inputs instead of requiring a colon in one field, because mobile keyboards may not show an easy minute/colon option.
