@@ -1539,6 +1539,7 @@ function initCoachApp() {
     return groups.map((group) => `
       <div class="exercise-group">
         <h4>${escapeHtml(group.label)}</h4>
+        ${group.section === "cardio" && options.cardioNotes ? `<p class="formatted-notes">${escapeHtml(options.cardioNotes)}</p>` : ""}
         <ul class="clean-list">${group.exercises.map((exercise) => `
           <li>
             <strong>${escapeHtml(exercise.name)}</strong>${exerciseSummary(exercise) ? ` — ${exerciseSummary(exercise)}` : ""}
@@ -1580,8 +1581,7 @@ function initCoachApp() {
         ${selectedAthlete ? `<p class="muted">Showing ${escapeHtml(selectedAthlete.name)}'s logged reps, weights, and scores inside this program.</p>` : ""}
         ${!compact && workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
         ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
-        ${renderExerciseGroups(workout.exercises, { showLogs: Boolean(selectedAthleteId), results: workoutResults })}
-        ${workout.cardioNotes ? `<div class="exercise-group"><h4>Cardio / WOD</h4><p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p></div>` : ""}
+        ${renderExerciseGroups(workout.exercises, { showLogs: Boolean(selectedAthleteId), results: workoutResults, cardioNotes: workout.cardioNotes })}
         ${compact ? `<div class="actions calendar-card-actions"><button type="button" data-edit="${workout.id}">Edit</button><button type="button" data-copy="${workout.id}">Copy</button><button type="button" class="danger-button" data-delete="${workout.id}">Delete</button></div>` : ""}
         </div>
       </article>
@@ -2735,6 +2735,7 @@ function initAthleteApp() {
               ${workoutSectionGroups(workout.exercises).map((group) => `
                 <section class="athlete-workout-section">
                   <h4>${escapeHtml(group.label)}</h4>
+                  ${group.section === "cardio" && workout.cardioNotes ? `<p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p>` : ""}
                   <div class="list-stack">
                     ${group.exercises.map((exercise) => (exercise.section || "cardio") === "partner" ? `
                       <div class="result-form partner-instruction-card">
@@ -2770,7 +2771,6 @@ function initAthleteApp() {
                   </div>
                 </section>
               `).join("")}
-              ${workout.cardioNotes ? `<section class="athlete-workout-section"><h4>Cardio / WOD</h4><p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p></section>` : ""}
             </div>
           </article>
         `;
