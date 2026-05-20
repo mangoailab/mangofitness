@@ -3250,9 +3250,30 @@ function initAthleteHistoryApp(options = {}) {
     return group.some((result) => !result.score && result.weight !== "" && result.weight != null);
   }
 
+  function bestStrengthResultForDate(results) {
+    return [...results].sort((a, b) => {
+      const weightDiff = scoreToNumber(b.weight) - scoreToNumber(a.weight);
+      if (weightDiff) return weightDiff;
+      const repsDiff = scoreToNumber(b.reps) - scoreToNumber(a.reps);
+      if (repsDiff) return repsDiff;
+      return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+    })[0];
+  }
+
+  function chartResultsForGroup(group, strengthGroup) {
+    if (!strengthGroup) return [...group];
+    const byDate = group.reduce((map, result) => {
+      const date = result.completedOn || "unknown";
+      if (!map.has(date)) map.set(date, []);
+      map.get(date).push(result);
+      return map;
+    }, new Map());
+    return [...byDate.values()].map(bestStrengthResultForDate);
+  }
+
   function renderProgressChart(group) {
     const strengthGroup = isStrengthGroup(group);
-    const points = [...group]
+    const points = chartResultsForGroup(group, strengthGroup)
       .sort((a, b) => String(a.completedOn || "").localeCompare(String(b.completedOn || "")))
       .map((result, index) => ({ result, index, value: scoreToNumber(strengthGroup ? result.weight : (result.score || result.weight)) }))
       .filter((point) => point.value != null);
