@@ -2861,16 +2861,7 @@ function initAthleteApp() {
         view.innerHTML = `
           <article class="item-card workout-detail${workout.isAthleteCreated ? " self-workout-detail" : ""}">
             <h3>${escapeHtml(workout.title)}${workout.isAthleteCreated ? ` <span class="self-workout-badge">Athlete-created</span>` : ""}</h3>
-            <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}${workoutStatus ? ` · ${workoutStatus.status === "skipped" ? "Skipped" : "Done"}` : ""}</p>
-            ${!workout.isAthleteCreated ? `
-              <form class="workout-status-form" data-workout-status-form data-workout-id="${escapeHtml(workout.id)}">
-                <div class="actions workout-status-actions">
-                  <button type="button" class="${workoutStatus?.status === "done" ? "primary" : ""}" data-workout-status="done">Mark done</button>
-                  <button type="button" class="${workoutStatus?.status === "skipped" ? "primary" : ""}" data-workout-status="skipped">Skip workout</button>
-                </div>
-                <div class="field${workoutStatus?.status === "skipped" ? "" : " hidden"}" data-skip-reason-field><label>Skip reason</label><input name="statusNotes" type="text" placeholder="Vacation, sick, no equipment..." value="${escapeHtml(workoutStatus?.notes || "")}" /></div>
-              </form>
-            ` : ""}
+            <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}${workoutStatus?.status === "done" ? " · Done" : ""}</p>
             ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
             ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
             <div class="list-stack athlete-workout-sections">
@@ -2914,6 +2905,11 @@ function initAthleteApp() {
                 </section>
               `).join("")}
             </div>
+            ${!workout.isAthleteCreated ? `
+              <form class="workout-status-form" data-workout-status-form data-workout-id="${escapeHtml(workout.id)}">
+                <button type="button" class="${workoutStatus?.status === "done" ? "primary" : ""}" data-workout-status="done">${workoutStatus?.status === "done" ? "Workout done" : "Mark workout done"}</button>
+              </form>
+            ` : ""}
           </article>
         `;
       }
@@ -2934,17 +2930,11 @@ function initAthleteApp() {
           const button = event.target.closest("[data-workout-status]");
           if (!button) return;
           const status = button.dataset.workoutStatus;
-          const reasonField = form.querySelector("[data-skip-reason-field]");
-          if (status === "skipped" && reasonField?.classList.contains("hidden")) {
-            reasonField.classList.remove("hidden");
-            reasonField.querySelector("input")?.focus();
-            return;
-          }
           try {
             await MangoFitnessStore.setWorkoutStatus({
               workoutId: form.dataset.workoutId,
               status,
-              notes: status === "skipped" ? new FormData(form).get("statusNotes") : "",
+              notes: "",
               markedOn: date.value || todayISO()
             });
             await renderAthlete();
