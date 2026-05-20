@@ -2787,6 +2787,7 @@ function initAthleteApp() {
   let weekPickerMonth = null;
   let weekPickerWorkouts = [];
   let selectedWorkoutId = "";
+  const selectedCardioOptions = new Map();
 
 
   function renderWeekPicker(visibleWorkouts) {
@@ -2927,6 +2928,7 @@ function initAthleteApp() {
       if (workout && selectedAthleteId) {
         athleteResults = (await MangoFitnessStore.results()).filter((result) => result.athleteId === selectedAthleteId);
       }
+      const loggedExerciseIds = new Set(athleteResults.filter((result) => result.completedOn === date.value).map((result) => result.exerciseId));
 
       if (!workout) {
         view.innerHTML = `<p class="muted empty-state">No program assigned for ${escapeHtml(date.value || "this date")}.</p>`;
@@ -2944,7 +2946,11 @@ function initAthleteApp() {
                   ${group.section === "cardio" && workout.cardioNotes ? `<p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p>` : ""}
                   ${group.section === "cardio" && group.exercises.length > 1 ? `<p class="muted cardio-option-hint">Choose the cardio option you did, then log that result.</p>` : ""}
                   <div class="list-stack${group.section === "cardio" && group.exercises.length > 1 ? " cardio-option-list" : ""}">
-                    ${group.exercises.map((exercise) => (exercise.section || "cardio") === "partner" ? `
+                    ${group.exercises.map((exercise) => {
+                      const isCardioChoice = group.section === "cardio" && group.exercises.length > 1;
+                      const selectedCardioId = selectedCardioOptions.get(workout.id) || group.exercises.find((item) => loggedExerciseIds.has(item.id))?.id || "";
+                      const isSelectedCardio = !isCardioChoice || selectedCardioId === exercise.id;
+                      return (exercise.section || "cardio") === "partner" ? `
                       <div class="result-form partner-instruction-card">
                         <div>
                           <strong>${escapeHtml(exercise.name)}</strong>
@@ -2953,17 +2959,23 @@ function initAthleteApp() {
                         </div>
                       </div>
                     ` : `
-                      <form class="result-form${group.section === "cardio" && group.exercises.length > 1 ? " cardio-option-card" : ""}" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}" data-existing-result-id="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.id || "")}"${isSplitCardioExercise(exercise) ? " data-split-log-form=\"true\"" : ""}>
-                        <div>
-                          <strong>${escapeHtml(exercise.name)}</strong>
-                          ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
-                          ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
+                      <form class="result-form${isCardioChoice ? " cardio-option-card" : ""}${isCardioChoice && isSelectedCardio ? " is-selected" : ""}${isCardioChoice && !isSelectedCardio ? " is-collapsed" : ""}" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}" data-existing-result-id="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.id || "")}"${isSplitCardioExercise(exercise) ? " data-split-log-form=\"true\"" : ""}>
+                        <div class="cardio-option-head">
+                          <div>
+                            <strong>${escapeHtml(exercise.name)}</strong>
+                            ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
+                            ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
+                          </div>
+                          ${isCardioChoice ? `<button type="button" class="${isSelectedCardio ? "primary" : ""}" data-choose-cardio-option="${escapeHtml(exercise.id)}" data-workout-id="${escapeHtml(workout.id)}">${isSelectedCardio ? "Selected" : "Choose"}</button>` : ""}
                         </div>
-                        ${renderSetLogFields(exercise, athleteResults, date.value)}
-                        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" value="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.notes || "")}" /></div>
-                        <button type="submit" class="primary">Log result</button>
+                        <div class="cardio-option-log-fields">
+                          ${renderSetLogFields(exercise, athleteResults, date.value)}
+                          <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" value="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.notes || "")}" /></div>
+                          <button type="submit" class="primary">Log result</button>
+                        </div>
                       </form>
-                    `).join("")}
+                    `;
+                    }).join("")}
                     ${group.section === "partner" && group.exercises[0] ? `
                       <form class="result-form partner-score-form" data-workout-id="${workout.id}" data-exercise-id="${group.exercises[0].id}" data-exercise-name="Partner WOD">
                         <div>
@@ -3002,6 +3014,13 @@ function initAthleteApp() {
           row?.remove();
         }
       }
+
+      view.querySelectorAll("[data-choose-cardio-option]").forEach((button) => {
+        button.addEventListener("click", () => {
+          selectedCardioOptions.set(button.dataset.workoutId || selectedWorkoutId, button.dataset.chooseCardioOption || "");
+          renderAthlete();
+        });
+      });
 
       view.querySelectorAll("[data-delete-self-workout]").forEach((button) => {
         button.addEventListener("click", async () => {

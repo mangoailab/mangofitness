@@ -56,3 +56,7 @@
 ## Cardio options and split logging
 
 - Coach-programmed cardio can include multiple options inside the Cardio / WOD section. Athlete UI frames multiple cardio rows as “Choose the cardio option you did.” Interval options use the cardio row `Splits` count and `Split label` fields, then athletes log each split and the app auto-sums the total time.
+
+## Athlete cardio option UI
+
+- When a workout has multiple cardio options, the athlete UI should be choose-first: show compact option cards with Choose/Selected buttons, expand only the selected option's logging fields, and keep any already-logged option selected when returning.

@@ -2069,6 +2069,39 @@ body.is-reordering .exercise-row.dragging {
 .cardio-option-card {
   border-color: rgba(15, 122, 59, .18);
 }
+.cardio-option-card.is-selected {
+  background: rgba(15, 122, 59, .05);
+  border-color: rgba(15, 122, 59, .28);
+}
+.cardio-option-head {
+  align-items: start;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.cardio-option-head button {
+  min-height: 36px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+.cardio-option-card.is-collapsed .cardio-option-log-fields {
+  display: none;
+}
+.cardio-option-card.is-collapsed {
+  padding-bottom: 12px;
+}
+.cardio-option-log-fields {
+  display: grid;
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .cardio-option-head {
+    grid-template-columns: 1fr;
+  }
+  .cardio-option-head button {
+    width: 100%;
+  }
+}
 .split-log-card {
   display: grid;
   gap: 10px;
