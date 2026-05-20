@@ -404,6 +404,13 @@ const MangoFitnessStore = (() => {
       if (error) throw error;
     },
 
+    async clearWorkoutStatus(workoutId) {
+      const sb = client();
+      if (!sb) return;
+      const { error } = await sb.rpc("clear_athlete_workout_status", { p_workout_id: workoutId });
+      if (error) throw error;
+    },
+
     async results() {
       const sb = client();
       if (!sb) return readLocal(localResultKey);
@@ -2907,7 +2914,7 @@ function initAthleteApp() {
             </div>
             ${!workout.isAthleteCreated ? `
               <form class="workout-status-form" data-workout-status-form data-workout-id="${escapeHtml(workout.id)}">
-                <button type="button" class="${workoutStatus?.status === "done" ? "primary" : ""}" data-workout-status="done">${workoutStatus?.status === "done" ? "Workout done" : "Mark workout done"}</button>
+                <button type="button" class="${workoutStatus?.status === "done" ? "primary" : ""}" data-workout-status="done" data-workout-status-active="${workoutStatus?.status === "done" ? "true" : "false"}">${workoutStatus?.status === "done" ? "Workout done" : "Mark workout done"}</button>
               </form>
             ` : ""}
           </article>
@@ -2931,12 +2938,16 @@ function initAthleteApp() {
           if (!button) return;
           const status = button.dataset.workoutStatus;
           try {
-            await MangoFitnessStore.setWorkoutStatus({
-              workoutId: form.dataset.workoutId,
-              status,
-              notes: "",
-              markedOn: date.value || todayISO()
-            });
+            if (button.dataset.workoutStatusActive === "true") {
+              await MangoFitnessStore.clearWorkoutStatus(form.dataset.workoutId);
+            } else {
+              await MangoFitnessStore.setWorkoutStatus({
+                workoutId: form.dataset.workoutId,
+                status,
+                notes: "",
+                markedOn: date.value || todayISO()
+              });
+            }
             await renderAthlete();
           } catch (error) {
             view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);

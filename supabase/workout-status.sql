@@ -91,3 +91,31 @@ end;
 $$;
 
 grant execute on function public.set_athlete_workout_status(uuid, text, text, date) to authenticated;
+
+create or replace function public.clear_athlete_workout_status(p_workout_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_athlete_id uuid;
+begin
+  select id into v_athlete_id
+  from public.athletes
+  where auth_user_id = auth.uid()
+     or lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  order by created_at desc
+  limit 1;
+
+  if v_athlete_id is null then
+    raise exception 'Athlete profile not found.';
+  end if;
+
+  delete from public.athlete_workout_statuses
+  where workout_id = p_workout_id
+    and athlete_id = v_athlete_id;
+end;
+$$;
+
+grant execute on function public.clear_athlete_workout_status(uuid) to authenticated;
