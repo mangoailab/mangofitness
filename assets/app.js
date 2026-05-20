@@ -1473,9 +1473,11 @@ function initCoachApp() {
     const selectedBenchmark = values.benchmarkKey || "";
     const selectedMovement = values.movementKey || "";
     const rowFields = section === "cardio" ? `
+      <div class="field exercise-name-field"><label>Option name</label><input class="exercise-name" type="text" placeholder="Row tester or 400m x 4" value="${escapeHtml(values.name || values.benchmarkName || "Cardio option")}" required /></div>
       <div class="field benchmark-field"><label>Benchmark map</label><select class="exercise-benchmark">${benchmarkOptions(selectedBenchmark)}</select></div>
-      <input class="exercise-name" type="hidden" value="${escapeHtml(values.name || values.benchmarkName || "Cardio score")}" />
-      <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
+      <div class="field compact-field"><label>Splits</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
+      <div class="field compact-field"><label>Split label</label><input class="exercise-reps" type="text" placeholder="400m" value="${escapeHtml(values.reps)}" /></div>
+      <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, splits, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Description / notes</label><input class="exercise-notes" type="text" placeholder="Workout description or what the athlete should record" value="${escapeHtml(values.notes)}" /></div>
     ` : `
       ${section === "lifting" ? `<div class="field exercise-name-field movement-map-field"><label>Movement</label><input class="exercise-name exercise-movement" data-movement-key="${escapeHtml(selectedMovement)}" placeholder="Start typing, e.g. chest" value="${escapeHtml(movementInputValue(values, selectedMovement))}" autocomplete="off" required /><div class="movement-suggestions hidden"></div></div>` : `<div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>`}
@@ -2213,6 +2215,40 @@ function prescribedSetCount(exercise) {
   return Math.max(1, Math.min(count || 1, 12));
 }
 
+function isSplitCardioExercise(exercise) {
+  if ((exercise.section || "cardio") !== "cardio") return false;
+  const count = prescribedSetCount(exercise);
+  const text = `${exercise.name || ""} ${exercise.target || ""} ${exercise.notes || ""} ${exercise.reps || ""}`.toLowerCase();
+  return count > 1 && /split|interval|repeat|400m|800m|meter|metre|x\s*\d|\d+\s*x/.test(text);
+}
+
+function splitSeconds(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const parts = text.split(":").map((part) => Number(part));
+  if (parts.length === 2 && parts.every(Number.isFinite)) return parts[0] * 60 + parts[1];
+  if (parts.length === 3 && parts.every(Number.isFinite)) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  const number = Number(text.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(number) ? number : null;
+}
+
+function formatSplitTotal(seconds) {
+  if (!Number.isFinite(seconds)) return "";
+  const rounded = Math.round(seconds);
+  const hours = Math.floor(rounded / 3600);
+  const minutes = Math.floor((rounded % 3600) / 60);
+  const secs = rounded % 60;
+  return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}` : `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+
+function splitTotalFromInputs(form) {
+  const values = [...form.querySelectorAll('[name^="set_"][name$="_score"]')]
+    .map((input) => splitSeconds(input.value))
+    .filter((value) => value != null);
+  if (!values.length) return "";
+  return formatSplitTotal(values.reduce((sum, value) => sum + value, 0));
+}
+
 function numberFromMatch(text, regex) {
   const match = String(text || "").match(regex);
   if (!match) return "";
@@ -2642,6 +2678,32 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
   const loggedRows = exerciseLoggedResults(exercise, athleteResults, selectedDate);
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
+    if (isSplitCardioExercise(exercise)) {
+      const loggedBySet = new Map(loggedRows.map((result) => [Number(result.setNumber || 1), result]));
+      const splitLabel = exercise.reps || "Split";
+      const count = Math.max(prescribedSetCount(exercise), ...loggedRows.map((result) => Number(result.setNumber || 1)));
+      return `
+        <div class="split-log-card" data-split-log>
+          <p class="muted">Enter each ${escapeHtml(splitLabel)} split. Total time auto-sums below.</p>
+          <div class="set-log-table split-log-table" data-set-log-table>
+            <div class="set-log-head split-log-head"><span>#</span><span>${escapeHtml(splitLabel)}</span></div>
+            ${Array.from({ length: count }, (_, index) => {
+              const setNumber = index + 1;
+              const logged = loggedBySet.get(setNumber) || null;
+              return `
+                <div class="set-log-row split-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="${escapeHtml(logged?.id || "")}" data-swipe-delete-row>
+                  <div class="set-log-row-content split-log-row-content">
+                    <strong>${escapeHtml(setNumber)}</strong>
+                    <input name="set_${setNumber}_score" type="text" inputmode="decimal" placeholder="1:45" value="${escapeHtml(logged?.score || "")}" />
+                  </div>
+                  <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
+                </div>`;
+            }).join("")}
+          </div>
+          <p class="split-total"><span>Total</span><strong data-split-total></strong></p>
+        </div>
+      `;
+    }
     const logged = loggedRows[0] || null;
     const scoreLabel = exercise.target || benchmarkScoreType(benchmarkByKey(exercise.benchmarkKey || "")) || "Score";
     const placeholder = /round/i.test(scoreLabel) ? "7+12" : /time/i.test(scoreLabel) ? "18:42" : scoreLabel;
@@ -2880,7 +2942,8 @@ function initAthleteApp() {
                 <section class="athlete-workout-section">
                   <h4>${escapeHtml(group.label)}</h4>
                   ${group.section === "cardio" && workout.cardioNotes ? `<p class="formatted-notes">${escapeHtml(workout.cardioNotes)}</p>` : ""}
-                  <div class="list-stack">
+                  ${group.section === "cardio" && group.exercises.length > 1 ? `<p class="muted cardio-option-hint">Choose the cardio option you did, then log that result.</p>` : ""}
+                  <div class="list-stack${group.section === "cardio" && group.exercises.length > 1 ? " cardio-option-list" : ""}">
                     ${group.exercises.map((exercise) => (exercise.section || "cardio") === "partner" ? `
                       <div class="result-form partner-instruction-card">
                         <div>
@@ -2890,7 +2953,7 @@ function initAthleteApp() {
                         </div>
                       </div>
                     ` : `
-                      <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}" data-existing-result-id="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.id || "")}">
+                      <form class="result-form${group.section === "cardio" && group.exercises.length > 1 ? " cardio-option-card" : ""}" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}" data-existing-result-id="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.id || "")}"${isSplitCardioExercise(exercise) ? " data-split-log-form=\"true\"" : ""}>
                         <div>
                           <strong>${escapeHtml(exercise.name)}</strong>
                           ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
@@ -2977,6 +3040,12 @@ function initAthleteApp() {
       });
 
       view.querySelectorAll(".result-form").forEach((form) => {
+        const updateSplitTotal = () => {
+          const total = form.querySelector("[data-split-total]");
+          if (total) total.textContent = splitTotalFromInputs(form) || "—";
+        };
+        updateSplitTotal();
+        form.querySelectorAll('[name^="set_"][name$="_score"]').forEach((input) => input.addEventListener("input", updateSplitTotal));
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
         const setGhostWeight = (input, value) => {
           if (!input.dataset.basePlaceholder) input.dataset.basePlaceholder = input.getAttribute("placeholder") || "lb";
@@ -3064,14 +3133,18 @@ function initAthleteApp() {
           const setRows = [...form.querySelectorAll(".set-log-row")];
           if (setRows.length) {
             let savedAnySet = false;
+            const isSplitLog = form.dataset.splitLogForm === "true";
+            const splitTotal = isSplitLog ? splitTotalFromInputs(form) : "";
             for (const row of setRows) {
               const setNumber = Number(row.dataset.setNumber || 0);
-              const reps = data.get(`set_${setNumber}_reps`);
-              const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
-              const weight = numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
               const existingId = row.dataset.existingResultId || "";
-              if (!reps && weight == null && !existingId) continue;
+              const score = isSplitLog ? data.get(`set_${setNumber}_score`) : "";
+              const reps = isSplitLog ? "" : data.get(`set_${setNumber}_reps`);
+              const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
+              const weight = isSplitLog ? null : numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
+              if (!score && !reps && weight == null && !existingId) continue;
               savedAnySet = true;
+              const baseNotes = String(data.get("notes") || "").trim();
               const resultEntry = {
                 id: existingId,
                 workoutId: form.dataset.workoutId,
@@ -3082,7 +3155,8 @@ function initAthleteApp() {
                 setNumber,
                 weight,
                 reps,
-                notes: data.get("notes")
+                score,
+                notes: isSplitLog && splitTotal ? [baseNotes, `Total: ${splitTotal}`].filter(Boolean).join(" · ") : baseNotes
               };
               const savedId = await MangoFitnessStore.saveResult({
                 ...resultEntry,
@@ -3090,7 +3164,7 @@ function initAthleteApp() {
               });
               if (savedId) row.dataset.existingResultId = savedId;
             }
-            if (!savedAnySet && requireValue) throw new Error("Enter reps or weight for at least one set.");
+            if (!savedAnySet && requireValue) throw new Error(isSplitLog ? "Enter at least one split time." : "Enter reps or weight for at least one set.");
             if (!savedAnySet) return false;
           } else {
             const resultEntry = {

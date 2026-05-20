@@ -52,3 +52,7 @@
 ## Historical benchmark system workout
 
 - `public.save_historical_benchmark(...)` reuses one `Historical Benchmarks` system workout instead of inserting blindly. The placeholder workout uses `assignment_type = 'system_history'`, and normal app workout queries exclude `system_history` so it does not appear as a class/athlete workout.
+
+## Cardio options and split logging
+
+- Coach-programmed cardio can include multiple options inside the Cardio / WOD section. Athlete UI frames multiple cardio rows as “Choose the cardio option you did.” Interval options use the cardio row `Splits` count and `Split label` fields, then athletes log each split and the app auto-sums the total time.

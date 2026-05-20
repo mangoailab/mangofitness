@@ -2059,6 +2059,41 @@ body.is-reordering .exercise-row.dragging {
   }
 }
 
+.cardio-option-hint {
+  background: rgba(15, 122, 59, .07);
+  border: 1px solid rgba(15, 122, 59, .14);
+  border-radius: 14px;
+  margin: 0;
+  padding: 10px 12px;
+}
+.cardio-option-card {
+  border-color: rgba(15, 122, 59, .18);
+}
+.split-log-card {
+  display: grid;
+  gap: 10px;
+}
+.split-log-row-content,
+.split-log-head {
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+.split-total {
+  align-items: center;
+  background: rgba(15, 122, 59, .07);
+  border: 1px solid rgba(15, 122, 59, .14);
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 10px 12px;
+}
+.split-total span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
 .partner-instruction-card {
   background: white;
 }

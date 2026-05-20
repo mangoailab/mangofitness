@@ -76,3 +76,5 @@ Coach pages use fixed nav links:
 - Sign out
 
 The current page remains visible and is slightly bolded, with no bubble/pill styling.
+
+- Cardio/WOD programming supports real-world option choices. Coaches can add multiple cardio options such as Row tester and 400m x 4. For interval work, set the Splits count and Split label; athletes enter each split and see an auto-summed total.
