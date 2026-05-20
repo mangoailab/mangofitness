@@ -2513,6 +2513,16 @@ function exerciseLoggedResults(exercise, athleteResults = [], selectedDate = "")
     .sort((a, b) => (Number(a.setNumber || 0) - Number(b.setNumber || 0)) || String(b.id || "").localeCompare(String(a.id || "")));
 }
 
+function renderSetLogRow(setNumber, exercise, suggestion = null, logged = null) {
+  return `
+    <div class="set-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="${escapeHtml(logged?.id || "")}">
+      <strong>${escapeHtml(setNumber)}</strong>
+      <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" value="${escapeHtml(logged?.reps || "")}" />
+      <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" value="${logged?.weight !== "" && logged?.weight != null ? escapeHtml(logged.weight) : ""}" />
+      <button type="button" class="set-remove-button" data-remove-set aria-label="Remove set ${escapeHtml(setNumber)}">Remove</button>
+    </div>`;
+}
+
 function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
   const loggedRows = exerciseLoggedResults(exercise, athleteResults, selectedDate);
   const isStrength = (exercise.section || "cardio") === "lifting";
@@ -2536,19 +2546,14 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
         <button type="button" data-apply-weight="${escapeHtml(suggestion.value)}">Use weight</button>
       </div>
     ` : `<p class="muted weight-suggestion-text">Enter set 1 weight to auto-fill the remaining sets.</p>`}
-    <div class="set-log-table">
-      <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
-      ${Array.from({ length: prescribedSetCount(exercise) }, (_, index) => {
+    <div class="set-log-table" data-set-log-table data-reps-placeholder="${escapeHtml(exercise.reps || "reps")}" data-weight-placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}">
+      <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span><span></span></div>
+      ${Array.from({ length: Math.max(prescribedSetCount(exercise), ...loggedRows.map((result) => Number(result.setNumber || 1))) }, (_, index) => {
         const setNumber = index + 1;
-        const logged = loggedBySet.get(setNumber) || null;
-        return `
-        <div class="set-log-row" data-existing-result-id="${escapeHtml(logged?.id || "")}">
-          <strong>${setNumber}</strong>
-          <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" value="${escapeHtml(logged?.reps || "")}" />
-          <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" value="${logged?.weight !== "" && logged?.weight != null ? escapeHtml(logged.weight) : ""}" />
-        </div>`;
+        return renderSetLogRow(setNumber, exercise, suggestion, loggedBySet.get(setNumber) || null);
       }).join("")}
     </div>
+    <button type="button" class="set-add-button" data-add-set>Add set</button>
   `;
 }
 
@@ -2799,10 +2804,38 @@ function initAthleteApp() {
           });
           input.addEventListener("focus", () => confirmGhostWeight(input));
         });
-        form.addEventListener("click", (event) => {
+        form.addEventListener("click", async (event) => {
+          const addSetButton = event.target.closest("[data-add-set]");
+          if (addSetButton) {
+            const table = form.querySelector("[data-set-log-table]");
+            if (!table) return;
+            const nextSet = Math.max(0, ...[...table.querySelectorAll(".set-log-row")].map((row) => Number(row.dataset.setNumber || 0))) + 1;
+            table.insertAdjacentHTML("beforeend", `
+              <div class="set-log-row" data-set-number="${escapeHtml(nextSet)}" data-existing-result-id="">
+                <strong>${escapeHtml(nextSet)}</strong>
+                <input name="set_${nextSet}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(table.dataset.repsPlaceholder || "reps")}" />
+                <input name="set_${nextSet}_weight" type="text" inputmode="decimal" placeholder="${escapeHtml(table.dataset.weightPlaceholder || "lb")}" />
+                <button type="button" class="set-remove-button" data-remove-set aria-label="Remove set ${escapeHtml(nextSet)}">Remove</button>
+              </div>
+            `);
+            return;
+          }
+          const removeSetButton = event.target.closest("[data-remove-set]");
+          if (removeSetButton) {
+            const row = removeSetButton.closest(".set-log-row");
+            const existingId = row?.dataset.existingResultId || "";
+            if (existingId) {
+              removeSetButton.disabled = true;
+              await MangoFitnessStore.deleteResult(existingId);
+              await renderAthlete();
+            } else {
+              row?.remove();
+            }
+            return;
+          }
           const button = event.target.closest("[data-apply-weight]");
           if (!button) return;
-          weightInputs.forEach((input, index) => {
+          [...form.querySelectorAll('input[name$="_weight"]')].forEach((input, index) => {
             if (index === 0) {
               input.value = button.dataset.applyWeight || "";
               setGhostWeight(input, "");
@@ -2818,8 +2851,8 @@ function initAthleteApp() {
             const setRows = [...form.querySelectorAll(".set-log-row")];
             if (setRows.length) {
               let savedAnySet = false;
-              for (const [index, row] of setRows.entries()) {
-                const setNumber = index + 1;
+              for (const row of setRows) {
+                const setNumber = Number(row.dataset.setNumber || 0);
                 const reps = data.get(`set_${setNumber}_reps`);
                 const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
                 const weight = numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);

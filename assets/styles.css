@@ -1941,7 +1941,7 @@ body.is-reordering .exercise-row.dragging {
 .set-log-head,
 .set-log-row {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
 }
@@ -1963,6 +1963,18 @@ body.is-reordering .exercise-row.dragging {
 .set-log-row input {
   min-height: 42px;
   padding: 9px 10px;
+}
+.set-remove-button,
+.set-add-button {
+  min-height: 38px;
+  padding: 8px 10px;
+}
+.set-remove-button {
+  color: #b91c1c;
+}
+.set-add-button {
+  justify-self: start;
+  margin-top: 8px;
 }
 .set-log-row input.has-ghost-weight {
   background: rgba(15, 122, 59, .06);
@@ -1986,6 +1998,11 @@ body.is-reordering .exercise-row.dragging {
   .set-log-row {
     grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr);
     gap: 6px;
+  }
+  .set-log-head span:last-child { display: none; }
+  .set-remove-button {
+    grid-column: 2 / -1;
+    justify-self: start;
   }
 }
 
