@@ -1978,8 +1978,9 @@ body.is-reordering .exercise-row.dragging {
 }
 .set-swipe-delete-label {
   align-items: center;
-  background: #dc2626;
-  color: white;
+  background: #fff1f2;
+  border-left: 1px solid rgba(190, 18, 60, .16);
+  color: #be123c;
   display: flex;
   font-size: 12px;
   font-weight: 900;
