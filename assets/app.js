@@ -619,7 +619,8 @@ const MangoFitnessStore = (() => {
         p_reps_completed: entry.reps || null,
         p_notes: entry.notes || null,
         p_is_pr: Boolean(entry.isPr),
-        p_sets: entry.sets || null
+        p_sets: entry.sets || null,
+        p_pieces: entry.pieces || null
       });
       if (error) throw error;
     },
@@ -2627,9 +2628,9 @@ function initAthleteApp() {
   const showSelfWorkoutBtn = document.getElementById("showSelfWorkoutBtn");
   const cancelSelfWorkoutBtn = document.getElementById("cancelSelfWorkoutBtn");
   const selfWorkoutForm = document.getElementById("selfWorkoutForm");
-  const selfWorkoutType = document.getElementById("selfWorkoutType");
-  const selfWorkoutSetRows = document.getElementById("selfWorkoutSetRows");
-  const addSelfWorkoutSetBtn = document.getElementById("addSelfWorkoutSetBtn");
+  const selfWorkoutPieces = document.getElementById("selfWorkoutPieces");
+  const addSelfStrengthPieceBtn = document.getElementById("addSelfStrengthPieceBtn");
+  const addSelfCardioPieceBtn = document.getElementById("addSelfCardioPieceBtn");
   if (!date || !view) return;
 
   date.value = todayISO();
@@ -2995,72 +2996,104 @@ function initAthleteApp() {
     if (weekPickerOpen) weekPickerMonth = new Date(selectedWeekStart);
     renderWeekPicker(weekPickerWorkouts);
   });
-  const renderSelfWorkoutSetRow = (setNumber) => `
+  const renderSelfWorkoutSetRow = (pieceId, setNumber) => `
     <div class="set-log-row self-set-row" data-set-number="${escapeHtml(setNumber)}">
       <div class="set-log-row-content">
         <strong>${escapeHtml(setNumber)}</strong>
-        <input name="self_set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="reps" />
-        <input name="self_set_${setNumber}_weight" type="number" step="0.1" inputmode="decimal" placeholder="lb" />
+        <input name="piece_${pieceId}_set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="reps" />
+        <input name="piece_${pieceId}_set_${setNumber}_weight" type="number" step="0.1" inputmode="decimal" placeholder="lb" />
       </div>
     </div>
   `;
-  const resetSelfWorkoutSets = () => {
-    if (selfWorkoutSetRows) selfWorkoutSetRows.innerHTML = renderSelfWorkoutSetRow(1);
+  const renderSelfWorkoutPiece = (section = "lifting") => {
+    const pieceId = uid("self-piece");
+    const isStrength = section === "lifting";
+    return `
+      <section class="self-workout-piece" data-self-piece="${escapeHtml(pieceId)}" data-section="${escapeHtml(section)}">
+        <div class="item-head compact"><div><strong>${isStrength ? "Strength piece" : "Cardio / WOD piece"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log one time or score."}</p></div></div>
+        <input type="hidden" name="piece_${pieceId}_section" value="${escapeHtml(section)}" />
+        <div class="field"><label>Movement / workout</label><input name="piece_${pieceId}_exercise" type="text" placeholder="${isStrength ? "Hotel DB press" : "Row 5K or 20 min AMRAP"}" required /></div>
+        ${isStrength ? `
+          <div class="self-set-log-card">
+            <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
+            <div class="set-log-table" data-self-set-rows>${renderSelfWorkoutSetRow(pieceId, 1)}</div>
+            <button type="button" class="set-add-button" data-add-self-set>+ Add set</button>
+          </div>
+        ` : `<div class="field"><label>Time / score</label><input name="piece_${pieceId}_score" type="text" placeholder="8:15 or 6+14" /></div>`}
+        <div class="field"><label>Notes</label><input name="piece_${pieceId}_notes" type="text" placeholder="How it felt, scaling, location" /></div>
+        <label class="check-row"><input name="piece_${pieceId}_is_pr" type="checkbox" /> Mark as PR</label>
+      </section>
+    `;
   };
-  const updateSelfWorkoutFields = () => {
-    const isStrength = selfWorkoutType?.value === "lifting";
-    selfWorkoutForm?.querySelectorAll(".self-strength-field").forEach((field) => field.classList.toggle("hidden", !isStrength));
-    selfWorkoutForm?.querySelectorAll(".self-score-field").forEach((field) => field.classList.toggle("hidden", isStrength));
+  const resetSelfWorkoutPieces = () => {
+    if (selfWorkoutPieces) selfWorkoutPieces.innerHTML = renderSelfWorkoutPiece("lifting") + renderSelfWorkoutPiece("cardio");
   };
   showSelfWorkoutBtn?.addEventListener("click", () => {
     selfWorkoutForm?.classList.remove("hidden");
     showSelfWorkoutBtn.classList.add("hidden");
     const titleInput = selfWorkoutForm?.querySelector('[name="title"]');
     if (titleInput && !titleInput.value) titleInput.value = "Self-created workout";
-    updateSelfWorkoutFields();
+    if (selfWorkoutPieces && !selfWorkoutPieces.children.length) resetSelfWorkoutPieces();
   });
   cancelSelfWorkoutBtn?.addEventListener("click", () => {
     selfWorkoutForm?.reset();
-    resetSelfWorkoutSets();
+    resetSelfWorkoutPieces();
     selfWorkoutForm?.classList.add("hidden");
     showSelfWorkoutBtn?.classList.remove("hidden");
-    updateSelfWorkoutFields();
   });
-  addSelfWorkoutSetBtn?.addEventListener("click", () => {
-    if (!selfWorkoutSetRows) return;
-    const nextSet = Math.max(0, ...[...selfWorkoutSetRows.querySelectorAll(".self-set-row")].map((row) => Number(row.dataset.setNumber || 0))) + 1;
-    selfWorkoutSetRows.insertAdjacentHTML("beforeend", renderSelfWorkoutSetRow(nextSet));
+  addSelfStrengthPieceBtn?.addEventListener("click", () => selfWorkoutPieces?.insertAdjacentHTML("beforeend", renderSelfWorkoutPiece("lifting")));
+  addSelfCardioPieceBtn?.addEventListener("click", () => selfWorkoutPieces?.insertAdjacentHTML("beforeend", renderSelfWorkoutPiece("cardio")));
+  selfWorkoutPieces?.addEventListener("click", (event) => {
+    const addSetButton = event.target.closest("[data-add-self-set]");
+    if (!addSetButton) return;
+    const piece = addSetButton.closest("[data-self-piece]");
+    const rows = piece?.querySelector("[data-self-set-rows]");
+    if (!piece || !rows) return;
+    const pieceId = piece.dataset.selfPiece;
+    const nextSet = Math.max(0, ...[...rows.querySelectorAll(".self-set-row")].map((row) => Number(row.dataset.setNumber || 0))) + 1;
+    rows.insertAdjacentHTML("beforeend", renderSelfWorkoutSetRow(pieceId, nextSet));
   });
-  selfWorkoutType?.addEventListener("change", updateSelfWorkoutFields);
   selfWorkoutForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(selfWorkoutForm);
-    const section = String(data.get("section") || "cardio");
-    const sets = [...(selfWorkoutSetRows?.querySelectorAll(".self-set-row") || [])]
-      .map((row) => {
-        const setNumber = Number(row.dataset.setNumber || 0);
-        return {
-          setNumber,
-          reps: data.get(`self_set_${setNumber}_reps`) || "",
-          weight: numericWeight(data.get(`self_set_${setNumber}_weight`))
-        };
-      })
-      .filter((set) => set.reps || set.weight != null);
+    const pieces = [...(selfWorkoutPieces?.querySelectorAll("[data-self-piece]") || [])].map((piece) => {
+      const pieceId = piece.dataset.selfPiece;
+      const section = String(data.get(`piece_${pieceId}_section`) || "cardio");
+      const sets = [...piece.querySelectorAll(".self-set-row")]
+        .map((row) => {
+          const setNumber = Number(row.dataset.setNumber || 0);
+          return {
+            setNumber,
+            reps: data.get(`piece_${pieceId}_set_${setNumber}_reps`) || "",
+            weight: numericWeight(data.get(`piece_${pieceId}_set_${setNumber}_weight`))
+          };
+        })
+        .filter((set) => set.reps || set.weight != null);
+      return {
+        section,
+        exerciseName: data.get(`piece_${pieceId}_exercise`) || "",
+        score: section === "lifting" ? "" : data.get(`piece_${pieceId}_score`) || "",
+        sets: section === "lifting" ? sets : null,
+        notes: data.get(`piece_${pieceId}_notes`) || "",
+        isPr: data.get(`piece_${pieceId}_is_pr`) === "on"
+      };
+    }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
       await MangoFitnessStore.saveAthleteSelfWorkout({
         completedOn: date.value || todayISO(),
         title: data.get("title"),
-        exerciseName: data.get("exerciseName"),
-        section,
-        score: section === "lifting" ? "" : data.get("score"),
+        exerciseName: pieces[0]?.exerciseName || "Self-created workout",
+        section: pieces[0]?.section || "cardio",
+        score: pieces[0]?.score || "",
         weight: null,
         reps: "",
-        sets: section === "lifting" ? sets : null,
-        notes: data.get("notes"),
-        isPr: data.get("isPr") === "on"
+        sets: pieces[0]?.sets || null,
+        notes: pieces[0]?.notes || "",
+        isPr: Boolean(pieces[0]?.isPr),
+        pieces
       });
       selfWorkoutForm.reset();
-      resetSelfWorkoutSets();
+      resetSelfWorkoutPieces();
       selfWorkoutForm.classList.add("hidden");
       showSelfWorkoutBtn?.classList.remove("hidden");
       await renderAthlete();
@@ -3068,7 +3101,7 @@ function initAthleteApp() {
       view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
     }
   });
-  updateSelfWorkoutFields();
+  resetSelfWorkoutPieces();
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
     if (session?.user) loadAthleteProfiles().then(renderAthlete);
   });

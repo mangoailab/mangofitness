@@ -2850,3 +2850,24 @@ body.is-reordering .exercise-row.dragging {
   min-height: 0;
   width: auto;
 }
+.self-workout-pieces {
+  display: grid;
+  gap: 12px;
+}
+.self-workout-piece {
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(99, 102, 241, .18);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+.self-piece-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 560px) {
+  .self-piece-actions {
+    grid-template-columns: 1fr;
+  }
+}
