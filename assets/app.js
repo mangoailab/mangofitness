@@ -2259,14 +2259,22 @@ function splitTimeFromForm(data, setNumber) {
 function splitTotalFromInputs(form) {
   const values = [...form.querySelectorAll(".split-log-row")].map((row) => {
     const setNumber = row.dataset.setNumber || "";
-    const minutes = Number(form.querySelector(`[name="set_${CSS.escape(setNumber)}_minutes"]`)?.value || 0);
-    const seconds = Number(form.querySelector(`[name="set_${CSS.escape(setNumber)}_seconds"]`)?.value || 0);
+    const minutes = Number(form.elements[`set_${setNumber}_minutes`]?.value || 0);
+    const seconds = Number(form.elements[`set_${setNumber}_seconds`]?.value || 0);
     if (!minutes && !seconds) return null;
     if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null;
     return minutes * 60 + seconds;
   }).filter((value) => value != null);
   if (!values.length) return "";
   return formatSplitTotal(values.reduce((sum, value) => sum + value, 0));
+}
+
+function cleanSplitNotes(notes) {
+  return String(notes || "")
+    .split(" · ")
+    .filter((part) => !/^Total:\s*/i.test(part.trim()))
+    .join(" · ")
+    .trim();
 }
 
 function numberFromMatch(text, regex) {
@@ -3187,7 +3195,7 @@ function initAthleteApp() {
               const weight = isSplitLog ? null : numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
               if (!score && !reps && weight == null && !existingId) continue;
               savedAnySet = true;
-              const baseNotes = String(data.get("notes") || "").trim();
+              const baseNotes = cleanSplitNotes(data.get("notes"));
               const resultEntry = {
                 id: existingId,
                 workoutId: form.dataset.workoutId,
@@ -3199,7 +3207,7 @@ function initAthleteApp() {
                 weight,
                 reps,
                 score,
-                notes: isSplitLog && splitTotal ? [baseNotes, `Total: ${splitTotal}`].filter(Boolean).join(" · ") : baseNotes
+                notes: isSplitLog && splitTotal && setNumber === 1 ? [baseNotes, `Total: ${splitTotal}`].filter(Boolean).join(" · ") : baseNotes
               };
               const savedId = await MangoFitnessStore.saveResult({
                 ...resultEntry,

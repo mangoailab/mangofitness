@@ -64,3 +64,7 @@
 ## Split time mobile entry
 
 - Athlete split logging should use separate minute and second number inputs instead of requiring a colon in one field, because mobile keyboards may not show an easy minute/colon option.
+
+## Split total behavior
+
+- Split total should be calculated from all visible minute/second rows using form elements directly. Store the calculated total only once on the first split row notes, and strip old `Total:` fragments before saving to avoid duplicated total text.
