@@ -1964,15 +1964,23 @@ body.is-reordering .exercise-row.dragging {
   min-height: 42px;
   padding: 9px 10px;
 }
-.set-remove-button,
-.set-add-button {
+.icon-set-button {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 22px;
+  font-weight: 900;
+  justify-content: center;
+  line-height: 1;
   min-height: 38px;
-  padding: 8px 10px;
+  min-width: 38px;
+  padding: 0;
 }
 .set-remove-button {
   color: #b91c1c;
 }
 .set-add-button {
+  color: var(--accent-dark);
   justify-self: start;
   margin-top: 8px;
 }

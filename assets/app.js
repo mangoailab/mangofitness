@@ -2519,7 +2519,7 @@ function renderSetLogRow(setNumber, exercise, suggestion = null, logged = null) 
       <strong>${escapeHtml(setNumber)}</strong>
       <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" value="${escapeHtml(logged?.reps || "")}" />
       <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" value="${logged?.weight !== "" && logged?.weight != null ? escapeHtml(logged.weight) : ""}" />
-      <button type="button" class="set-remove-button" data-remove-set aria-label="Remove set ${escapeHtml(setNumber)}">Remove</button>
+      <button type="button" class="set-remove-button icon-set-button" data-remove-set aria-label="Remove set ${escapeHtml(setNumber)}">×</button>
     </div>`;
 }
 
@@ -2553,7 +2553,7 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
         return renderSetLogRow(setNumber, exercise, suggestion, loggedBySet.get(setNumber) || null);
       }).join("")}
     </div>
-    <button type="button" class="set-add-button" data-add-set>Add set</button>
+    <button type="button" class="set-add-button icon-set-button" data-add-set aria-label="Add set">+</button>
   `;
 }
 
@@ -2815,7 +2815,7 @@ function initAthleteApp() {
                 <strong>${escapeHtml(nextSet)}</strong>
                 <input name="set_${nextSet}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(table.dataset.repsPlaceholder || "reps")}" />
                 <input name="set_${nextSet}_weight" type="text" inputmode="decimal" placeholder="${escapeHtml(table.dataset.weightPlaceholder || "lb")}" />
-                <button type="button" class="set-remove-button" data-remove-set aria-label="Remove set ${escapeHtml(nextSet)}">Remove</button>
+                <button type="button" class="set-remove-button icon-set-button" data-remove-set aria-label="Remove set ${escapeHtml(nextSet)}">×</button>
               </div>
             `);
             return;
