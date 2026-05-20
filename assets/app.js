@@ -3509,6 +3509,51 @@ function initAthleteHistoryApp(options = {}) {
     return result.score || (result.weight !== "" && result.weight != null ? `${result.weight} lb` : (result.reps || "Logged"));
   }
 
+  function progressResultSort(a, b) {
+    return String(b.completedOn || "").localeCompare(String(a.completedOn || ""))
+      || String(b.createdAt || "").localeCompare(String(a.createdAt || ""))
+      || (Number(a.setNumber || 0) - Number(b.setNumber || 0));
+  }
+
+  function strengthSessionKey(result) {
+    return [result.completedOn || "unknown", result.workoutId || result.exerciseId || result.exerciseName || "movement"].join("::");
+  }
+
+  function strengthSessionGroups(group) {
+    return [...group].sort(progressResultSort).reduce((sessions, result) => {
+      const key = strengthSessionKey(result);
+      if (!sessions.has(key)) sessions.set(key, []);
+      sessions.get(key).push(result);
+      return sessions;
+    }, new Map());
+  }
+
+  function strengthSetSummary(rows) {
+    return [...rows]
+      .sort((a, b) => Number(a.setNumber || 0) - Number(b.setNumber || 0) || String(a.createdAt || "").localeCompare(String(b.createdAt || "")))
+      .map((result, index) => {
+        const setLabel = result.setNumber || index + 1;
+        const value = result.weight !== "" && result.weight != null ? `${result.weight} lb` : "—";
+        const reps = result.reps ? ` × ${result.reps}` : "";
+        return `Set ${setLabel}: ${value}${reps}${result.isPr ? " PR" : ""}`;
+      });
+  }
+
+  function progressLatestValue(group) {
+    const strengthGroup = isStrengthGroup(group);
+    if (!strengthGroup) return progressDisplayValue([...group].sort(progressResultSort)[0] || group[0]);
+    const latestSession = [...strengthSessionGroups(group).values()][0] || [];
+    const best = bestStrengthResultForDate(latestSession);
+    const count = latestSession.length;
+    if (!best) return "Logged";
+    const top = best.weight !== "" && best.weight != null ? `top ${best.weight} lb` : `${best.reps || "Logged"}`;
+    return count > 1 ? `${count} sets · ${top}` : progressDisplayValue(best);
+  }
+
+  function progressLogCount(group) {
+    return isStrengthGroup(group) ? strengthSessionGroups(group).size : group.length;
+  }
+
   const progressGroupOrder = ["WODs", "Cardio", "Squats", "Barbell / Olympic Lifts", "Gymnastics", "Accessory / Strength", "Other"];
 
   function progressGroupLabel(result) {
@@ -3676,24 +3721,27 @@ function initAthleteHistoryApp(options = {}) {
   }
 
   function renderProgressTable(group) {
-    const rows = [...group].sort((a, b) => String(b.completedOn || "").localeCompare(String(a.completedOn || "")));
+    const rows = [...group].sort(progressResultSort);
     const strengthGroup = isStrengthGroup(group);
     if (strengthGroup) {
+      const sessions = [...strengthSessionGroups(group).values()];
       return `
         <div class="progress-table-wrap">
           <table class="progress-table strength-progress-table">
-            <thead><tr><th>Date</th><th>Weight</th><th>Reps</th><th>Set</th><th>Notes</th><th></th></tr></thead>
+            <thead><tr><th>Date</th><th>Sets</th><th>Notes</th><th></th></tr></thead>
             <tbody>
-              ${rows.map((result) => `
-                <tr class="${result.isPr ? "is-pr" : ""}">
-                  <td>${escapeHtml(displayDate(result.completedOn))}</td>
-                  <td><strong>${result.weight !== "" && result.weight != null ? `${escapeHtml(result.weight)} lb` : "-"}</strong>${result.isPr ? ` <span class="pr-badge">PR</span>` : ""}</td>
-                  <td>${escapeHtml(result.reps || "-")}</td>
-                  <td>${result.setNumber ? escapeHtml(result.setNumber) : "-"}</td>
-                  <td>${escapeHtml(result.notes || "")}</td>
-                  <td><button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} on ${displayDate(result.completedOn)}`)}">Delete</button></td>
-                </tr>
-              `).join("")}
+              ${sessions.map((sessionRows) => {
+                const first = sessionRows[0];
+                const notes = [...new Set(sessionRows.map((result) => result.notes).filter(Boolean))].join(" · ");
+                return `
+                  <tr class="${sessionRows.some((result) => result.isPr) ? "is-pr" : ""}">
+                    <td>${escapeHtml(displayDate(first.completedOn))}</td>
+                    <td><div class="strength-set-summary">${strengthSetSummary(sessionRows).map((line) => `<span>${escapeHtml(line)}</span>`).join("")}</div></td>
+                    <td>${escapeHtml(notes)}</td>
+                    <td><div class="progress-set-delete-actions">${[...sessionRows].sort((a, b) => Number(a.setNumber || 0) - Number(b.setNumber || 0)).map((result) => `<button type="button" class="danger-button progress-delete-button" data-delete-result="${escapeHtml(result.id)}" data-delete-result-label="${escapeHtml(`${result.exerciseName || "Result"} set ${result.setNumber || ""} on ${displayDate(result.completedOn)}`)}">Delete set ${escapeHtml(result.setNumber || "")}</button>`).join("")}</div></td>
+                  </tr>
+                `;
+              }).join("")}
             </tbody>
           </table>
         </div>
@@ -3772,16 +3820,17 @@ function initAthleteHistoryApp(options = {}) {
                 <tr class="progress-category-row"><td colspan="4">${escapeHtml(category)}</td></tr>
                 ${categoryMovementGroups.map((group) => {
                   const index = detailIndex++;
-                  const latest = group[0];
+                  const sortedGroup = [...group].sort(progressResultSort);
+                  const latest = sortedGroup[0];
                   const prCount = group.filter((result) => result.isPr).length;
-                  const latestValue = progressDisplayValue(latest);
+                  const latestValue = progressLatestValue(group);
                   const subtitle = [coachMode ? athleteName(latest.athleteId) : "", displayDate(latest.completedOn)].filter(Boolean).join(" · ");
                   return `
                     <tr class="progress-overview-row ${prCount ? "has-pr" : ""}">
                       <td><button type="button" class="progress-toggle" data-progress-toggle="${index}" aria-expanded="false" aria-label="Show ${escapeHtml(latest.exerciseName)} details">▸</button></td>
                       <td><strong>${escapeHtml(latest.exerciseName)}</strong><span class="muted">${escapeHtml(subtitle)}</span></td>
                       <td><strong>${escapeHtml(latestValue)}</strong>${prCount ? ` <span class="pr-badge">${prCount} PR${prCount === 1 ? "" : "s"}</span>` : ""}</td>
-                      <td>${group.length}</td>
+                      <td>${progressLogCount(group)}</td>
                     </tr>
                     <tr class="progress-detail-row hidden" data-progress-detail="${index}">
                       <td colspan="4"><div class="progress-log-list">${renderProgressChart(group)}${renderProgressTable(group)}</div></td>

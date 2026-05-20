@@ -2900,3 +2900,20 @@ body.is-reordering .exercise-row.dragging {
 .workout-status-form button {
   width: 100%;
 }
+.strength-set-summary,
+.progress-set-delete-actions {
+  display: grid;
+  gap: 6px;
+}
+.strength-set-summary span {
+  white-space: nowrap;
+}
+.progress-set-delete-actions .progress-delete-button {
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .strength-set-summary span {
+    white-space: normal;
+  }
+}
