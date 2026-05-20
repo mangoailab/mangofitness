@@ -54,6 +54,7 @@ const MangoFitnessStore = (() => {
     const exercise = row.workout_exercises || {};
     return {
       id: row.id,
+      createdAt: row.created_at || "",
       workoutId: exercise.workout_id || "",
       athleteId: row.athlete_id || "",
       exerciseId: row.workout_exercise_id,
@@ -385,7 +386,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("athlete_workout_results")
-        .select("id, athlete_id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, set_number, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
+        .select("id, created_at, athlete_id, workout_exercise_id, completed_on, working_weight, reps_completed, notes, score_result, set_number, is_pr, workout_exercises (exercise_name, workout_id, benchmark_key, benchmark_name, movement_key, movement_name)")
         .order("completed_on", { ascending: false })
         .order("created_at", { ascending: false });
 
@@ -2508,9 +2509,16 @@ function weightSuggestionForExercise(exercise, athleteResults = []) {
 }
 
 function exerciseLoggedResults(exercise, athleteResults = [], selectedDate = "") {
-  return (athleteResults || [])
+  const latestBySet = new Map();
+  (athleteResults || [])
     .filter((result) => result.exerciseId === exercise.id && (!selectedDate || result.completedOn === selectedDate))
-    .sort((a, b) => (Number(a.setNumber || 0) - Number(b.setNumber || 0)) || String(b.id || "").localeCompare(String(a.id || "")));
+    .forEach((result) => {
+      const setKey = String(result.setNumber || 1);
+      const current = latestBySet.get(setKey);
+      if (!current || String(result.createdAt || "") > String(current.createdAt || "")) latestBySet.set(setKey, result);
+    });
+  return [...latestBySet.values()]
+    .sort((a, b) => (Number(a.setNumber || 0) - Number(b.setNumber || 0)) || String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
 }
 
 function renderSetLogRow(setNumber, exercise, suggestion = null, logged = null) {
