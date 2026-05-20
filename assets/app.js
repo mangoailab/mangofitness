@@ -2731,7 +2731,7 @@ function initAthleteApp() {
             <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}</p>
             ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
             ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
-            <div class="list-stack">
+            <div class="list-stack athlete-workout-sections">
               ${workoutSectionGroups(workout.exercises).map((group) => `
                 <section class="athlete-workout-section">
                   <h4>${escapeHtml(group.label)}</h4>
