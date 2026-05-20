@@ -771,18 +771,18 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 }
 .exercise-group h4,
 .athlete-workout-section h4 {
-  margin: 0 0 12px;
+  margin: 0 0 6px;
   color: var(--accent-dark);
   font-size: 15px;
   letter-spacing: -.01em;
 }
 .athlete-workout-section {
   display: grid;
-  gap: 14px;
+  gap: 8px;
   padding-top: 10px;
 }
 .athlete-workout-section + .athlete-workout-section {
-  margin-top: 16px;
+  margin-top: 28px;
 }
 .athlete-workout-section:first-child {
   padding-top: 0;
