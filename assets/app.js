@@ -2503,6 +2503,26 @@ function weightSuggestionForExercise(exercise, athleteResults = []) {
   return null;
 }
 
+function renderExerciseLoggedResults(exercise, athleteResults = [], selectedDate = "") {
+  const rows = (athleteResults || [])
+    .filter((result) => result.exerciseId === exercise.id && (!selectedDate || result.completedOn === selectedDate))
+    .sort((a, b) => (Number(a.setNumber || 0) - Number(b.setNumber || 0)) || String(b.id || "").localeCompare(String(a.id || "")));
+  if (!rows.length) return "";
+  return `
+    <div class="logged-result-summary">
+      <strong>Logged</strong>
+      ${rows.map((result) => {
+        const parts = [];
+        if (result.reps) parts.push(`${escapeHtml(result.reps)} reps`);
+        if (result.weight !== "" && result.weight != null) parts.push(`${escapeHtml(result.weight)} lb`);
+        if (result.score) parts.push(escapeHtml(result.score));
+        if (result.notes) parts.push(escapeHtml(result.notes));
+        return `<p>${result.setNumber ? `Set ${escapeHtml(result.setNumber)}: ` : ""}${parts.length ? parts.join(" · ") : "Saved"}</p>`;
+      }).join("")}
+    </div>
+  `;
+}
+
 function renderSetLogFields(exercise, athleteResults = []) {
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
@@ -2731,6 +2751,7 @@ function initAthleteApp() {
                           ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
                           ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
+                        ${renderExerciseLoggedResults(exercise, athleteResults, date.value)}
                         ${renderSetLogFields(exercise, athleteResults)}
                         <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
                         <button type="submit" class="primary">Log result</button>
