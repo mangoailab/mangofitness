@@ -17,3 +17,7 @@
 ## Security follow-up
 
 - After applying `supabase/loggable-result-rls.sql` in Supabase, manually verify: athlete can log an assigned/everyone workout, athlete cannot log a workout exercise from another athlete's individual workout, and coach result management still works.
+
+## Body scan parser follow-up
+
+- Confirm signed-in athlete body scan parsing still works from the UI after the `parse-body-scan` auth hardening deploy.

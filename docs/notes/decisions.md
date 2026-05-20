@@ -36,3 +36,7 @@
 ## Result logging security
 
 - Athlete result writes must check both identity and workout access. `athlete_workout_results` insert/update policies use `public.can_log_workout_exercise(workout_exercise_id, athlete_id)` so athletes can only log exercises from class/everyone workouts or workouts assigned to that athlete. Coaches remain allowed through `public.is_coach()`.
+
+## Body scan AI parser security
+
+- `parse-body-scan` must verify a valid Supabase user session inside the Edge Function before calling OpenAI. Anonymous requests and invalid bearer tokens should return 401 before any AI/API spend happens.

@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -24,6 +26,27 @@ function jsonResponse(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" }
   });
+}
+
+function getBearerToken(req: Request): string {
+  return (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+}
+
+async function verifySignedInUser(req: Request): Promise<Response | null> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !anonKey) return jsonResponse({ error: "AI parser auth is not configured." }, 503);
+
+  const token = getBearerToken(req);
+  if (!token) return jsonResponse({ error: "Sign in required to parse body scans." }, 401);
+
+  const userClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false }
+  });
+  const { data, error } = await userClient.auth.getUser(token);
+  if (error || !data?.user) return jsonResponse({ error: "Invalid session. Sign out and sign back in." }, 401);
+  return null;
 }
 
 function cleanNumber(value: unknown): number | "" {
@@ -79,12 +102,19 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
+  const authError = await verifySignedInUser(req);
+  if (authError) return authError;
+
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return jsonResponse({ error: "AI parser is not configured yet." }, 503);
 
   try {
     const { images = [], filename = "InBody scan" } = await req.json();
     if (!Array.isArray(images) || !images.length) return jsonResponse({ error: "No scan image provided." }, 400);
+    if (images.length > 2) return jsonResponse({ error: "Upload up to 2 scan images/pages at a time." }, 400);
+    if (images.some((image) => typeof image !== "string" || !image.startsWith("data:image/") || image.length > 8_000_000)) {
+      return jsonResponse({ error: "Scan images must be image uploads under 8 MB each." }, 400);
+    }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
