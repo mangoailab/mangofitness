@@ -31,6 +31,7 @@ const MangoFitnessStore = (() => {
       rounds: row.rounds || "",
       scoreType: row.score_type || "",
       assignmentType: row.assignment_type || row.assignmentType || "everyone",
+      isAthleteCreated: (row.assignment_type || row.assignmentType || "") === "athlete_created",
       assignedAthleteIds: (row.workout_assignments || row.assignedAthleteIds || []).map((assignment) => assignment.athlete_id || assignment.athleteId || assignment).filter(Boolean),
       assignedAthleteNames: (row.workout_assignments || []).map((assignment) => assignment.athletes?.name).filter(Boolean),
       exercises: (row.workout_exercises || []).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((exercise) => ({
@@ -605,6 +606,23 @@ const MangoFitnessStore = (() => {
       if (error) throw error;
     },
 
+    async saveAthleteSelfWorkout(entry) {
+      const sb = client();
+      if (!sb) return;
+      const { error } = await sb.rpc("save_athlete_self_workout", {
+        p_completed_on: entry.completedOn,
+        p_title: entry.title || "Self-created workout",
+        p_exercise_name: entry.exerciseName,
+        p_section_type: entry.section || "cardio",
+        p_score_result: entry.score || null,
+        p_working_weight: entry.weight || null,
+        p_reps_completed: entry.reps || null,
+        p_notes: entry.notes || null,
+        p_is_pr: Boolean(entry.isPr)
+      });
+      if (error) throw error;
+    },
+
     async saveHistoricalBenchmark(entry) {
       const sb = client();
       if (!sb) {
@@ -707,10 +725,11 @@ function athleteOptions(selectedId = "") {
 }
 
 function workoutAssignmentLabel(workout) {
+  if ((workout.assignmentType || "everyone") === "athlete_created") return "Athlete-created";
   if ((workout.assignmentType || "everyone") === "individual") {
     return `Individual${workout.assignedAthleteNames?.length ? ` · ${workout.assignedAthleteNames.map(escapeHtml).join(", ")}` : ""}`;
   }
-  return "Everyone";
+  return "Coach program";
 }
 
 function isWorkoutVisibleToAthlete(workout, athleteId = "") {
@@ -2604,6 +2623,10 @@ function initAthleteApp() {
   const prevWeekBtn = document.getElementById("athletePrevWeekBtn");
   const thisWeekBtn = document.getElementById("athleteThisWeekBtn");
   const nextWeekBtn = document.getElementById("athleteNextWeekBtn");
+  const showSelfWorkoutBtn = document.getElementById("showSelfWorkoutBtn");
+  const cancelSelfWorkoutBtn = document.getElementById("cancelSelfWorkoutBtn");
+  const selfWorkoutForm = document.getElementById("selfWorkoutForm");
+  const selfWorkoutType = document.getElementById("selfWorkoutType");
   if (!date || !view) return;
 
   date.value = todayISO();
@@ -2612,6 +2635,7 @@ function initAthleteApp() {
   let weekPickerOpen = false;
   let weekPickerMonth = null;
   let weekPickerWorkouts = [];
+  let selectedWorkoutId = "";
 
 
   function renderWeekPicker(visibleWorkouts) {
@@ -2638,7 +2662,8 @@ function initAthleteApp() {
         ${Array.from({ length: dayCount }, (_, index) => {
           const day = addDays(calendarStart, index);
           const dayIso = isoDate(day);
-          return `<button type="button" class="week-picker-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === selectedDate ? " is-selected" : ""}" data-week-picker-date="${escapeHtml(dayIso)}"><span>${escapeHtml(String(day.getDate()))}</span><i class="athlete-program-dot${workoutDates.has(dayIso) ? " has-program" : ""}" aria-hidden="true"></i></button>`;
+          const hasAthleteCreated = visibleWorkouts.some((item) => item.date === dayIso && item.isAthleteCreated);
+          return `<button type="button" class="week-picker-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === selectedDate ? " is-selected" : ""}" data-week-picker-date="${escapeHtml(dayIso)}"><span>${escapeHtml(String(day.getDate()))}</span><i class="athlete-program-dot${workoutDates.has(dayIso) ? " has-program" : ""}${hasAthleteCreated ? " is-self-workout" : ""}" aria-hidden="true"></i></button>`;
         }).join("")}
       </div>
     `;
@@ -2657,6 +2682,7 @@ function initAthleteApp() {
       button.addEventListener("click", () => {
         date.value = button.dataset.weekPickerDate;
         selectedWeekStart = startOfWeek(parseLocalDate(date.value));
+        selectedWorkoutId = "";
         weekPickerOpen = false;
         weekPickerMonth = null;
         renderAthlete();
@@ -2698,7 +2724,9 @@ function initAthleteApp() {
         const workoutDate = parseLocalDate(item.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
-      const workout = visibleWorkouts.find((item) => item.date === date.value);
+      const selectedDateWorkouts = visibleWorkouts.filter((item) => item.date === date.value);
+      const workout = selectedDateWorkouts.find((item) => item.id === selectedWorkoutId) || selectedDateWorkouts[0];
+      selectedWorkoutId = workout?.id || "";
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
       renderWeekPicker(visibleWorkouts);
@@ -2713,17 +2741,18 @@ function initAthleteApp() {
           const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
+          const hasAthleteCreated = dayWorkouts.some((item) => item.isAthleteCreated);
           return `
-            <section class="calendar-day athlete-program-day${dayIso === date.value ? " is-selected" : ""}" data-athlete-day="${escapeHtml(dayIso)}">
+            <section class="calendar-day athlete-program-day${dayIso === date.value ? " is-selected" : ""}${hasAthleteCreated ? " has-self-workout" : ""}" data-athlete-day="${escapeHtml(dayIso)}">
               <button type="button" class="calendar-day-head athlete-program-day-head" data-athlete-date="${escapeHtml(dayIso)}" aria-label="View ${escapeHtml(calendarDayLabel(day))}">
                 <span class="athlete-program-weekday">${escapeHtml(weekdayLabel(day))}</span>
                 <strong class="athlete-program-date">${escapeHtml(String(day.getDate()))}</strong>
                 <span class="muted athlete-program-count">${dayWorkouts.length || ""}</span>
-                <span class="athlete-program-dot${dayWorkouts.length ? " has-program" : ""}" aria-hidden="true"></span>
+                <span class="athlete-program-dot${dayWorkouts.length ? " has-program" : ""}${hasAthleteCreated ? " is-self-workout" : ""}" aria-hidden="true"></span>
               </button>
               <div class="calendar-day-body">
                 ${dayWorkouts.length ? dayWorkouts.map((item) => `
-                  <button type="button" class="calendar-workout-card athlete-schedule-card" data-athlete-date="${escapeHtml(item.date)}">
+                  <button type="button" class="calendar-workout-card athlete-schedule-card${item.isAthleteCreated ? " self-workout-card" : ""}" data-athlete-date="${escapeHtml(item.date)}" data-athlete-workout-id="${escapeHtml(item.id)}">
                     <strong>${escapeHtml(item.title)}</strong>
                     <p class="muted">${item.exercises.length} items · ${workoutAssignmentLabel(item)}</p>
                   </button>
@@ -2735,6 +2764,7 @@ function initAthleteApp() {
         scheduleView.querySelectorAll("[data-athlete-date]").forEach((button) => {
           button.addEventListener("click", () => {
             date.value = button.dataset.athleteDate;
+            selectedWorkoutId = button.dataset.athleteWorkoutId || "";
             renderAthlete();
           });
         });
@@ -2749,8 +2779,8 @@ function initAthleteApp() {
         view.innerHTML = `<p class="muted empty-state">No program assigned for ${escapeHtml(date.value || "this date")}.</p>`;
       } else {
         view.innerHTML = `
-          <article class="item-card workout-detail">
-            <h3>${escapeHtml(workout.title)}</h3>
+          <article class="item-card workout-detail${workout.isAthleteCreated ? " self-workout-detail" : ""}">
+            <h3>${escapeHtml(workout.title)}${workout.isAthleteCreated ? ` <span class="self-workout-badge">Athlete-created</span>` : ""}</h3>
             <p class="muted">${escapeHtml(workout.date)} · ${workoutAssignmentLabel(workout)}</p>
             ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
             ${workout.warmupNotes ? `<section class="athlete-workout-section"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></section>` : ""}
@@ -2952,6 +2982,7 @@ function initAthleteApp() {
 
   date.addEventListener("change", () => {
     selectedWeekStart = startOfWeek(parseLocalDate(date.value));
+    selectedWorkoutId = "";
     weekPickerOpen = false;
     weekPickerMonth = null;
     renderAthlete();
@@ -2961,6 +2992,50 @@ function initAthleteApp() {
     if (weekPickerOpen) weekPickerMonth = new Date(selectedWeekStart);
     renderWeekPicker(weekPickerWorkouts);
   });
+  const updateSelfWorkoutFields = () => {
+    const isStrength = selfWorkoutType?.value === "lifting";
+    selfWorkoutForm?.querySelectorAll(".self-strength-field").forEach((field) => field.classList.toggle("hidden", !isStrength));
+    selfWorkoutForm?.querySelectorAll(".self-score-field").forEach((field) => field.classList.toggle("hidden", isStrength));
+  };
+  showSelfWorkoutBtn?.addEventListener("click", () => {
+    selfWorkoutForm?.classList.remove("hidden");
+    showSelfWorkoutBtn.classList.add("hidden");
+    const titleInput = selfWorkoutForm?.querySelector('[name="title"]');
+    if (titleInput && !titleInput.value) titleInput.value = "Self-created workout";
+    updateSelfWorkoutFields();
+  });
+  cancelSelfWorkoutBtn?.addEventListener("click", () => {
+    selfWorkoutForm?.reset();
+    selfWorkoutForm?.classList.add("hidden");
+    showSelfWorkoutBtn?.classList.remove("hidden");
+    updateSelfWorkoutFields();
+  });
+  selfWorkoutType?.addEventListener("change", updateSelfWorkoutFields);
+  selfWorkoutForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const data = new FormData(selfWorkoutForm);
+    const section = String(data.get("section") || "cardio");
+    try {
+      await MangoFitnessStore.saveAthleteSelfWorkout({
+        completedOn: date.value || todayISO(),
+        title: data.get("title"),
+        exerciseName: data.get("exerciseName"),
+        section,
+        score: section === "lifting" ? "" : data.get("score"),
+        weight: section === "lifting" ? numericWeight(data.get("weight")) : null,
+        reps: section === "lifting" ? data.get("reps") : "",
+        notes: data.get("notes"),
+        isPr: data.get("isPr") === "on"
+      });
+      selfWorkoutForm.reset();
+      selfWorkoutForm.classList.add("hidden");
+      showSelfWorkoutBtn?.classList.remove("hidden");
+      await renderAthlete();
+    } catch (error) {
+      view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+    }
+  });
+  updateSelfWorkoutFields();
   MangoFitnessStore.client()?.auth?.onAuthStateChange?.((_event, session) => {
     if (session?.user) loadAthleteProfiles().then(renderAthlete);
   });

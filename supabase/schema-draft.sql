@@ -181,6 +181,9 @@ alter table workouts add column if not exists rounds text;
 alter table workouts add column if not exists score_type text;
 alter table workouts add column if not exists assignment_type text not null default 'everyone';
 
+-- Athlete self-created workout logs use assignment_type = 'athlete_created'.
+-- They are created through public.save_athlete_self_workout so athletes do not need broad table writes.
+
 alter table warmup_templates add column if not exists template_key text unique;
 alter table warmup_templates add column if not exists is_builtin boolean not null default false;
 
