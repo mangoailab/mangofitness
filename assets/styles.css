@@ -1933,23 +1933,6 @@ body.is-reordering .exercise-row.dragging {
   padding: 8px 12px;
   white-space: nowrap;
 }
-.logged-result-summary {
-  border: 1px solid rgba(15, 122, 59, .18);
-  border-radius: 14px;
-  background: rgba(15, 122, 59, .06);
-  color: var(--accent-dark);
-  display: grid;
-  gap: 4px;
-  padding: 10px 12px;
-}
-.logged-result-summary strong {
-  font-size: 13px;
-}
-.logged-result-summary p {
-  margin: 0;
-  color: var(--text);
-  font-size: 13px;
-}
 .set-log-table {
   display: grid;
   gap: 8px;

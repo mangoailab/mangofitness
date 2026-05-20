@@ -585,7 +585,7 @@ const MangoFitnessStore = (() => {
       }
 
       const user = await requireUser();
-      const { error } = await sb.from("athlete_workout_results").insert({
+      const payload = {
         athlete_id: result.athleteId || null,
         auth_user_id: user?.id || null,
         workout_exercise_id: result.exerciseId,
@@ -596,7 +596,11 @@ const MangoFitnessStore = (() => {
         score_result: result.score || null,
         set_number: result.setNumber || null,
         is_pr: result.isPr
-      });
+      };
+      const query = result.id
+        ? sb.from("athlete_workout_results").update(payload).eq("id", result.id).eq("auth_user_id", user?.id || "")
+        : sb.from("athlete_workout_results").insert(payload);
+      const { error } = await query;
       if (error) throw error;
     },
 
@@ -2503,39 +2507,28 @@ function weightSuggestionForExercise(exercise, athleteResults = []) {
   return null;
 }
 
-function renderExerciseLoggedResults(exercise, athleteResults = [], selectedDate = "") {
-  const rows = (athleteResults || [])
+function exerciseLoggedResults(exercise, athleteResults = [], selectedDate = "") {
+  return (athleteResults || [])
     .filter((result) => result.exerciseId === exercise.id && (!selectedDate || result.completedOn === selectedDate))
     .sort((a, b) => (Number(a.setNumber || 0) - Number(b.setNumber || 0)) || String(b.id || "").localeCompare(String(a.id || "")));
-  if (!rows.length) return "";
-  return `
-    <div class="logged-result-summary">
-      <strong>Logged</strong>
-      ${rows.map((result) => {
-        const parts = [];
-        if (result.reps) parts.push(`${escapeHtml(result.reps)} reps`);
-        if (result.weight !== "" && result.weight != null) parts.push(`${escapeHtml(result.weight)} lb`);
-        if (result.score) parts.push(escapeHtml(result.score));
-        if (result.notes) parts.push(escapeHtml(result.notes));
-        return `<p>${result.setNumber ? `Set ${escapeHtml(result.setNumber)}: ` : ""}${parts.length ? parts.join(" · ") : "Saved"}</p>`;
-      }).join("")}
-    </div>
-  `;
 }
 
-function renderSetLogFields(exercise, athleteResults = []) {
+function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
+  const loggedRows = exerciseLoggedResults(exercise, athleteResults, selectedDate);
   const isStrength = (exercise.section || "cardio") === "lifting";
   if (!isStrength) {
+    const logged = loggedRows[0] || null;
     const scoreLabel = exercise.target || benchmarkScoreType(benchmarkByKey(exercise.benchmarkKey || "")) || "Score";
     const placeholder = /round/i.test(scoreLabel) ? "7+12" : /time/i.test(scoreLabel) ? "18:42" : scoreLabel;
     return `
       <div class="field cardio-score-field">
         <label>${escapeHtml(scoreLabel)}</label>
-        <input name="score" type="text" placeholder="${escapeHtml(placeholder)}" />
+        <input name="score" type="text" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(logged?.score || "")}" />
       </div>
     `;
   }
-  const suggestion = weightSuggestionForExercise(exercise, athleteResults);
+  const loggedBySet = new Map(loggedRows.map((result) => [Number(result.setNumber || 1), result]));
+  const suggestion = weightSuggestionForExercise(exercise, athleteResults.filter((result) => !selectedDate || result.completedOn !== selectedDate));
   return `
     ${suggestion ? `
       <div class="weight-suggestion">
@@ -2545,13 +2538,16 @@ function renderSetLogFields(exercise, athleteResults = []) {
     ` : `<p class="muted weight-suggestion-text">Enter set 1 weight to auto-fill the remaining sets.</p>`}
     <div class="set-log-table">
       <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
-      ${Array.from({ length: prescribedSetCount(exercise) }, (_, index) => `
-        <div class="set-log-row">
-          <strong>${index + 1}</strong>
-          <input name="set_${index + 1}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" />
-          <input name="set_${index + 1}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" />
-        </div>
-      `).join("")}
+      ${Array.from({ length: prescribedSetCount(exercise) }, (_, index) => {
+        const setNumber = index + 1;
+        const logged = loggedBySet.get(setNumber) || null;
+        return `
+        <div class="set-log-row" data-existing-result-id="${escapeHtml(logged?.id || "")}">
+          <strong>${setNumber}</strong>
+          <input name="set_${setNumber}_reps" type="text" inputmode="numeric" placeholder="${escapeHtml(exercise.reps || "reps")}" value="${escapeHtml(logged?.reps || "")}" />
+          <input name="set_${setNumber}_weight" type="text" inputmode="decimal" placeholder="${suggestion ? escapeHtml(`${suggestion.value} lb`) : "lb"}" value="${logged?.weight !== "" && logged?.weight != null ? escapeHtml(logged.weight) : ""}" />
+        </div>`;
+      }).join("")}
     </div>
   `;
 }
@@ -2745,15 +2741,14 @@ function initAthleteApp() {
                         </div>
                       </div>
                     ` : `
-                      <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}">
+                      <form class="result-form" data-workout-id="${workout.id}" data-exercise-id="${exercise.id}" data-exercise-name="${escapeHtml(exercise.name)}" data-existing-result-id="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.id || "")}">
                         <div>
                           <strong>${escapeHtml(exercise.name)}</strong>
                           ${exerciseSummary(exercise) ? `<p class="muted">${exerciseSummary(exercise)}</p>` : ""}
                           ${exercise.notes ? `<p>${escapeHtml(exercise.notes)}</p>` : ""}
                         </div>
-                        ${renderExerciseLoggedResults(exercise, athleteResults, date.value)}
-                        ${renderSetLogFields(exercise, athleteResults)}
-                        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" /></div>
+                        ${renderSetLogFields(exercise, athleteResults, date.value)}
+                        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" value="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.notes || "")}" /></div>
                         <button type="submit" class="primary">Log result</button>
                       </form>
                     `).join("")}
@@ -2823,15 +2818,16 @@ function initAthleteApp() {
             const setRows = [...form.querySelectorAll(".set-log-row")];
             if (setRows.length) {
               let savedAnySet = false;
-              for (const [index] of setRows.entries()) {
+              for (const [index, row] of setRows.entries()) {
                 const setNumber = index + 1;
                 const reps = data.get(`set_${setNumber}_reps`);
                 const weightInput = form.querySelector(`[name="set_${setNumber}_weight"]`);
                 const weight = numericWeight(data.get(`set_${setNumber}_weight`) || weightInput?.dataset.ghostWeight);
-                if (!reps && weight == null) continue;
+                const existingId = row.dataset.existingResultId || "";
+                if (!reps && weight == null && !existingId) continue;
                 savedAnySet = true;
                 await MangoFitnessStore.saveResult({
-                  id: uid("result"),
+                  id: existingId,
                   workoutId: form.dataset.workoutId,
                   athleteId: signedInAthleteId,
                   exerciseId: form.dataset.exerciseId,
@@ -2847,7 +2843,7 @@ function initAthleteApp() {
               if (!savedAnySet) throw new Error("Enter reps or weight for at least one set.");
             } else {
               await MangoFitnessStore.saveResult({
-                id: uid("result"),
+                id: form.dataset.existingResultId || "",
                 workoutId: form.dataset.workoutId,
                 athleteId: signedInAthleteId,
                 exerciseId: form.dataset.exerciseId,
@@ -2860,7 +2856,6 @@ function initAthleteApp() {
                 isPr: data.get("isPr") === "on"
               });
             }
-            form.reset();
             await renderAthlete();
           } catch (error) {
             view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
