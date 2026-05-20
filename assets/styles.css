@@ -2861,6 +2861,7 @@ body.is-reordering .exercise-row.dragging {
   display: grid;
   gap: 12px;
   padding: 12px;
+  position: relative;
 }
 .self-piece-actions {
   display: grid;
@@ -2880,6 +2881,21 @@ body.is-reordering .exercise-row.dragging {
   text-align: center;
 }
 .self-piece-remove {
-  min-height: 32px;
-  padding: 6px 10px;
+  align-items: center;
+  background: rgba(99, 102, 241, .08);
+  border: 1px solid rgba(99, 102, 241, .14);
+  border-radius: 999px;
+  color: #3730a3;
+  display: inline-flex;
+  font-size: 18px;
+  font-weight: 900;
+  height: 30px;
+  justify-content: center;
+  line-height: 1;
+  min-height: 30px;
+  padding: 0;
+  width: 30px;
+}
+.self-piece-remove:hover {
+  background: rgba(99, 102, 241, .14);
 }

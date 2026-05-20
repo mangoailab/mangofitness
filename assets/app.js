@@ -3011,7 +3011,7 @@ function initAthleteApp() {
     const isStrength = section === "lifting";
     return `
       <section class="self-workout-piece" data-self-piece="${escapeHtml(pieceId)}" data-section="${escapeHtml(section)}">
-        <div class="item-head compact"><div><strong>${isStrength ? "Strength movement" : "Cardio / WOD"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log one time or score."}</p></div><button type="button" class="danger-button self-piece-remove" data-remove-self-piece>Remove</button></div>
+        <div class="item-head compact"><div><strong>${isStrength ? "Strength movement" : "Cardio / WOD"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log one time or score."}</p></div><button type="button" class="self-piece-remove" data-remove-self-piece aria-label="Remove ${isStrength ? "strength movement" : "cardio/WOD"}">×</button></div>
         <input type="hidden" name="piece_${pieceId}_section" value="${escapeHtml(section)}" />
         <div class="field"><label>Movement / workout</label><input name="piece_${pieceId}_exercise" type="text" placeholder="${isStrength ? "Hotel DB press" : "Row 5K or 20 min AMRAP"}" required /></div>
         ${isStrength ? `
