@@ -61,6 +61,7 @@
 
 - When a workout has multiple cardio options, the athlete UI should be choose-first: show compact option cards with Choose/Selected buttons, expand only the selected option's logging fields, and keep any already-logged option selected when returning.
 - Athlete-created cardio logging should explicitly include swim language because some athletes are swimmers. Keep swim/endurance pieces in the cardio data section, but the self-log form must let the athlete choose Swim, Cardio/endurance, or WOD and show fields that fit that type: swim distance/stroke/pool/pace, cardio modality/distance/score, or WOD format/result.
+- After an athlete saves a self-created workout or "own cardio" log, the athlete page should select the newly created workout before refreshing so the saved entry remains visible instead of returning to the prior program card.
 
 ## Split time mobile entry
 

@@ -647,7 +647,7 @@ const MangoFitnessStore = (() => {
     async saveAthleteSelfWorkout(entry) {
       const sb = client();
       if (!sb) return;
-      const { error } = await sb.rpc("save_athlete_self_workout", {
+      const { data, error } = await sb.rpc("save_athlete_self_workout", {
         p_completed_on: entry.completedOn,
         p_title: entry.title || "Self-created workout",
         p_exercise_name: entry.exerciseName,
@@ -661,6 +661,7 @@ const MangoFitnessStore = (() => {
         p_pieces: entry.pieces || null
       });
       if (error) throw error;
+      return data || "";
     },
 
     async saveHistoricalBenchmark(entry) {
@@ -2846,6 +2847,12 @@ function initAthleteApp() {
   let selectedWorkoutId = "";
   const selectedCardioOptions = new Map();
 
+  async function selectSavedSelfWorkout(savedResultId) {
+    if (!savedResultId) return;
+    const savedResult = (await MangoFitnessStore.results()).find((result) => result.id === savedResultId);
+    if (savedResult?.workoutId) selectedWorkoutId = savedResult.workoutId;
+  }
+
 
   function renderWeekPicker(visibleWorkouts) {
     if (!weekPicker) return;
@@ -3143,7 +3150,8 @@ function initAthleteApp() {
               notes,
               isPr: autoPrCandidate({ exerciseName, score, notes }, priorResults)
             };
-            await MangoFitnessStore.saveAthleteSelfWorkout(entry);
+            const savedResultId = await MangoFitnessStore.saveAthleteSelfWorkout(entry);
+            await selectSavedSelfWorkout(savedResultId);
             form.reset();
             if (submitButton) submitButton.textContent = "Saved";
             await renderAthlete();
@@ -3593,7 +3601,7 @@ function initAthleteApp() {
     }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
       if (!pieces.length) throw new Error("Add at least one strength, swim, cardio, or WOD piece with a result.");
-      await MangoFitnessStore.saveAthleteSelfWorkout({
+      const savedResultId = await MangoFitnessStore.saveAthleteSelfWorkout({
         completedOn: date.value || todayISO(),
         title: data.get("title"),
         exerciseName: pieces[0]?.exerciseName || "Self-created workout",
@@ -3606,6 +3614,7 @@ function initAthleteApp() {
         isPr: Boolean(pieces[0]?.isPr),
         pieces
       });
+      await selectSavedSelfWorkout(savedResultId);
       selfWorkoutForm.reset();
       resetSelfWorkoutPieces();
       selfWorkoutForm.classList.add("hidden");
