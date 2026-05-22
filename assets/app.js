@@ -27,6 +27,7 @@ const MangoFitnessStore = (() => {
     return {
       id: row.id,
       date: row.workout_date,
+      createdAt: row.created_at || "",
       title: row.title,
       notes: normalizeLineBreaks(row.notes),
       warmupNotes: normalizeLineBreaks(row.warmup_notes || row.warmupNotes),
@@ -378,7 +379,7 @@ const MangoFitnessStore = (() => {
 
       const { data, error } = await sb
         .from("workouts")
-        .select("id, workout_date, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, assignment_type, workout_assignments (athlete_id, athletes (name, email)), workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, movement_key, movement_name, section_type, notes, sort_order)")
+        .select("id, workout_date, created_at, title, notes, workout_format, rounds, score_type, warmup_notes, cardio_notes, assignment_type, workout_assignments (athlete_id, athletes (name, email)), workout_exercises (id, exercise_name, sets, reps, target, target_weight, benchmark_key, benchmark_name, movement_key, movement_name, section_type, notes, sort_order)")
         .neq("assignment_type", "system_history")
         .order("workout_date", { ascending: true });
 
@@ -2846,11 +2847,24 @@ function initAthleteApp() {
   let weekPickerWorkouts = [];
   let selectedWorkoutId = "";
   const selectedCardioOptions = new Map();
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   async function selectSavedSelfWorkout(savedResultId) {
-    if (!savedResultId) return;
-    const savedResult = (await MangoFitnessStore.results()).find((result) => result.id === savedResultId);
-    if (savedResult?.workoutId) selectedWorkoutId = savedResult.workoutId;
+    const targetDate = date.value || todayISO();
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      if (attempt) await sleep(300);
+      const [results, workouts] = await Promise.all([
+        savedResultId ? MangoFitnessStore.results() : Promise.resolve([]),
+        MangoFitnessStore.workouts()
+      ]);
+      const directWorkout = workouts.find((workout) => workout.id === savedResultId);
+      const savedResult = results.find((result) => result.id === savedResultId);
+      const latestSelfWorkout = workouts
+        .filter((workout) => workout.date === targetDate && workout.isAthleteCreated)
+        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0];
+      selectedWorkoutId = directWorkout?.id || savedResult?.workoutId || latestSelfWorkout?.id || "";
+      if (selectedWorkoutId) return;
+    }
   }
 
 
@@ -2936,7 +2950,9 @@ function initAthleteApp() {
       const statuses = selectedAthleteId ? await MangoFitnessStore.workoutStatuses() : [];
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
-      const visibleWorkouts = workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
+      const visibleWorkouts = MangoFitnessStore.client?.()
+        ? workouts
+        : workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
       const weekWorkouts = visibleWorkouts.filter((item) => {
         const workoutDate = parseLocalDate(item.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
