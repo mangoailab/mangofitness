@@ -2793,6 +2793,12 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
   `;
 }
 
+function renderLoggedResultNotes(exercise, athleteResults = [], selectedDate = "") {
+  const notes = [...new Set(exerciseLoggedResults(exercise, athleteResults, selectedDate).map((result) => result.notes).filter(Boolean))];
+  if (!notes.length) return "";
+  return `<p class="muted logged-result-note">Logged note: ${escapeHtml(notes.join(" · "))}</p>`;
+}
+
 function renderAddedSetRow(setNumber, repsPlaceholder = "reps", weightPlaceholder = "lb") {
   return `
     <div class="set-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="" data-swipe-delete-row>
@@ -3051,6 +3057,7 @@ function initAthleteApp() {
                         </div>
                         <div class="cardio-option-log-fields">
                           ${renderSetLogFields(exercise, athleteResults, date.value)}
+                          ${renderLoggedResultNotes(exercise, athleteResults, date.value)}
                           <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" value="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.notes || "")}" /></div>
                           <button type="submit" class="primary">Log result</button>
                         </div>
