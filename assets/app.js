@@ -3368,17 +3368,17 @@ function initAthleteApp() {
     const isStrength = section === "lifting";
     return `
       <section class="self-workout-piece" data-self-piece="${escapeHtml(pieceId)}" data-section="${escapeHtml(section)}">
-        <div class="item-head compact"><div><strong>${isStrength ? "Strength movement" : "Cardio / WOD"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log one time or score."}</p></div><button type="button" class="self-piece-remove" data-remove-self-piece aria-label="Remove ${isStrength ? "strength movement" : "cardio/WOD"}">×</button></div>
+        <div class="item-head compact"><div><strong>${isStrength ? "Strength movement" : "Swim / Cardio"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log swim distance, time, or score."}</p></div><button type="button" class="self-piece-remove" data-remove-self-piece aria-label="Remove ${isStrength ? "strength movement" : "swim/cardio"}">×</button></div>
         <input type="hidden" name="piece_${pieceId}_section" value="${escapeHtml(section)}" />
-        <div class="field"><label>Movement / workout</label><input name="piece_${pieceId}_exercise" type="text" placeholder="${isStrength ? "Hotel DB press" : "Row 5K or 20 min AMRAP"}" required /></div>
+        <div class="field"><label>${isStrength ? "Movement" : "Swim / cardio workout"}</label><input name="piece_${pieceId}_exercise" type="text" placeholder="${isStrength ? "Hotel DB press" : "Swim 10x100 free or 1500m"}" required /></div>
         ${isStrength ? `
           <div class="self-set-log-card">
             <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
             <div class="set-log-table" data-self-set-rows>${renderSelfWorkoutSetRow(pieceId, 1)}</div>
             <button type="button" class="set-add-button" data-add-self-set>+ Add set</button>
           </div>
-        ` : `<div class="field"><label>Time / score</label><input name="piece_${pieceId}_score" type="text" placeholder="8:15 or 6+14" /></div>`}
-        <div class="field"><label>Notes</label><input name="piece_${pieceId}_notes" type="text" placeholder="How it felt, scaling, location" /></div>
+        ` : `<div class="field"><label>Time / score</label><input name="piece_${pieceId}_score" type="text" placeholder="24:30, 1:35/100m, or 6+14" /></div>`}
+        <div class="field"><label>Notes</label><input name="piece_${pieceId}_notes" type="text" placeholder="${isStrength ? "How it felt, scaling, location" : "Stroke, pool length, splits, location"}" /></div>
       </section>
     `;
   };
@@ -3487,7 +3487,7 @@ function initAthleteApp() {
       return entry;
     }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
-      if (!pieces.length) throw new Error("Add at least one strength movement or cardio/WOD piece.");
+      if (!pieces.length) throw new Error("Add at least one strength movement or swim/cardio piece.");
       await MangoFitnessStore.saveAthleteSelfWorkout({
         completedOn: date.value || todayISO(),
         title: data.get("title"),
