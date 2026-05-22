@@ -60,7 +60,7 @@
 ## Athlete cardio option UI
 
 - When a workout has multiple cardio options, the athlete UI should be choose-first: show compact option cards with Choose/Selected buttons, expand only the selected option's logging fields, and keep any already-logged option selected when returning.
-- Athlete-created cardio logging should explicitly include swim language because some athletes are swimmers. Keep it in the cardio data section, but label the self-log piece as Swim / Cardio and use swim examples for distance, pace, stroke, pool length, and splits.
+- Athlete-created cardio logging should explicitly include swim language because some athletes are swimmers. Keep swim/endurance pieces in the cardio data section, but the self-log form must let the athlete choose Swim, Cardio/endurance, or WOD and show fields that fit that type: swim distance/stroke/pool/pace, cardio modality/distance/score, or WOD format/result.
 
 ## Split time mobile entry
 

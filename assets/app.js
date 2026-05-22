@@ -1458,6 +1458,7 @@ function initCoachApp() {
   const sectionLabels = {
     warmup: "Warm-up",
     lifting: "Weightlifting / Strength",
+    wod: "WOD",
     cardio: "Cardio / WOD",
     partner: "Partner WOD"
   };
@@ -1467,7 +1468,8 @@ function initCoachApp() {
   }
 
   function addExerciseRow(section = "cardio", values = {}) {
-    const rows = rowsForSection(section);
+    const rows = rowsForSection(section) || rowsForSection("cardio");
+    section = rows?.dataset.exerciseRows || "cardio";
     if (!rows) return;
     const row = document.createElement("div");
     row.className = "exercise-row exercise-table-row";
@@ -2205,7 +2207,7 @@ function initCoachApp() {
 }
 
 function workoutSectionGroups(exercises) {
-  const labels = { warmup: "Warm-up", lifting: "Weightlifting / Strength", cardio: "Cardio / WOD", partner: "Partner WOD" };
+  const labels = { warmup: "Warm-up", lifting: "Weightlifting / Strength", wod: "WOD", cardio: "Cardio / WOD", partner: "Partner WOD" };
   return Object.keys(labels).map((section) => ({
     section,
     label: labels[section],
@@ -3363,22 +3365,83 @@ function initAthleteApp() {
       <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
     </div>
   `;
+  const selfWorkoutTypeLabels = {
+    swim: "Swim",
+    cardio: "Cardio",
+    wod: "WOD"
+  };
+  const compactParts = (parts) => parts.map((part) => String(part || "").trim()).filter(Boolean);
+  const prefixedParts = (items) => items
+    .filter((item) => String(item.value || "").trim())
+    .map((item) => `${item.label}: ${String(item.value).trim()}`);
+  const updateSelfWorkoutTypeView = (piece) => {
+    if (!piece || (piece.dataset.section || "") === "lifting") return;
+    const type = piece.querySelector("[data-self-workout-type]")?.value || "swim";
+    piece.dataset.selfWorkoutType = type;
+    piece.querySelectorAll("[data-self-type-panel]").forEach((panel) => {
+      panel.classList.toggle("hidden", panel.dataset.selfTypePanel !== type);
+    });
+    const title = piece.querySelector("[data-self-cardio-title]");
+    const subtitle = piece.querySelector("[data-self-cardio-subtitle]");
+    if (title) title.textContent = selfWorkoutTypeLabels[type] || "Cardio";
+    if (subtitle) {
+      subtitle.textContent = type === "swim"
+        ? "Log distance, stroke, pool length, and time."
+        : type === "wod"
+          ? "Log the WOD format and final result."
+          : "Log modality, distance, and result.";
+    }
+  };
   const renderSelfWorkoutPiece = (section = "lifting") => {
     const pieceId = uid("self-piece");
     const isStrength = section === "lifting";
     return `
-      <section class="self-workout-piece" data-self-piece="${escapeHtml(pieceId)}" data-section="${escapeHtml(section)}">
-        <div class="item-head compact"><div><strong>${isStrength ? "Strength movement" : "Swim / Cardio"}</strong><p class="muted">${isStrength ? "Log sets, reps, and weight." : "Log swim distance, time, or score."}</p></div><button type="button" class="self-piece-remove" data-remove-self-piece aria-label="Remove ${isStrength ? "strength movement" : "swim/cardio"}">×</button></div>
+      <section class="self-workout-piece" data-self-piece="${escapeHtml(pieceId)}" data-section="${escapeHtml(section)}"${isStrength ? "" : ' data-self-workout-type="swim"'}>
+        <div class="item-head compact"><div><strong ${isStrength ? "" : "data-self-cardio-title"}>${isStrength ? "Strength movement" : "Swim"}</strong><p class="muted"${isStrength ? "" : " data-self-cardio-subtitle"}>${isStrength ? "Log sets, reps, and weight." : "Log distance, stroke, pool length, and time."}</p></div><button type="button" class="self-piece-remove" data-remove-self-piece aria-label="Remove ${isStrength ? "strength movement" : "workout piece"}">×</button></div>
         <input type="hidden" name="piece_${pieceId}_section" value="${escapeHtml(section)}" />
-        <div class="field"><label>${isStrength ? "Movement" : "Swim / cardio workout"}</label><input name="piece_${pieceId}_exercise" type="text" placeholder="${isStrength ? "Hotel DB press" : "Swim 10x100 free or 1500m"}" required /></div>
+        ${isStrength ? `<div class="field"><label>Movement</label><input name="piece_${pieceId}_exercise" type="text" placeholder="Hotel DB press" required /></div>` : `
+          <div class="field">
+            <label>Workout type</label>
+            <select name="piece_${pieceId}_type" data-self-workout-type>
+              <option value="swim">Swim</option>
+              <option value="cardio">Cardio / endurance</option>
+              <option value="wod">WOD</option>
+            </select>
+          </div>
+          <div class="self-type-panel" data-self-type-panel="swim">
+            <div class="field"><label>Swim workout</label><input name="piece_${pieceId}_swim_workout" type="text" placeholder="10x100 free, 1500m, or main set" /></div>
+            <div class="field-grid two">
+              <div class="field"><label>Distance</label><input name="piece_${pieceId}_swim_distance" type="text" placeholder="1500m or 10x100" /></div>
+              <div class="field"><label>Time</label><input name="piece_${pieceId}_swim_time" type="text" placeholder="24:30" /></div>
+            </div>
+            <div class="field-grid two">
+              <div class="field"><label>Stroke</label><input name="piece_${pieceId}_swim_stroke" type="text" placeholder="Free, breast, IM" /></div>
+              <div class="field"><label>Pool</label><input name="piece_${pieceId}_swim_pool" type="text" placeholder="25 yd, 25 m, 50 m" /></div>
+            </div>
+            <div class="field"><label>Pace / splits</label><input name="piece_${pieceId}_swim_pace" type="text" placeholder="1:35/100m or descending 100s" /></div>
+          </div>
+          <div class="self-type-panel hidden" data-self-type-panel="cardio">
+            <div class="field-grid two">
+              <div class="field"><label>Modality</label><input name="piece_${pieceId}_cardio_modality" type="text" placeholder="Run, row, bike, ski" /></div>
+              <div class="field"><label>Distance / work</label><input name="piece_${pieceId}_cardio_distance" type="text" placeholder="1 mile, 4K, 20 min" /></div>
+            </div>
+            <div class="field"><label>Workout</label><input name="piece_${pieceId}_cardio_workout" type="text" placeholder="Easy run, intervals, tempo row" /></div>
+            <div class="field"><label>Time / score</label><input name="piece_${pieceId}_cardio_score" type="text" placeholder="7:42, 28:15, or 220 cal" /></div>
+          </div>
+          <div class="self-type-panel hidden" data-self-type-panel="wod">
+            <div class="field"><label>WOD name</label><input name="piece_${pieceId}_wod_name" type="text" placeholder="Cindy, Fran, custom WOD" /></div>
+            <div class="field"><label>Format</label><input name="piece_${pieceId}_wod_format" type="text" placeholder="20 min AMRAP, 5 rounds for time" /></div>
+            <div class="field"><label>Result</label><input name="piece_${pieceId}_wod_score" type="text" placeholder="12+8, 18:42, or 155 reps" /></div>
+          </div>
+        `}
         ${isStrength ? `
           <div class="self-set-log-card">
             <div class="set-log-head"><span>Set</span><span>Reps</span><span>Weight</span></div>
             <div class="set-log-table" data-self-set-rows>${renderSelfWorkoutSetRow(pieceId, 1)}</div>
             <button type="button" class="set-add-button" data-add-self-set>+ Add set</button>
           </div>
-        ` : `<div class="field"><label>Time / score</label><input name="piece_${pieceId}_score" type="text" placeholder="24:30, 1:35/100m, or 6+14" /></div>`}
-        <div class="field"><label>Notes</label><input name="piece_${pieceId}_notes" type="text" placeholder="${isStrength ? "How it felt, scaling, location" : "Stroke, pool length, splits, location"}" /></div>
+        ` : ""}
+        <div class="field"><label>Notes</label><input name="piece_${pieceId}_notes" type="text" placeholder="${isStrength ? "How it felt, scaling, location" : "How it felt, scaling, location"}" /></div>
       </section>
     `;
   };
@@ -3404,6 +3467,7 @@ function initAthleteApp() {
   });
   const addSelfWorkoutPiece = (section) => {
     selfWorkoutPieces?.insertAdjacentHTML("beforeend", renderSelfWorkoutPiece(section));
+    updateSelfWorkoutTypeView(selfWorkoutPieces?.lastElementChild);
     updateSelfWorkoutEmptyHint();
   };
   addSelfStrengthPieceBtn?.addEventListener("click", () => addSelfWorkoutPiece("lifting"));
@@ -3456,6 +3520,10 @@ function initAthleteApp() {
     const nextSet = Math.max(0, ...[...rows.querySelectorAll(".self-set-row")].map((row) => Number(row.dataset.setNumber || 0))) + 1;
     rows.insertAdjacentHTML("beforeend", renderSelfWorkoutSetRow(pieceId, nextSet));
   });
+  selfWorkoutPieces?.addEventListener("change", (event) => {
+    if (!event.target.closest("[data-self-workout-type]")) return;
+    updateSelfWorkoutTypeView(event.target.closest("[data-self-piece]"));
+  });
   selfWorkoutForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(selfWorkoutForm);
@@ -3476,18 +3544,55 @@ function initAthleteApp() {
       const entry = {
         section,
         exerciseName: data.get(`piece_${pieceId}_exercise`) || "",
-        score: section === "lifting" ? "" : data.get(`piece_${pieceId}_score`) || "",
+        score: "",
         sets: section === "lifting" ? sets : null,
         notes: data.get(`piece_${pieceId}_notes`) || ""
       };
+      if (section !== "lifting") {
+        const type = String(data.get(`piece_${pieceId}_type`) || "swim");
+        if (type === "wod") {
+          const wodName = data.get(`piece_${pieceId}_wod_name`) || "";
+          const format = data.get(`piece_${pieceId}_wod_format`) || "";
+          entry.section = "wod";
+          entry.exerciseName = compactParts([wodName, format]).join(" - ") || "WOD";
+          entry.score = data.get(`piece_${pieceId}_wod_score`) || "";
+          entry.notes = compactParts([entry.notes, ...prefixedParts([{ label: "Format", value: format }])]).join(" | ");
+        } else if (type === "cardio") {
+          const modality = data.get(`piece_${pieceId}_cardio_modality`) || "";
+          const distance = data.get(`piece_${pieceId}_cardio_distance`) || "";
+          const workout = data.get(`piece_${pieceId}_cardio_workout`) || "";
+          entry.exerciseName = compactParts([modality, distance, workout]).join(" - ") || "Cardio";
+          entry.score = data.get(`piece_${pieceId}_cardio_score`) || "";
+          entry.notes = compactParts([entry.notes, ...prefixedParts([
+            { label: "Modality", value: modality },
+            { label: "Work", value: distance },
+            { label: "Workout", value: workout }
+          ])]).join(" | ");
+        } else {
+          const workout = data.get(`piece_${pieceId}_swim_workout`) || "";
+          const distance = data.get(`piece_${pieceId}_swim_distance`) || "";
+          const time = data.get(`piece_${pieceId}_swim_time`) || "";
+          const stroke = data.get(`piece_${pieceId}_swim_stroke`) || "";
+          const pool = data.get(`piece_${pieceId}_swim_pool`) || "";
+          const pace = data.get(`piece_${pieceId}_swim_pace`) || "";
+          entry.exerciseName = compactParts(["Swim", workout || distance]).join(" - ") || "Swim";
+          entry.score = time || pace;
+          entry.notes = compactParts([entry.notes, ...prefixedParts([
+            { label: "Distance", value: distance },
+            { label: "Stroke", value: stroke },
+            { label: "Pool", value: pool },
+            { label: "Pace/splits", value: pace }
+          ])]).join(" | ");
+        }
+      }
       const bestSet = sets.reduce((best, set) => numericWeight(set.weight) > numericWeight(best?.weight) ? set : best, null);
-      entry.isPr = section === "lifting"
+      entry.isPr = entry.section === "lifting"
         ? autoPrCandidate({ exerciseName: entry.exerciseName, weight: bestSet?.weight }, priorResults)
         : autoPrCandidate(entry, priorResults);
       return entry;
     }).filter((piece) => piece.exerciseName && (piece.section === "lifting" ? piece.sets?.length : piece.score));
     try {
-      if (!pieces.length) throw new Error("Add at least one strength movement or swim/cardio piece.");
+      if (!pieces.length) throw new Error("Add at least one strength, swim, cardio, or WOD piece with a result.");
       await MangoFitnessStore.saveAthleteSelfWorkout({
         completedOn: date.value || todayISO(),
         title: data.get("title"),

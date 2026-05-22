@@ -2953,11 +2953,23 @@ body.is-reordering .exercise-row.dragging {
   padding: 12px;
   position: relative;
 }
+.self-type-panel {
+  display: grid;
+  gap: 12px;
+}
+.field-grid {
+  display: grid;
+  gap: 12px;
+}
+.field-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .self-piece-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 @media (max-width: 560px) {
+  .field-grid.two,
   .self-piece-actions {
     grid-template-columns: 1fr;
   }
