@@ -19,14 +19,18 @@ const MangoFitnessStore = (() => {
     localStorage.setItem(key, JSON.stringify(value));
   }
 
+  function normalizeLineBreaks(value) {
+    return (value || "").replace(/\\n/g, "\n");
+  }
+
   function normalizeWorkout(row) {
     return {
       id: row.id,
       date: row.workout_date,
       title: row.title,
-      notes: row.notes || "",
-      warmupNotes: row.warmup_notes || row.warmupNotes || "",
-      cardioNotes: row.cardio_notes || row.cardioNotes || "",
+      notes: normalizeLineBreaks(row.notes),
+      warmupNotes: normalizeLineBreaks(row.warmup_notes || row.warmupNotes),
+      cardioNotes: normalizeLineBreaks(row.cardio_notes || row.cardioNotes),
       format: row.workout_format || row.format || "Strength",
       rounds: row.rounds || "",
       scoreType: row.score_type || "",
@@ -46,7 +50,7 @@ const MangoFitnessStore = (() => {
         movementKey: exercise.movement_key || exercise.movementKey || "",
         movementName: exercise.movement_name || exercise.movementName || "",
         section: exercise.section_type || exercise.section || "cardio",
-        notes: exercise.notes || ""
+        notes: normalizeLineBreaks(exercise.notes)
       }))
     };
   }
@@ -2915,7 +2919,8 @@ function initAthleteApp() {
       selectedWorkoutId = workout?.id || "";
 
       if (weekLabel) weekLabel.textContent = `Week of ${shortDate(weekStart)} – ${shortDate(weekEnd)}`;
-      renderWeekPicker(visibleWorkouts);
+      weekPickerWorkouts = visibleWorkouts;
+      renderWeekPicker(weekPickerWorkouts);
       if (workoutCount) workoutCount.textContent = `${weekWorkouts.length} workout${weekWorkouts.length === 1 ? "" : "s"}`;
       if (scheduleView) {
         const workoutsByDate = weekWorkouts.reduce((map, item) => {
