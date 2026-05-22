@@ -2213,6 +2213,25 @@ function workoutSectionGroups(exercises) {
   })).filter((group) => group.exercises.length);
 }
 
+function renderOwnCardioLogForm(workout) {
+  return `
+    <form class="own-cardio-log-form" data-own-cardio-log-form data-program-title="${escapeHtml(workout.title || "Program workout")}">
+      <div class="cardio-option-head">
+        <div>
+          <strong>Log own cardio</strong>
+          <p class="muted">For swim, run, bike, or another cardio option.</p>
+        </div>
+      </div>
+      <div class="cardio-option-log-fields">
+        <div class="field"><label>Workout</label><input name="exerciseName" type="text" placeholder="Swim intervals, 4K row, 1 mile run" required /></div>
+        <div class="field cardio-score-field"><label>Time / score</label><input name="score" type="text" placeholder="28:15, 1200m, or 8 rounds" required /></div>
+        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="Stroke, distance, scaling, or how it felt" /></div>
+        <button type="submit" class="primary">Save own cardio</button>
+      </div>
+    </form>
+  `;
+}
+
 function prescribedSetCount(exercise) {
   const match = String(exercise.sets || "").match(/\d+/);
   const count = match ? Number(match[0]) : 1;
@@ -3013,6 +3032,7 @@ function initAthleteApp() {
                       </form>
                     `;
                     }).join("")}
+                    ${group.section === "cardio" ? renderOwnCardioLogForm(workout) : ""}
                     ${group.section === "partner" && group.exercises[0] ? `
                       <form class="result-form partner-score-form" data-workout-id="${workout.id}" data-exercise-id="${group.exercises[0].id}" data-exercise-name="Partner WOD">
                         <div>
@@ -3090,6 +3110,43 @@ function initAthleteApp() {
             }
             await renderAthlete();
           } catch (error) {
+            view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
+          }
+        });
+      });
+
+      view.querySelectorAll("[data-own-cardio-log-form]").forEach((form) => {
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const submitButton = form.querySelector('button[type="submit"]');
+          const data = new FormData(form);
+          const exerciseName = String(data.get("exerciseName") || "").trim();
+          const score = String(data.get("score") || "").trim();
+          const notes = String(data.get("notes") || "").trim();
+          if (!exerciseName || !score) {
+            view.insertAdjacentHTML("afterbegin", `<p class="error-text">Enter the cardio workout and time or score.</p>`);
+            return;
+          }
+          try {
+            if (submitButton) submitButton.textContent = "Saving...";
+            const priorResults = signedInAthleteId ? (await MangoFitnessStore.results()).filter((result) => result.athleteId === signedInAthleteId) : [];
+            const entry = {
+              completedOn: date.value || todayISO(),
+              title: `${form.dataset.programTitle || "Program workout"} - own cardio`,
+              exerciseName,
+              section: "cardio",
+              score,
+              weight: null,
+              reps: "",
+              notes,
+              isPr: autoPrCandidate({ exerciseName, score, notes }, priorResults)
+            };
+            await MangoFitnessStore.saveAthleteSelfWorkout(entry);
+            form.reset();
+            if (submitButton) submitButton.textContent = "Saved";
+            await renderAthlete();
+          } catch (error) {
+            if (submitButton) submitButton.textContent = "Save own cardio";
             view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
           }
         });
