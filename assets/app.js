@@ -2889,46 +2889,6 @@ function initAthleteApp() {
     }
   }
 
-  async function ensureSavedSelfWorkoutNotes(savedResultId, entry) {
-    const pieces = (entry.pieces?.length ? entry.pieces : [entry])
-      .map((piece) => ({ ...piece, notes: String(piece.notes || "").trim() }))
-      .filter((piece) => piece.notes);
-    if (!pieces.length) return;
-
-    const targetDate = entry.completedOn || date.value || todayISO();
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      if (attempt) await sleep(300);
-      const [results, workouts] = await Promise.all([
-        MangoFitnessStore.results(),
-        MangoFitnessStore.workouts()
-      ]);
-      const savedResult = results.find((result) => result.id === savedResultId);
-      const savedWorkoutId = savedResult?.workoutId || (workouts.some((workout) => workout.id === savedResultId) ? savedResultId : "");
-      const latestSelfWorkout = savedWorkoutId ? null : workouts
-        .filter((workout) => workout.date === targetDate && workout.isAthleteCreated)
-        .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0];
-      const workoutId = savedWorkoutId || latestSelfWorkout?.id || "";
-      if (!workoutId) continue;
-
-      const workoutResults = results.filter((result) => result.workoutId === workoutId && result.completedOn === targetDate);
-      if (!workoutResults.length) continue;
-
-      await Promise.all(pieces.map(async (piece) => {
-        const matchingResults = workoutResults.filter((result) => result.exerciseName === piece.exerciseName);
-        if (!matchingResults.length) return;
-        await Promise.all(matchingResults.map((result) => {
-          if (String(result.notes || "").trim() === piece.notes) return null;
-          return MangoFitnessStore.saveResult({
-            ...result,
-            notes: piece.notes,
-            isPr: Boolean(result.isPr)
-          });
-        }));
-      }));
-      return;
-    }
-  }
-
 
   function renderWeekPicker(visibleWorkouts) {
     if (!weekPicker) return;
@@ -3220,7 +3180,6 @@ function initAthleteApp() {
               isPr: autoPrCandidate({ exerciseName, score, notes }, priorResults)
             };
             const savedResultId = await MangoFitnessStore.saveAthleteSelfWorkout(entry);
-            await ensureSavedSelfWorkoutNotes(savedResultId, entry);
             await selectSavedSelfWorkout(savedResultId);
             form.reset();
             if (submitButton) submitButton.textContent = "Saved";
@@ -3682,10 +3641,6 @@ function initAthleteApp() {
         sets: pieces[0]?.sets || null,
         notes: pieces[0]?.notes || "",
         isPr: Boolean(pieces[0]?.isPr),
-        pieces
-      });
-      await ensureSavedSelfWorkoutNotes(savedResultId, {
-        completedOn: date.value || todayISO(),
         pieces
       });
       await selectSavedSelfWorkout(savedResultId);
