@@ -2236,6 +2236,22 @@ function renderOwnCardioLogForm(workout) {
   `;
 }
 
+function renderPartnerScoreForm(workout, exercise, athleteResults = [], selectedDate = "") {
+  const logged = exerciseLoggedResults(exercise, athleteResults, selectedDate)[0] || null;
+  return `
+    <form class="result-form partner-score-form" data-workout-id="${escapeHtml(workout.id)}" data-exercise-id="${escapeHtml(exercise.id)}" data-exercise-name="${escapeHtml(exercise.name)}" data-existing-result-id="${escapeHtml(logged?.id || "")}">
+      <div>
+        <strong>Team result</strong>
+        <p class="muted">Log one final team time or score for the Partner WOD.</p>
+      </div>
+      <div class="field cardio-score-field"><label>Team time / score</label><input name="score" type="text" placeholder="18:42 or 6+14" value="${escapeHtml(logged?.score || "")}" /></div>
+      ${renderLoggedResultNotes(exercise, athleteResults, selectedDate)}
+      <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="Partner, scaling, or how it felt" value="${escapeHtml(logged?.notes || "")}" /></div>
+      <button type="submit" class="primary">Log team result</button>
+    </form>
+  `;
+}
+
 function prescribedSetCount(exercise) {
   const match = String(exercise.sets || "").match(/\d+/);
   const count = match ? Number(match[0]) : 1;
@@ -3105,17 +3121,7 @@ function initAthleteApp() {
                     `;
                     }).join("")}
                     ${group.section === "cardio" ? renderOwnCardioLogForm(workout) : ""}
-                    ${group.section === "partner" && group.exercises[0] ? `
-                      <form class="result-form partner-score-form" data-workout-id="${workout.id}" data-exercise-id="${group.exercises[0].id}" data-exercise-name="Partner WOD">
-                        <div>
-                          <strong>Team result</strong>
-                          <p class="muted">Log one final team time or score for the Partner WOD.</p>
-                        </div>
-                        <div class="field cardio-score-field"><label>Team time / score</label><input name="score" type="text" placeholder="18:42 or 6+14" /></div>
-                        <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="Partner, scaling, or how it felt" /></div>
-                        <button type="submit" class="primary">Log team result</button>
-                      </form>
-                    ` : ""}
+                    ${group.section === "partner" && group.exercises[0] ? renderPartnerScoreForm(workout, group.exercises[0], athleteResults, date.value) : ""}
                   </div>
                 </section>
               `).join("")}

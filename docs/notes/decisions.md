@@ -63,6 +63,7 @@
 - Athlete-created cardio logging should explicitly include swim language because some athletes are swimmers. Keep swim/endurance pieces in the cardio data section, but the self-log form must let the athlete choose Swim, Cardio/endurance, or WOD and show fields that fit that type: swim distance/stroke/pool/pace, cardio modality/distance/score, or WOD format/result.
 - After an athlete saves a self-created workout or "own cardio" log, the athlete page should select the newly created workout before refreshing so the saved entry remains visible instead of returning to the prior program card.
 - Self-created workout notes must be verified after the `save_athlete_self_workout` RPC returns. The client should re-read the saved result and repair missing notes through the normal result-save path so an RPC/schema mismatch cannot silently drop athlete notes.
+- Partner WOD team-result forms must reload their existing result id, score, and notes after save. Without that, autosave creates data but the rerendered partner form looks blank and later edits can insert duplicates instead of updating the original row.
 
 ## Split time mobile entry
 
