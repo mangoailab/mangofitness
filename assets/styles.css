@@ -186,6 +186,12 @@ input:focus, textarea:focus, select:focus {
   outline:3px solid rgba(34,197,94,.20);
   border-color:var(--accent);
 }
+textarea[data-auto-expand-notes] {
+  min-height: 46px;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.35;
+}
 button {
   border:1px solid var(--line);
   background:white;

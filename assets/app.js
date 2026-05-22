@@ -2236,6 +2236,10 @@ function renderOwnCardioLogForm(workout) {
   `;
 }
 
+function renderResultNotesField(value = "", placeholder = "How it felt") {
+  return `<div class="field"><label>Notes</label><textarea name="notes" rows="2" data-auto-expand-notes placeholder="${escapeHtml(placeholder)}">${escapeHtml(value || "")}</textarea></div>`;
+}
+
 function renderPartnerScoreForm(workout, exercise, athleteResults = [], selectedDate = "") {
   const logged = exerciseLoggedResults(exercise, athleteResults, selectedDate)[0] || null;
   return `
@@ -2245,8 +2249,7 @@ function renderPartnerScoreForm(workout, exercise, athleteResults = [], selected
         <p class="muted">Log one final team time or score for the Partner WOD.</p>
       </div>
       <div class="field cardio-score-field"><label>Team time / score</label><input name="score" type="text" placeholder="18:42 or 6+14" value="${escapeHtml(logged?.score || "")}" /></div>
-      ${renderLoggedResultNotes(exercise, athleteResults, selectedDate)}
-      <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="Partner, scaling, or how it felt" value="${escapeHtml(logged?.notes || "")}" /></div>
+      ${renderResultNotesField(logged?.notes || "", "Partner, scaling, or how it felt")}
       <button type="submit" class="primary">Log team result</button>
     </form>
   `;
@@ -2809,12 +2812,6 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
   `;
 }
 
-function renderLoggedResultNotes(exercise, athleteResults = [], selectedDate = "") {
-  const notes = [...new Set(exerciseLoggedResults(exercise, athleteResults, selectedDate).map((result) => result.notes).filter(Boolean))];
-  if (!notes.length) return "";
-  return `<p class="muted logged-result-note">Logged note: ${escapeHtml(notes.join(" · "))}</p>`;
-}
-
 function renderAddedSetRow(setNumber, repsPlaceholder = "reps", weightPlaceholder = "lb") {
   return `
     <div class="set-log-row" data-set-number="${escapeHtml(setNumber)}" data-existing-result-id="" data-swipe-delete-row>
@@ -2826,6 +2823,12 @@ function renderAddedSetRow(setNumber, repsPlaceholder = "reps", weightPlaceholde
       <span class="set-swipe-delete-label" aria-hidden="true">Delete</span>
     </div>
   `;
+}
+
+function autoExpandNoteField(field) {
+  if (!field) return;
+  field.style.height = "auto";
+  field.style.height = `${field.scrollHeight}px`;
 }
 
 function initAthleteTabs() {
@@ -3073,8 +3076,7 @@ function initAthleteApp() {
                         </div>
                         <div class="cardio-option-log-fields">
                           ${renderSetLogFields(exercise, athleteResults, date.value)}
-                          ${renderLoggedResultNotes(exercise, athleteResults, date.value)}
-                          <div class="field"><label>Notes</label><input name="notes" type="text" placeholder="How it felt" value="${escapeHtml(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.notes || "")}" /></div>
+                          ${renderResultNotesField(exerciseLoggedResults(exercise, athleteResults, date.value)[0]?.notes || "")}
                           <button type="submit" class="primary">Log result</button>
                         </div>
                       </form>
@@ -3128,6 +3130,11 @@ function initAthleteApp() {
             view.insertAdjacentHTML("afterbegin", `<p class="error-text">${escapeHtml(friendlyError(error))}</p>`);
           }
         });
+      });
+
+      view.querySelectorAll("[data-auto-expand-notes]").forEach((field) => {
+        autoExpandNoteField(field);
+        field.addEventListener("input", () => autoExpandNoteField(field));
       });
 
       view.querySelectorAll("[data-workout-status-form]").forEach((form) => {
