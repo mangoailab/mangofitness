@@ -2046,43 +2046,26 @@ body.is-reordering .exercise-row.dragging {
     z-index: 20;
     top: 26px;
     left: 6px;
-    display: inline-grid;
-    gap: 6px;
+    right: 6px;
+    display: grid;
+    gap: 5px;
     border: 1px solid rgba(15, 122, 59, .22);
-    border-radius: 12px;
+    border-radius: 10px;
     background: white;
-    padding: 7px;
+    padding: 8px;
     box-shadow: 0 14px 28px rgba(15, 23, 42, .16);
   }
   .coach-month-action-menu strong {
     color: var(--accent-dark);
     font-size: 10px;
     line-height: 1.2;
-    text-align: center;
-    white-space: nowrap;
   }
-  .coach-month-action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .coach-month-action-menu .coach-month-icon-button {
-    display: inline-grid;
-    place-items: center;
-    width: 30px;
-    height: 30px;
-    min-height: 0;
-    padding: 0;
-    border-radius: 8px;
-  }
-  .coach-month-action-menu .coach-month-icon-button svg {
-    width: 17px;
-    height: 17px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  .coach-month-action-menu button {
+    min-height: 28px;
+    padding: 5px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    line-height: 1.1;
   }
   .coach-month-action-menu button:disabled {
     opacity: .45;

@@ -1970,35 +1970,15 @@ function initCoachApp() {
     `;
   }
 
-  function coachMonthActionIcon(action) {
-    if (action === "copy") {
-      return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="10" height="12" rx="2"></rect><path d="M6 16H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-    }
-    if (action === "move") {
-      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"></path><path d="m8 7 4-4 4 4"></path><path d="m8 17 4 4 4-4"></path><path d="M3 12h18"></path><path d="m7 8-4 4 4 4"></path><path d="m17 8 4 4-4 4"></path></svg>`;
-    }
-    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2Z"></path><path d="M9 4V2h6v2"></path><path d="M9 12h6"></path><path d="M9 16h6"></path></svg>`;
-  }
-
-  function coachMonthActionButton(action, label, dayIso, disabled = false, title = "") {
-    return `
-      <button type="button" class="coach-month-icon-button" data-coach-month-action="${action}" data-coach-month-action-date="${escapeHtml(dayIso)}"${disabled ? " disabled" : ""} aria-label="${escapeHtml(label)}" title="${escapeHtml(title || label)}">
-        ${coachMonthActionIcon(action)}
-      </button>
-    `;
-  }
-
   function renderCoachMonthActionMenu(dayIso, dayWorkouts) {
     const hasPrograms = dayWorkouts.length > 0;
     const clipboardLabel = coachMonthClipboard ? `${coachMonthClipboard.mode === "move" ? "Move" : "Copy"} ${coachMonthClipboard.workouts.length} from ${shortDate(parseLocalDate(coachMonthClipboard.sourceDate))}` : "";
     return `
       <div class="coach-month-action-menu" data-coach-month-action-menu="${escapeHtml(dayIso)}">
         <strong>${escapeHtml(calendarDayLabel(parseLocalDate(dayIso)))}</strong>
-        <div class="coach-month-action-buttons">
-          ${coachMonthActionButton("copy", "Copy program", dayIso, !hasPrograms)}
-          ${coachMonthActionButton("move", "Move program", dayIso, !hasPrograms)}
-          ${coachMonthActionButton("paste", clipboardLabel ? `Paste here: ${clipboardLabel}` : "Paste here", dayIso, !coachMonthClipboard)}
-        </div>
+        <button type="button" data-coach-month-action="copy" data-coach-month-action-date="${escapeHtml(dayIso)}"${hasPrograms ? "" : " disabled"}>Copy program</button>
+        <button type="button" data-coach-month-action="move" data-coach-month-action-date="${escapeHtml(dayIso)}"${hasPrograms ? "" : " disabled"}>Move program</button>
+        <button type="button" data-coach-month-action="paste" data-coach-month-action-date="${escapeHtml(dayIso)}"${coachMonthClipboard ? "" : " disabled"}>${clipboardLabel ? `Paste here · ${escapeHtml(clipboardLabel)}` : "Paste here"}</button>
       </div>
     `;
   }
