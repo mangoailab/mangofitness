@@ -1889,6 +1889,9 @@ function initCoachApp() {
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
     workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
+    setWorkoutSectionCollapsed("warmup", !workout.warmupNotes);
+    setWorkoutSectionCollapsed("lifting", !workout.exercises.some((exercise) => (exercise.section || "cardio") === "lifting"));
+    setWorkoutSectionCollapsed("cardio", !workout.cardioNotes && !workout.exercises.some((exercise) => (exercise.section || "cardio") === "cardio"));
     showWorkoutForm(true, { inlineContainer: options.inlineContainer });
     if (!options.inlineContainer) window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
