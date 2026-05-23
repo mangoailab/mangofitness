@@ -2202,6 +2202,12 @@ function initCoachApp() {
         dayElement.addEventListener("pointerleave", clearPressTimer);
         dayElement.addEventListener("click", (event) => {
           if (event.target.closest("[data-coach-month-action-menu]")) return;
+          const openActionMenu = list.querySelector("[data-coach-month-action-menu]");
+          if (openActionMenu) {
+            openActionMenu.remove();
+            longPressed = false;
+            return;
+          }
           if (longPressed) {
             longPressed = false;
             return;
