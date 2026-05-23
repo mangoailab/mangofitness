@@ -2097,6 +2097,15 @@ body.is-reordering .exercise-row.dragging {
   .coach-month-window-card {
     box-shadow: none;
   }
+  .coach-month-window-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+  .coach-month-window-actions button {
+    min-height: 30px;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
   .coach-month-note-actions {
     flex-wrap: nowrap;
     gap: 3px;

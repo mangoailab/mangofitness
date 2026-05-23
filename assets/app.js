@@ -1940,10 +1940,15 @@ function initCoachApp() {
           </div>
           <div class="coach-month-window-body">
             ${dayWorkouts.length ? dayWorkouts.map((workout) => `
-              <article class="item-card coach-month-window-card">
+              <article class="item-card coach-month-window-card" data-program-card="${escapeHtml(workout.id)}">
                 <div class="item-head">
                   <div><strong>${escapeHtml(workout.title || "Untitled workout")}</strong><p class="muted">${escapeHtml(workoutAssignmentLabel(workout))}</p></div>
+                  <div class="actions coach-month-window-actions">
+                    <button type="button" data-edit="${escapeHtml(workout.id)}">Edit</button>
+                    <button type="button" class="danger-button" data-delete="${escapeHtml(workout.id)}">Delete</button>
+                  </div>
                 </div>
+                <div data-inline-workout-editor></div>
                 <div class="program-readonly-content">
                   ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
                   ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
@@ -2189,7 +2194,23 @@ function initCoachApp() {
           }
           list.querySelector("[data-coach-month-window]")?.remove();
           list.insertAdjacentHTML("beforeend", renderCoachMonthProgramWindow(dayIso, dayWorkouts));
-          list.querySelector("[data-close-coach-month-window]")?.addEventListener("click", () => list.querySelector("[data-coach-month-window]")?.remove());
+          const monthWindow = list.querySelector("[data-coach-month-window]");
+          monthWindow?.querySelector("[data-close-coach-month-window]")?.addEventListener("click", () => monthWindow.remove());
+          monthWindow?.querySelectorAll("[data-edit]").forEach((editButton) => editButton.addEventListener("click", () => {
+            const inlineContainer = editButton.closest("[data-program-card]")?.querySelector("[data-inline-workout-editor]");
+            editWorkout(editButton.dataset.edit, { inlineContainer }).catch((error) => setAppMessage(friendlyError(error), true));
+          }));
+          monthWindow?.querySelectorAll("[data-delete]").forEach((deleteButton) => deleteButton.addEventListener("click", async () => {
+            const workoutTitle = deleteButton.closest("[data-program-card]")?.querySelector("strong")?.textContent || "this workout";
+            if (!confirm(`Delete ${workoutTitle}? This cannot be undone.`)) return;
+            try {
+              await MangoFitnessStore.deleteWorkout(deleteButton.dataset.delete);
+              monthWindow.remove();
+              await renderCoach();
+            } catch (error) {
+              setAppMessage(friendlyError(error), true);
+            }
+          }));
         });
       });
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => {
