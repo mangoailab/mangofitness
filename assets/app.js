@@ -1301,6 +1301,8 @@ function initCoachApp() {
   let selectedCoachProgramDate = "";
   let coachWeekPickerWorkouts = [];
   let coachMonthClipboard = null;
+  let coachMonthDragState = null;
+  let suppressCoachMonthClick = false;
 
 
   function renderCoachWeekPicker(workoutsForDots) {
@@ -1983,6 +1985,70 @@ function initCoachApp() {
     `;
   }
 
+  function clearCoachMonthDragTargets() {
+    list.querySelectorAll("[data-coach-month-day].is-drop-target").forEach((item) => item.classList.remove("is-drop-target"));
+  }
+
+  function setCoachMonthDragPosition(event) {
+    if (!coachMonthDragState) return;
+    coachMonthDragState.ghost.style.transform = `translate(${event.clientX + 12}px, ${event.clientY + 12}px)`;
+    const targetDay = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-coach-month-day]");
+    clearCoachMonthDragTargets();
+    if (targetDay) {
+      targetDay.classList.add("is-drop-target");
+      coachMonthDragState.targetDate = targetDay.dataset.coachMonthDay || "";
+    } else {
+      coachMonthDragState.targetDate = "";
+    }
+  }
+
+  function clearCoachMonthDrag() {
+    coachMonthDragState?.ghost?.remove();
+    coachMonthDragState = null;
+    clearCoachMonthDragTargets();
+    document.body.classList.remove("is-moving-coach-program");
+  }
+
+  function startCoachMonthProgramDrag(event, noteElement, workout) {
+    const ghost = noteElement.cloneNode(true);
+    ghost.classList.add("coach-month-note-ghost");
+    ghost.removeAttribute("data-coach-month-draggable");
+    document.body.appendChild(ghost);
+    coachMonthDragState = {
+      sourceDate: workout.date,
+      targetDate: workout.date,
+      workout,
+      ghost
+    };
+    document.body.classList.add("is-moving-coach-program");
+    noteElement.classList.add("is-dragging");
+    list.querySelector("[data-coach-month-window]")?.remove();
+    list.querySelectorAll("[data-coach-month-action-menu]").forEach((menu) => menu.remove());
+    setCoachMonthDragPosition(event);
+  }
+
+  async function finishCoachMonthProgramDrag(event) {
+    const dragState = coachMonthDragState;
+    if (!dragState) return;
+    setCoachMonthDragPosition(event);
+    const targetDate = dragState.targetDate;
+    const sourceDate = dragState.sourceDate;
+    const workoutTitle = dragState.workout.title || "Program";
+    list.querySelectorAll(".coach-month-note.is-dragging").forEach((item) => item.classList.remove("is-dragging"));
+    clearCoachMonthDrag();
+    suppressCoachMonthClick = true;
+    setTimeout(() => { suppressCoachMonthClick = false; }, 0);
+    if (!targetDate || targetDate === sourceDate) return;
+    try {
+      await MangoFitnessStore.saveWorkout(workoutPayloadForDate(dragState.workout, targetDate, true));
+      selectedCoachProgramDate = targetDate;
+      setAppMessage(`Moved ${workoutTitle} to ${shortDate(parseLocalDate(targetDate))}.`);
+      await renderCoach();
+    } catch (error) {
+      setAppMessage(friendlyError(error), true);
+    }
+  }
+
   function renderCoachMonthStickyBoard(workouts) {
     const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
     const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
@@ -2015,7 +2081,7 @@ function initCoachApp() {
                 <div class="coach-month-day-number">${escapeHtml(String(day.getDate()))}</div>
                 <div class="coach-month-notes">
                   ${dayWorkouts.map((workout) => `
-                    <article class="coach-month-note" data-program-card="${escapeHtml(workout.id)}">
+                    <article class="coach-month-note" data-program-card="${escapeHtml(workout.id)}" data-coach-month-draggable="${escapeHtml(workout.id)}" data-coach-month-note-date="${escapeHtml(dayIso)}">
                       <strong>${escapeHtml(workout.title || "Untitled workout")}</strong>
                       <p>${escapeHtml(workoutAssignmentLabel(workout))}${workout.exercises?.length ? ` · ${workout.exercises.length} items` : ""}</p>
                     </article>
@@ -2180,6 +2246,7 @@ function initCoachApp() {
           }
         };
         dayElement.addEventListener("pointerdown", (event) => {
+          if (event.target.closest("[data-coach-month-draggable]")) return;
           if (event.target.closest("[data-coach-month-action-menu]")) return;
           longPressed = false;
           clearPressTimer();
@@ -2201,6 +2268,10 @@ function initCoachApp() {
         dayElement.addEventListener("pointerup", clearPressTimer);
         dayElement.addEventListener("pointerleave", clearPressTimer);
         dayElement.addEventListener("click", (event) => {
+          if (suppressCoachMonthClick) {
+            event.preventDefault();
+            return;
+          }
           if (event.target.closest("[data-coach-month-action-menu]")) return;
           const openActionMenu = list.querySelector("[data-coach-month-action-menu]");
           if (openActionMenu) {
@@ -2234,6 +2305,62 @@ function initCoachApp() {
               setAppMessage(friendlyError(error), true);
             }
           }));
+        });
+      });
+      list.querySelectorAll("[data-coach-month-draggable]").forEach((noteElement) => {
+        const workout = matchingWorkouts.find((item) => item.id === noteElement.dataset.coachMonthDraggable);
+        if (!workout) return;
+        let dragTimer = null;
+        let started = false;
+        const clearDragTimer = () => {
+          if (dragTimer) clearTimeout(dragTimer);
+          dragTimer = null;
+        };
+        const stopDragListeners = () => {
+          window.removeEventListener("pointermove", handlePointerMove);
+          window.removeEventListener("pointerup", handlePointerUp);
+          window.removeEventListener("pointercancel", handlePointerCancel);
+        };
+        const handlePointerMove = (moveEvent) => {
+          if (!started || !coachMonthDragState) return;
+          moveEvent.preventDefault();
+          setCoachMonthDragPosition(moveEvent);
+        };
+        const handlePointerUp = (upEvent) => {
+          clearDragTimer();
+          stopDragListeners();
+          noteElement.classList.remove("is-dragging");
+          if (started) {
+            upEvent.preventDefault();
+            finishCoachMonthProgramDrag(upEvent);
+          }
+          started = false;
+        };
+        const handlePointerCancel = () => {
+          clearDragTimer();
+          stopDragListeners();
+          noteElement.classList.remove("is-dragging");
+          clearCoachMonthDrag();
+          started = false;
+        };
+        noteElement.addEventListener("pointerdown", (event) => {
+          if (event.button !== undefined && event.button !== 0) return;
+          event.stopPropagation();
+          clearDragTimer();
+          started = false;
+          window.addEventListener("pointermove", handlePointerMove, { passive: false });
+          window.addEventListener("pointerup", handlePointerUp);
+          window.addEventListener("pointercancel", handlePointerCancel);
+          dragTimer = setTimeout(() => {
+            started = true;
+            startCoachMonthProgramDrag(event, noteElement, workout);
+          }, 420);
+        });
+        noteElement.addEventListener("click", (event) => {
+          if (suppressCoachMonthClick) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
         });
       });
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => {
