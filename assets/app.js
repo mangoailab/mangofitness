@@ -532,6 +532,18 @@ const MangoFitnessStore = (() => {
       return workoutId;
     },
 
+    async moveWorkoutDate(id, date) {
+      const sb = client();
+      if (!sb) {
+        const workouts = readLocal(localWorkoutKey).map((item) => item.id === id ? { ...item, date } : item);
+        writeLocal(localWorkoutKey, workouts.sort((a, b) => a.date.localeCompare(b.date)));
+        return;
+      }
+
+      const { error } = await sb.from("workouts").update({ workout_date: date }).eq("id", id);
+      if (error) throw error;
+    },
+
     async deleteWorkout(id) {
       const sb = client();
       if (!sb) {
@@ -1992,11 +2004,13 @@ function initCoachApp() {
   function setCoachMonthDragPosition(event) {
     if (!coachMonthDragState) return;
     const ghostRect = coachMonthDragState.ghost.getBoundingClientRect();
+    const offsetX = coachMonthDragState.offsetX ?? ghostRect.width / 2;
+    const offsetY = coachMonthDragState.offsetY ?? ghostRect.height / 2;
     const margin = 8;
     const maxX = Math.max(margin, window.innerWidth - ghostRect.width - margin);
     const maxY = Math.max(margin, window.innerHeight - ghostRect.height - margin);
-    const x = Math.min(Math.max(event.clientX - (ghostRect.width / 2), margin), maxX);
-    const y = Math.min(Math.max(event.clientY + 12, margin), maxY);
+    const x = Math.min(Math.max(event.clientX - offsetX, margin), maxX);
+    const y = Math.min(Math.max(event.clientY - offsetY, margin), maxY);
     coachMonthDragState.ghost.style.transform = `translate(${x}px, ${y}px)`;
     const targetDay = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-coach-month-day]");
     clearCoachMonthDragTargets();
@@ -2019,6 +2033,8 @@ function initCoachApp() {
     const sourceDay = noteElement.closest("[data-coach-month-day]");
     const ghost = (sourceDay || noteElement).cloneNode(true);
     const sourceRect = (sourceDay || noteElement).getBoundingClientRect();
+    const offsetX = event.clientX - sourceRect.left;
+    const offsetY = event.clientY - sourceRect.top;
     ghost.classList.add("coach-month-day-ghost");
     ghost.removeAttribute("data-coach-month-draggable");
     ghost.querySelectorAll("[data-coach-month-action-menu], [data-coach-month-window]").forEach((item) => item.remove());
@@ -2029,7 +2045,9 @@ function initCoachApp() {
       sourceDate: workout.date,
       targetDate: workout.date,
       workout,
-      ghost
+      ghost,
+      offsetX,
+      offsetY
     };
     document.body.classList.add("is-moving-coach-program");
     noteElement.classList.add("is-dragging");
@@ -2051,7 +2069,7 @@ function initCoachApp() {
     setTimeout(() => { suppressCoachMonthClick = false; }, 0);
     if (!targetDate || targetDate === sourceDate) return;
     try {
-      await MangoFitnessStore.saveWorkout(workoutPayloadForDate(dragState.workout, targetDate, true));
+      await MangoFitnessStore.moveWorkoutDate(dragState.workout.id, targetDate);
       selectedCoachProgramDate = targetDate;
       setAppMessage(`Moved ${workoutTitle} to ${shortDate(parseLocalDate(targetDate))}.`);
       await renderCoach();
@@ -2323,6 +2341,7 @@ function initCoachApp() {
         if (!workout) return;
         let dragTimer = null;
         let started = false;
+        let lastPointerEvent = null;
         const clearDragTimer = () => {
           if (dragTimer) clearTimeout(dragTimer);
           dragTimer = null;
@@ -2333,6 +2352,7 @@ function initCoachApp() {
           window.removeEventListener("pointercancel", handlePointerCancel);
         };
         const handlePointerMove = (moveEvent) => {
+          lastPointerEvent = moveEvent;
           if (!started || !coachMonthDragState) return;
           moveEvent.preventDefault();
           setCoachMonthDragPosition(moveEvent);
@@ -2359,12 +2379,13 @@ function initCoachApp() {
           event.stopPropagation();
           clearDragTimer();
           started = false;
+          lastPointerEvent = event;
           window.addEventListener("pointermove", handlePointerMove, { passive: false });
           window.addEventListener("pointerup", handlePointerUp);
           window.addEventListener("pointercancel", handlePointerCancel);
           dragTimer = setTimeout(() => {
             started = true;
-            startCoachMonthProgramDrag(event, noteElement, workout);
+            startCoachMonthProgramDrag(lastPointerEvent || event, noteElement, workout);
           }, 420);
         });
         noteElement.addEventListener("click", (event) => {
