@@ -79,4 +79,4 @@ Coach pages use fixed nav links:
 The current page remains visible and is slightly bolded, with no bubble/pill styling.
 
 - Cardio/WOD programming supports real-world option choices. Coaches can add multiple cardio options such as Row tester and 400m x 4. For interval work, set the Splits count and Split label; athletes enter each split and see an auto-summed total.
-- The phone home-screen app can hold older CSS/JS longer than Chrome. When layout or app JS changes need to show up immediately in the installed app, bump the `assets/styles.css`, `assets/app.js`, and `manifest.webmanifest` query versions across every HTML entry page.
+- The phone home-screen app can hold older HTML/CSS/JS longer than Chrome. When layout or app JS changes need to show up immediately in the installed app, bump the `assets/styles.css`, `assets/app.js`, and `manifest.webmanifest` query versions across every HTML entry page. Keep no-cache meta tags in the HTML pages and `_headers` cache rules for hosts that support them. If an already-installed iPhone home-screen app still shows an old shell, delete that home-screen icon and add it again once.
