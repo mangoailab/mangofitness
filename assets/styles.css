@@ -1973,12 +1973,16 @@ body.is-reordering .exercise-row.dragging {
     text-transform: uppercase;
   }
   .coach-month-day {
+    position: relative;
     min-width: 0;
     min-height: 82px;
     border: 1px solid rgba(15, 122, 59, .1);
     border-radius: 8px;
     background: #fffef7;
     padding: 5px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
   }
   .coach-month-day.is-outside-month {
     opacity: .48;
@@ -2036,6 +2040,62 @@ body.is-reordering .exercise-row.dragging {
     font-weight: 800;
     line-height: 1.15;
     white-space: nowrap;
+  }
+  .coach-month-action-menu {
+    position: absolute;
+    z-index: 20;
+    top: 26px;
+    left: 6px;
+    right: 6px;
+    display: grid;
+    gap: 5px;
+    border: 1px solid rgba(15, 122, 59, .22);
+    border-radius: 10px;
+    background: white;
+    padding: 8px;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, .16);
+  }
+  .coach-month-action-menu strong {
+    color: var(--accent-dark);
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .coach-month-action-menu button {
+    min-height: 28px;
+    padding: 5px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+  .coach-month-action-menu button:disabled {
+    opacity: .45;
+  }
+  .coach-month-program-window {
+    position: fixed;
+    z-index: 80;
+    inset: 10px;
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    background: rgba(15, 23, 42, .36);
+    padding: 8px;
+  }
+  .coach-month-window-panel {
+    width: min(720px, 100%);
+    max-height: 88vh;
+    overflow: auto;
+    border: 1px solid rgba(15, 122, 59, .24);
+    border-radius: 14px;
+    background: white;
+    padding: 12px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, .2);
+  }
+  .coach-month-window-body {
+    display: grid;
+    gap: 10px;
+  }
+  .coach-month-window-card {
+    box-shadow: none;
   }
   .coach-month-note-actions {
     flex-wrap: nowrap;

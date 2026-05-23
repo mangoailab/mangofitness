@@ -1300,6 +1300,7 @@ function initCoachApp() {
   let coachWeekPickerMonth = null;
   let selectedCoachProgramDate = "";
   let coachWeekPickerWorkouts = [];
+  let coachMonthClipboard = null;
 
 
   function renderCoachWeekPicker(workoutsForDots) {
@@ -1911,6 +1912,64 @@ function initCoachApp() {
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
 
+  function workoutPayloadForDate(workout, workoutDate, keepId = false) {
+    return {
+      id: keepId ? workout.id : "",
+      date: workoutDate,
+      title: workout.title || "Workout",
+      notes: workout.notes || "",
+      warmupNotes: workout.warmupNotes || "",
+      cardioNotes: workout.cardioNotes || "",
+      assignmentType: workout.assignmentType || "everyone",
+      assignedAthleteId: workout.assignedAthleteIds?.[0] || "",
+      format: workout.format || "Strength",
+      rounds: workout.rounds || "",
+      scoreType: workout.scoreType || "",
+      exercises: (workout.exercises || []).map((exercise) => ({ ...exercise, id: keepId ? exercise.id : "" }))
+    };
+  }
+
+  function renderCoachMonthProgramWindow(dayIso, dayWorkouts) {
+    const day = parseLocalDate(dayIso);
+    return `
+      <section class="coach-month-program-window" data-coach-month-window>
+        <div class="coach-month-window-panel">
+          <div class="section-head compact">
+            <div><h3>${escapeHtml(calendarDayLabel(day))}</h3><p class="muted">${dayWorkouts.length ? `${dayWorkouts.length} program${dayWorkouts.length === 1 ? "" : "s"}` : "No program for this day"}</p></div>
+            <button type="button" class="section-toggle" data-close-coach-month-window aria-label="Close program window">×</button>
+          </div>
+          <div class="coach-month-window-body">
+            ${dayWorkouts.length ? dayWorkouts.map((workout) => `
+              <article class="item-card coach-month-window-card">
+                <div class="item-head">
+                  <div><strong>${escapeHtml(workout.title || "Untitled workout")}</strong><p class="muted">${escapeHtml(workoutAssignmentLabel(workout))}</p></div>
+                </div>
+                <div class="program-readonly-content">
+                  ${workout.notes ? `<p class="formatted-notes">${escapeHtml(workout.notes)}</p>` : ""}
+                  ${workout.warmupNotes ? `<div class="exercise-group"><h4>Warm-up</h4><p class="formatted-notes">${escapeHtml(workout.warmupNotes)}</p></div>` : ""}
+                  ${renderExerciseGroups(workout.exercises || [], { cardioNotes: workout.cardioNotes })}
+                </div>
+              </article>
+            `).join("") : `<p class="muted empty-state">No program for this day.</p>`}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderCoachMonthActionMenu(dayIso, dayWorkouts) {
+    const hasPrograms = dayWorkouts.length > 0;
+    const clipboardLabel = coachMonthClipboard ? `${coachMonthClipboard.mode === "move" ? "Move" : "Copy"} ${coachMonthClipboard.workouts.length} from ${shortDate(parseLocalDate(coachMonthClipboard.sourceDate))}` : "";
+    return `
+      <div class="coach-month-action-menu" data-coach-month-action-menu="${escapeHtml(dayIso)}">
+        <strong>${escapeHtml(calendarDayLabel(parseLocalDate(dayIso)))}</strong>
+        <button type="button" data-coach-month-action="copy" data-coach-month-action-date="${escapeHtml(dayIso)}"${hasPrograms ? "" : " disabled"}>Copy program</button>
+        <button type="button" data-coach-month-action="move" data-coach-month-action-date="${escapeHtml(dayIso)}"${hasPrograms ? "" : " disabled"}>Move program</button>
+        <button type="button" data-coach-month-action="paste" data-coach-month-action-date="${escapeHtml(dayIso)}"${coachMonthClipboard ? "" : " disabled"}>${clipboardLabel ? `Paste here · ${escapeHtml(clipboardLabel)}` : "Paste here"}</button>
+      </div>
+    `;
+  }
+
   function renderCoachMonthStickyBoard(workouts) {
     const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
     const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
@@ -1939,19 +1998,13 @@ function initCoachApp() {
             const dayIso = isoDate(day);
             const dayWorkouts = workoutsByDate.get(dayIso) || [];
             return `
-              <section class="coach-month-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === selectedCoachProgramDate ? " is-selected" : ""}">
+              <section class="coach-month-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === selectedCoachProgramDate ? " is-selected" : ""}" data-coach-month-day="${escapeHtml(dayIso)}">
                 <div class="coach-month-day-number">${escapeHtml(String(day.getDate()))}</div>
                 <div class="coach-month-notes">
                   ${dayWorkouts.map((workout) => `
                     <article class="coach-month-note" data-program-card="${escapeHtml(workout.id)}">
                       <strong>${escapeHtml(workout.title || "Untitled workout")}</strong>
                       <p>${escapeHtml(workoutAssignmentLabel(workout))}${workout.exercises?.length ? ` · ${workout.exercises.length} items` : ""}</p>
-                      <div data-inline-workout-editor></div>
-                      <div class="actions coach-month-note-actions">
-                        <button type="button" data-edit="${escapeHtml(workout.id)}">Edit</button>
-                        <button type="button" data-copy="${escapeHtml(workout.id)}">Copy</button>
-                        <button type="button" class="danger-button" data-delete="${escapeHtml(workout.id)}">Delete</button>
-                      </div>
                     </article>
                   `).join("")}
                 </div>
@@ -2076,6 +2129,69 @@ function initCoachApp() {
           detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
       }));
+      list.querySelectorAll("[data-coach-month-day]").forEach((dayElement) => {
+        let pressTimer = null;
+        let longPressed = false;
+        const clearPressTimer = () => {
+          if (pressTimer) clearTimeout(pressTimer);
+          pressTimer = null;
+        };
+        const dayIso = dayElement.dataset.coachMonthDay;
+        const dayWorkouts = matchingWorkouts.filter((workout) => workout.date === dayIso);
+        const handleMonthAction = async (button, event) => {
+          event?.stopPropagation();
+          const actionDate = button.dataset.coachMonthActionDate;
+          const action = button.dataset.coachMonthAction;
+          const sourceWorkouts = matchingWorkouts.filter((workout) => workout.date === actionDate);
+          try {
+            if (action === "copy" || action === "move") {
+              if (!sourceWorkouts.length) return;
+              coachMonthClipboard = { mode: action, sourceDate: actionDate, workouts: sourceWorkouts };
+              setAppMessage(`${action === "move" ? "Move" : "Copy"} ready. Press and hold another day, then tap Paste here.`);
+              list.querySelectorAll("[data-coach-month-action-menu]").forEach((menu) => menu.remove());
+              return;
+            }
+            if (action === "paste" && coachMonthClipboard) {
+              for (const workout of coachMonthClipboard.workouts) {
+                await MangoFitnessStore.saveWorkout(workoutPayloadForDate(workout, actionDate, coachMonthClipboard.mode === "move"));
+              }
+              const pastedCount = coachMonthClipboard.workouts.length;
+              const moved = coachMonthClipboard.mode === "move";
+              coachMonthClipboard = null;
+              selectedCoachProgramDate = actionDate;
+              setAppMessage(`${moved ? "Moved" : "Copied"} ${pastedCount} program${pastedCount === 1 ? "" : "s"}.`);
+              await renderCoach();
+            }
+          } catch (error) {
+            setAppMessage(friendlyError(error), true);
+          }
+        };
+        dayElement.addEventListener("pointerdown", (event) => {
+          if (event.target.closest("[data-coach-month-action-menu]")) return;
+          longPressed = false;
+          clearPressTimer();
+          pressTimer = setTimeout(() => {
+            longPressed = true;
+            list.querySelectorAll("[data-coach-month-action-menu]").forEach((menu) => menu.remove());
+            dayElement.insertAdjacentHTML("beforeend", renderCoachMonthActionMenu(dayIso, dayWorkouts));
+            dayElement.querySelectorAll("[data-coach-month-action]").forEach((button) => {
+              button.addEventListener("click", (event) => handleMonthAction(button, event));
+            });
+          }, 550);
+        });
+        dayElement.addEventListener("pointerup", clearPressTimer);
+        dayElement.addEventListener("pointerleave", clearPressTimer);
+        dayElement.addEventListener("click", (event) => {
+          if (event.target.closest("[data-coach-month-action-menu]")) return;
+          if (longPressed) {
+            longPressed = false;
+            return;
+          }
+          list.querySelector("[data-coach-month-window]")?.remove();
+          list.insertAdjacentHTML("beforeend", renderCoachMonthProgramWindow(dayIso, dayWorkouts));
+          list.querySelector("[data-close-coach-month-window]")?.addEventListener("click", () => list.querySelector("[data-coach-month-window]")?.remove());
+        });
+      });
       list.querySelectorAll("[data-edit]").forEach((button) => button.addEventListener("click", () => {
         const inlineContainer = button.closest("[data-program-card]")?.querySelector("[data-inline-workout-editor]") || button.closest("[data-coach-horizontal-detail]")?.querySelector("[data-inline-workout-editor]");
         editWorkout(button.dataset.edit, { inlineContainer }).catch((error) => setAppMessage(friendlyError(error), true));
