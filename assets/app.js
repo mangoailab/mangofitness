@@ -2187,6 +2187,12 @@ function initCoachApp() {
             longPressed = true;
             list.querySelectorAll("[data-coach-month-action-menu]").forEach((menu) => menu.remove());
             dayElement.insertAdjacentHTML("beforeend", renderCoachMonthActionMenu(dayIso, dayWorkouts));
+            const closeMonthActionMenu = (outsideEvent) => {
+              if (outsideEvent.target.closest("[data-coach-month-action-menu]")) return;
+              list.querySelectorAll("[data-coach-month-action-menu]").forEach((menu) => menu.remove());
+              document.removeEventListener("pointerdown", closeMonthActionMenu, true);
+            };
+            setTimeout(() => document.addEventListener("pointerdown", closeMonthActionMenu, true), 0);
             dayElement.querySelectorAll("[data-coach-month-action]").forEach((button) => {
               button.addEventListener("click", (event) => handleMonthAction(button, event));
             });
