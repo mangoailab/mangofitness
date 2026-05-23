@@ -1878,6 +1878,11 @@ function initCoachApp() {
   async function editWorkout(id, options = {}) {
     const workout = (await MangoFitnessStore.workouts()).find((item) => item.id === id);
     if (!workout) return;
+    const editExercises = (workout.exercises || []).map((exercise) => {
+      const looksLikeStrength = Boolean(strengthMovementByName(exercise.name) || exercise.weight);
+      const section = looksLikeStrength ? "lifting" : exercise.section || "cardio";
+      return { ...exercise, section };
+    });
     form.dataset.editId = workout.id;
     date.value = workout.date;
     title.value = workout.title;
@@ -1888,10 +1893,10 @@ function initCoachApp() {
     warmupNotes.value = workout.warmupNotes || "";
     cardioNotes.value = workout.cardioNotes || "";
     sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
-    workout.exercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
+    editExercises.forEach((exercise) => addExerciseRow(exercise.section || "cardio", exercise));
     setWorkoutSectionCollapsed("warmup", !workout.warmupNotes);
-    setWorkoutSectionCollapsed("lifting", !workout.exercises.some((exercise) => (exercise.section || "cardio") === "lifting"));
-    setWorkoutSectionCollapsed("cardio", !workout.cardioNotes && !workout.exercises.some((exercise) => (exercise.section || "cardio") === "cardio"));
+    setWorkoutSectionCollapsed("lifting", !editExercises.some((exercise) => (exercise.section || "cardio") === "lifting"));
+    setWorkoutSectionCollapsed("cardio", !workout.cardioNotes && !editExercises.some((exercise) => (exercise.section || "cardio") === "cardio"));
     showWorkoutForm(true, { inlineContainer: options.inlineContainer });
     if (!options.inlineContainer) window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
