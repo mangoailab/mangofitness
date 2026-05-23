@@ -1991,7 +1991,13 @@ function initCoachApp() {
 
   function setCoachMonthDragPosition(event) {
     if (!coachMonthDragState) return;
-    coachMonthDragState.ghost.style.transform = `translate(${event.clientX + 12}px, ${event.clientY + 12}px)`;
+    const ghostRect = coachMonthDragState.ghost.getBoundingClientRect();
+    const margin = 8;
+    const maxX = Math.max(margin, window.innerWidth - ghostRect.width - margin);
+    const maxY = Math.max(margin, window.innerHeight - ghostRect.height - margin);
+    const x = Math.min(Math.max(event.clientX - (ghostRect.width / 2), margin), maxX);
+    const y = Math.min(Math.max(event.clientY + 12, margin), maxY);
+    coachMonthDragState.ghost.style.transform = `translate(${x}px, ${y}px)`;
     const targetDay = document.elementFromPoint(event.clientX, event.clientY)?.closest("[data-coach-month-day]");
     clearCoachMonthDragTargets();
     if (targetDay) {
@@ -2010,9 +2016,14 @@ function initCoachApp() {
   }
 
   function startCoachMonthProgramDrag(event, noteElement, workout) {
-    const ghost = noteElement.cloneNode(true);
-    ghost.classList.add("coach-month-note-ghost");
+    const sourceDay = noteElement.closest("[data-coach-month-day]");
+    const ghost = (sourceDay || noteElement).cloneNode(true);
+    const sourceRect = (sourceDay || noteElement).getBoundingClientRect();
+    ghost.classList.add("coach-month-day-ghost");
     ghost.removeAttribute("data-coach-month-draggable");
+    ghost.querySelectorAll("[data-coach-month-action-menu], [data-coach-month-window]").forEach((item) => item.remove());
+    ghost.style.width = `${sourceRect.width}px`;
+    ghost.style.minHeight = `${sourceRect.height}px`;
     document.body.appendChild(ghost);
     coachMonthDragState = {
       sourceDate: workout.date,

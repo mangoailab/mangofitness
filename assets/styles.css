@@ -2025,15 +2025,18 @@ body.is-reordering .exercise-row.dragging {
   .coach-month-note.is-dragging {
     opacity: .5;
   }
-  .coach-month-note-ghost {
+  .coach-month-day-ghost {
     position: fixed;
     z-index: 120;
     top: 0;
     left: 0;
-    width: min(180px, 48vw);
     pointer-events: none;
     opacity: .94;
     transform: translate(-999px, -999px);
+    cursor: grabbing;
+  }
+  .coach-month-day-ghost .coach-month-note {
+    cursor: grabbing;
   }
   body.is-moving-coach-program {
     cursor: grabbing;
