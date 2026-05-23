@@ -1911,6 +1911,58 @@ function initCoachApp() {
     window.scrollTo({ top: form.offsetTop - 20, behavior: "smooth" });
   }
 
+  function renderCoachMonthStickyBoard(workouts) {
+    const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
+    const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = addDays(startOfWeek(monthEnd), 6);
+    const monthWorkouts = workouts.filter((workout) => {
+      const workoutDate = parseLocalDate(workout.date);
+      return workoutDate >= monthStart && workoutDate <= monthEnd;
+    });
+    const workoutsByDate = monthWorkouts.reduce((map, workout) => {
+      if (!map.has(workout.date)) map.set(workout.date, []);
+      map.get(workout.date).push(workout);
+      return map;
+    }, new Map());
+    const dayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
+    return `
+      <section class="coach-month-board" aria-label="${escapeHtml(monthLabel(monthStart))} programs">
+        <div class="coach-month-board-head">
+          <strong>${escapeHtml(monthLabel(monthStart))}</strong>
+          <span class="muted">${monthWorkouts.length} program${monthWorkouts.length === 1 ? "" : "s"}</span>
+        </div>
+        <div class="coach-month-weekdays">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => `<span>${day}</span>`).join("")}</div>
+        <div class="coach-month-grid">
+          ${Array.from({ length: dayCount }, (_, index) => {
+            const day = addDays(calendarStart, index);
+            const dayIso = isoDate(day);
+            const dayWorkouts = workoutsByDate.get(dayIso) || [];
+            return `
+              <section class="coach-month-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === selectedCoachProgramDate ? " is-selected" : ""}">
+                <div class="coach-month-day-number">${escapeHtml(String(day.getDate()))}</div>
+                <div class="coach-month-notes">
+                  ${dayWorkouts.map((workout) => `
+                    <article class="coach-month-note" data-program-card="${escapeHtml(workout.id)}">
+                      <strong>${escapeHtml(workout.title || "Untitled workout")}</strong>
+                      <p>${escapeHtml(workoutAssignmentLabel(workout))}${workout.exercises?.length ? ` · ${workout.exercises.length} items` : ""}</p>
+                      <div data-inline-workout-editor></div>
+                      <div class="actions coach-month-note-actions">
+                        <button type="button" data-edit="${escapeHtml(workout.id)}">Edit</button>
+                        <button type="button" data-copy="${escapeHtml(workout.id)}">Copy</button>
+                        <button type="button" class="danger-button" data-delete="${escapeHtml(workout.id)}">Delete</button>
+                      </div>
+                    </article>
+                  `).join("")}
+                </div>
+              </section>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
   async function renderCoach() {
     try {
       const workouts = await MangoFitnessStore.workouts();
@@ -1953,7 +2005,7 @@ function initCoachApp() {
           map.get(workout.date).push(workout);
           return map;
         }, new Map());
-        list.className = savedWorkoutView === "horizontal" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar" : "workout-calendar";
+        list.className = savedWorkoutView === "horizontal" ? "workout-calendar athlete-program-calendar coach-horizontal-program-calendar" : "workout-calendar coach-vertical-program-calendar";
         const preferredHorizontalDate = selectedCoachProgramDate && parseLocalDate(selectedCoachProgramDate) >= weekStart && parseLocalDate(selectedCoachProgramDate) <= weekEnd ? selectedCoachProgramDate : "";
         let selectedHorizontalDate = preferredHorizontalDate;
         list.innerHTML = Array.from({ length: 7 }, (_, index) => {
@@ -1984,7 +2036,7 @@ function initCoachApp() {
               </div>
             </section>
           `;
-        }).join("");
+        }).join("") + (savedWorkoutView === "vertical" ? renderCoachMonthStickyBoard(matchingWorkouts) : "");
         if (savedWorkoutView === "horizontal") {
           if (!selectedHorizontalDate) selectedHorizontalDate = isoDate(weekStart);
           const selectedWorkouts = workoutsByDate.get(selectedHorizontalDate) || [];
@@ -2031,7 +2083,7 @@ function initCoachApp() {
       list.querySelectorAll("[data-copy]").forEach((button) => button.addEventListener("click", () => copyWorkout(button.dataset.copy).catch((error) => setAppMessage(friendlyError(error), true))));
       list.querySelectorAll("[data-program-athlete]").forEach((select) => select.addEventListener("change", renderCoach));
       list.querySelectorAll("[data-delete]").forEach((button) => button.addEventListener("click", async () => {
-        const workoutTitle = button.closest(".item-card")?.querySelector("strong")?.textContent || "this workout";
+        const workoutTitle = button.closest("[data-program-card]")?.querySelector("strong")?.textContent || "this workout";
         if (!confirm(`Delete ${workoutTitle}? This cannot be undone.`)) return;
         try {
           await MangoFitnessStore.deleteWorkout(button.dataset.delete);
