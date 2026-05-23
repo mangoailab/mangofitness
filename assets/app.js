@@ -2204,6 +2204,9 @@ function initCoachApp() {
           list.insertAdjacentHTML("beforeend", renderCoachMonthProgramWindow(dayIso, dayWorkouts));
           const monthWindow = list.querySelector("[data-coach-month-window]");
           monthWindow?.querySelector("[data-close-coach-month-window]")?.addEventListener("click", () => monthWindow.remove());
+          monthWindow?.addEventListener("click", (windowEvent) => {
+            if (windowEvent.target === monthWindow) monthWindow.remove();
+          });
           monthWindow?.querySelectorAll("[data-edit]").forEach((editButton) => editButton.addEventListener("click", () => {
             const inlineContainer = editButton.closest("[data-program-card]")?.querySelector("[data-inline-workout-editor]");
             editWorkout(editButton.dataset.edit, { inlineContainer }).catch((error) => setAppMessage(friendlyError(error), true));
