@@ -424,6 +424,14 @@ const MangoFitnessStore = (() => {
       if (error) throw error;
     },
 
+    async aiProgramWorkout(entry) {
+      const sb = client();
+      if (!sb?.functions?.invoke) throw new Error("AI programming is unavailable.");
+      const { data, error } = await sb.functions.invoke("program-workout", { body: entry });
+      if (error || data?.error) throw new Error(data?.error || error?.message || "AI programming failed.");
+      return data?.draft;
+    },
+
     async results() {
       const sb = client();
       if (!sb) return readLocal(localResultKey);
@@ -1266,6 +1274,10 @@ function initCoachApp() {
   const saveBenchmarkBtn = document.getElementById("saveBenchmarkBtn");
   const updateBenchmarkBtn = document.getElementById("updateBenchmarkBtn");
   const deleteBenchmarkBtn = document.getElementById("deleteBenchmarkBtn");
+  const aiProgramPrompt = document.getElementById("aiProgramPrompt");
+  const aiDraftWorkoutBtn = document.getElementById("aiDraftWorkoutBtn");
+  const aiImproveWorkoutBtn = document.getElementById("aiImproveWorkoutBtn");
+  const aiProgramMessage = document.getElementById("aiProgramMessage");
   const warmupNotes = document.getElementById("warmupNotes");
   const cardioNotes = document.getElementById("cardioNotes");
   const sectionRows = [...document.querySelectorAll("[data-exercise-rows]")];
@@ -1354,6 +1366,13 @@ function initCoachApp() {
     message.textContent = text || "";
     message.classList.toggle("hidden", !text);
     message.classList.toggle("error-text", Boolean(isError));
+  }
+
+  function setAiProgramMessage(text, isError = false) {
+    if (!aiProgramMessage) return;
+    aiProgramMessage.textContent = text || "";
+    aiProgramMessage.classList.toggle("hidden", !text);
+    aiProgramMessage.classList.toggle("error-text", Boolean(isError));
   }
 
   function renderAthleteOptions(selectedId = "") {
@@ -1776,6 +1795,85 @@ function initCoachApp() {
     })).filter((exercise) => exercise.name);
   }
 
+  function currentWorkoutDraft() {
+    return {
+      date: date.value || todayISO(),
+      title: title.value.trim(),
+      notes: notes.value.trim(),
+      warmupNotes: warmupNotes.value.trim(),
+      cardioNotes: cardioNotes.value.trim(),
+      assignmentType: assignmentType?.value || "everyone",
+      exercises: collectExercises()
+    };
+  }
+
+  function normalizeAiExercise(section, exercise = {}) {
+    const name = String(exercise.name || exercise.exerciseName || "").trim();
+    if (!name) return null;
+    return {
+      section,
+      name,
+      sets: String(exercise.sets || "").trim(),
+      reps: String(exercise.reps || "").trim(),
+      weight: String(exercise.weight || "").trim(),
+      target: String(exercise.target || exercise.scoreType || "").trim(),
+      notes: String(exercise.notes || "").trim(),
+      benchmarkKey: "",
+      movementKey: ""
+    };
+  }
+
+  function normalizeAiWorkoutDraft(draft = {}) {
+    const rawExercises = Array.isArray(draft.exercises) ? draft.exercises : [];
+    const sectionExercises = ["lifting", "cardio", "partner"].flatMap((section) => (
+      Array.isArray(draft[section]) ? draft[section].map((exercise) => ({ ...exercise, section })) : []
+    ));
+    const exercises = [...rawExercises, ...sectionExercises]
+      .map((exercise) => normalizeAiExercise(["lifting", "cardio", "partner"].includes(exercise.section) ? exercise.section : "cardio", exercise))
+      .filter(Boolean);
+    return {
+      date: String(draft.date || date.value || todayISO()).trim(),
+      title: String(draft.title || "").trim(),
+      notes: String(draft.notes || "").trim(),
+      warmupNotes: String(draft.warmupNotes || draft.warmup || "").trim(),
+      cardioNotes: String(draft.cardioNotes || draft.wodNotes || "").trim(),
+      exercises
+    };
+  }
+
+  function setWorkoutSectionCollapsed(sectionName, collapsed) {
+    const section = document.querySelector(`.workout-section[data-section="${sectionName}"]`);
+    section?.classList.toggle("is-collapsed", collapsed);
+    const button = section?.querySelector("[data-toggle-section]");
+    if (button) {
+      const label = section?.querySelector("h3")?.textContent?.trim() || "section";
+      button.textContent = collapsed ? "▾" : "▴";
+      button.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      button.setAttribute("aria-label", `${collapsed ? "Expand" : "Collapse"} ${label}`);
+    }
+  }
+
+  function applyAiWorkoutDraft(draft) {
+    const workout = normalizeAiWorkoutDraft(draft);
+    form.dataset.editId = "";
+    date.value = workout.date || date.value || todayISO();
+    title.value = workout.title || title.value || "AI workout draft";
+    notes.value = workout.notes;
+    warmupNotes.value = workout.warmupNotes;
+    cardioNotes.value = workout.cardioNotes;
+    if (assignmentType) assignmentType.value = "everyone";
+    if (assignmentAthlete) assignmentAthlete.value = "";
+    updateAssignmentVisibility();
+    sectionRows.forEach((rowContainer) => { rowContainer.innerHTML = ""; });
+    workout.exercises.forEach((exercise) => addExerciseRow(exercise.section, exercise));
+    if (!rowsForSection("lifting")?.children.length) addExerciseRow("lifting");
+    if (!rowsForSection("cardio")?.children.length) addExerciseRow("cardio");
+    setWorkoutSectionCollapsed("warmup", !workout.warmupNotes);
+    setWorkoutSectionCollapsed("lifting", !workout.exercises.some((exercise) => exercise.section === "lifting"));
+    setWorkoutSectionCollapsed("cardio", !workout.cardioNotes && !workout.exercises.some((exercise) => exercise.section === "cardio"));
+    showWorkoutForm(true);
+  }
+
   async function editWorkout(id, options = {}) {
     const workout = (await MangoFitnessStore.workouts()).find((item) => item.id === id);
     if (!workout) return;
@@ -2168,6 +2266,43 @@ function initCoachApp() {
   document.querySelectorAll("[data-add-section]").forEach((button) => {
     button.addEventListener("click", () => addExerciseRow(button.dataset.addSection));
   });
+
+  async function runAiProgram(action) {
+    const prompt = aiProgramPrompt?.value.trim() || "";
+    if (!prompt && action === "draft") return setAiProgramMessage("Describe what you want to program first.", true);
+    const activeButton = action === "improve" ? aiImproveWorkoutBtn : aiDraftWorkoutBtn;
+    const originalText = activeButton?.textContent || "";
+    try {
+      setAiProgramMessage(action === "improve" ? "Improving current draft..." : "Drafting workout...");
+      if (activeButton) {
+        activeButton.disabled = true;
+        activeButton.textContent = "Working...";
+      }
+      const draft = await MangoFitnessStore.aiProgramWorkout({
+        action,
+        prompt: prompt || "Improve the current workout draft.",
+        currentWorkout: currentWorkoutDraft(),
+        movements: strengthMovements.filter((movement) => movementId(movement)).slice(0, 120).map((movement) => movement.name),
+        cardioBenchmarks: cardioBenchmarks.filter((benchmark) => benchmarkId(benchmark)).slice(0, 80).map((benchmark) => ({
+          name: benchmark.name,
+          scoreType: benchmark.scoreType || "",
+          description: benchmark.description || ""
+        }))
+      });
+      applyAiWorkoutDraft(draft);
+      setAiProgramMessage("AI draft loaded. Review and edit before saving.");
+    } catch (error) {
+      setAiProgramMessage(friendlyError(error), true);
+    } finally {
+      if (activeButton) {
+        activeButton.disabled = false;
+        activeButton.textContent = originalText;
+      }
+    }
+  }
+
+  aiDraftWorkoutBtn?.addEventListener("click", () => runAiProgram("draft"));
+  aiImproveWorkoutBtn?.addEventListener("click", () => runAiProgram("improve"));
   showWorkoutFormBtn?.addEventListener("click", () => showWorkoutForm(true));
   document.getElementById("clearWorkoutBtn")?.addEventListener("click", () => clearForm());
   form.addEventListener("submit", async (event) => {

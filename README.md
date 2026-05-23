@@ -55,3 +55,19 @@ supabase/harden-rls.sql
 ```
 
 Before applying, create/link the coach Auth user and add that user to `coach_profiles`, otherwise the coach portal will be locked out by design.
+
+## Edge Functions
+
+AI-backed features run through Supabase Edge Functions so API keys stay server-side.
+
+- `parse-body-scan` parses body scan uploads.
+- `program-workout` drafts and improves coach workout builder programs.
+
+Required function secrets:
+
+```sh
+OPENAI_API_KEY=...
+SUPABASE_URL=...
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```

@@ -64,6 +64,12 @@
 - After an athlete saves a self-created workout or "own cardio" log, the athlete page should select the newly created workout before refreshing so the saved entry remains visible instead of returning to the prior program card.
 - Partner WOD team-result forms must reload their existing result id, score, and notes after save. Without that, autosave creates data but the rerendered partner form looks blank and later edits can insert duplicates instead of updating the original row.
 
+## Coach AI programming
+
+- Coach AI programming should be draft-only. AI can fill or improve the workout builder, but the coach must review and click Save Workout before anything goes on the schedule.
+- OpenAI calls must stay server-side in the `program-workout` Supabase Edge Function. Browser code calls the function and receives structured workout JSON; do not expose `OPENAI_API_KEY` in frontend files.
+- AI output should map to existing builder fields: title, coach notes, warm-up notes, cardio/WOD notes, and lifting/cardio/partner exercise rows. Keep rows editable after generation.
+
 ## Split time mobile entry
 
 - Athlete split logging should use separate minute and second number inputs instead of requiring a colon in one field, because mobile keyboards may not show an easy minute/colon option.

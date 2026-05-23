@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Coach Dashboard — Mango Fitness</title>
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/styles.css?v=20260522-ai-program" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png" />
@@ -76,6 +76,24 @@
           </div>
 
           <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Overall focus, pacing, scaling, or coaching notes"></textarea></div>
+
+          <section class="ai-program-card">
+            <div class="section-head compact">
+              <div>
+                <h3>AI Program Assistant</h3>
+                <p class="muted">Draft or improve this workout before saving.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="aiProgramPrompt">Programming request</label>
+              <textarea id="aiProgramPrompt" rows="4" placeholder="Example: Make this a 45 minute partner WOD for intermediate athletes with warm-up, strength, and a 15 min AMRAP."></textarea>
+            </div>
+            <div class="actions ai-program-actions">
+              <button type="button" id="aiDraftWorkoutBtn">Draft with AI</button>
+              <button type="button" id="aiImproveWorkoutBtn">Improve current draft</button>
+            </div>
+            <p id="aiProgramMessage" class="muted hidden"></p>
+          </section>
 
           <div class="workout-sections">
             <section class="workout-section is-collapsed" data-section="warmup">
@@ -216,7 +234,7 @@
     </section>
   </main>
   <script src="assets/auth.js"></script>
-  <script src="assets/app.js"></script>
+  <script src="assets/app.js?v=20260522-ai-program"></script>
   <script>
     initLoginPage({
       emailId: "coachEmail",
