@@ -1768,7 +1768,6 @@ function initCoachApp() {
     }
     form.classList.toggle("hidden", !show);
     showWorkoutFormBtn?.classList.toggle("hidden", show && !options.inlineContainer);
-    if (show) date?.focus();
   }
 
   function clearForm(options = {}) {
