@@ -325,6 +325,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   padding: 14px;
   display: grid;
   gap: 12px;
+  order: -1;
 }
 .ai-program-card .field,
 .ai-program-card .section-head {

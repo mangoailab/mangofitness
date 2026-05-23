@@ -65,17 +65,6 @@
               <h2>Workout Builder</h2>
             </div>
           </div>
-          <div class="grid-2 form-grid">
-            <div class="field"><label for="workoutDate">Workout date</label><input id="workoutDate" type="date" required /></div>
-            <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Optional" /></div>
-          </div>
-
-          <div class="assignment-grid">
-            <div class="field"><label for="assignmentType">Assign to</label><select id="assignmentType"><option value="everyone">Everyone</option><option value="individual">Individual athlete</option></select></div>
-            <div class="field hidden" id="assignmentAthleteField"><label for="assignmentAthlete">Athlete</label><select id="assignmentAthlete"><option value="">Select athlete</option></select></div>
-          </div>
-
-          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Overall focus, pacing, scaling, or coaching notes"></textarea></div>
 
           <section class="ai-program-card">
             <div class="section-head compact">
@@ -94,6 +83,18 @@
             </div>
             <p id="aiProgramMessage" class="muted hidden"></p>
           </section>
+
+          <div class="grid-2 form-grid">
+            <div class="field"><label for="workoutDate">Workout date</label><input id="workoutDate" type="date" required /></div>
+            <div class="field"><label for="workoutTitle">Day title</label><input id="workoutTitle" type="text" placeholder="Optional" /></div>
+          </div>
+
+          <div class="assignment-grid">
+            <div class="field"><label for="assignmentType">Assign to</label><select id="assignmentType"><option value="everyone">Everyone</option><option value="individual">Individual athlete</option></select></div>
+            <div class="field hidden" id="assignmentAthleteField"><label for="assignmentAthlete">Athlete</label><select id="assignmentAthlete"><option value="">Select athlete</option></select></div>
+          </div>
+
+          <div class="field"><label for="workoutNotes">Coach notes</label><textarea id="workoutNotes" rows="3" placeholder="Overall focus, pacing, scaling, or coaching notes"></textarea></div>
 
           <div class="workout-sections">
             <section class="workout-section is-collapsed" data-section="warmup">
