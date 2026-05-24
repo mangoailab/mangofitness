@@ -72,8 +72,8 @@
 
 ## Split time mobile entry
 
-- Athlete split logging should use separate minute and second number inputs instead of requiring a colon in one field, because mobile keyboards may not show an easy minute/colon option.
+- Athlete split logging should use one Time field per set. Accept normal `m:ss` entries and compact numeric entries such as `430` for `4:30`, so athletes do not have to move between separate minute and second boxes.
 
 ## Split total behavior
 
-- Split total should be calculated from all visible minute/second rows using form elements directly. Store the calculated total only once on the first split row notes, and strip old `Total:` fragments before saving to avoid duplicated total text.
+- Split total should be calculated from all visible time rows using form elements directly. Store the calculated total only once on the first split row notes, and strip old `Total:` fragments before saving to avoid duplicated total text.
