@@ -2761,16 +2761,25 @@ function renderPartnerScoreForm(workout, exercise, athleteResults = [], selected
 }
 
 function prescribedSetCount(exercise) {
-  const match = String(exercise.sets || "").match(/\d+/);
-  const count = match ? Number(match[0]) : 1;
+  const text = String(exercise.sets || "").toLowerCase();
+  const afterX = text.match(/x\s*(\d+)/i);
+  const beforeX = text.match(/(\d+)\s*x/i);
+  const match = afterX && Number(afterX[1]) <= 12 ? afterX : beforeX || afterX || text.match(/\d+/);
+  const count = match ? Number(match[1] || match[0]) : 1;
   return Math.max(1, Math.min(count || 1, 12));
 }
 
 function isSplitCardioExercise(exercise) {
   if ((exercise.section || "cardio") !== "cardio") return false;
   const count = prescribedSetCount(exercise);
-  const text = `${exercise.name || ""} ${exercise.target || ""} ${exercise.notes || ""} ${exercise.reps || ""}`.toLowerCase();
+  const text = `${exercise.name || ""} ${exercise.sets || ""} ${exercise.target || ""} ${exercise.notes || ""} ${exercise.reps || ""}`.toLowerCase();
   return count > 1 && /split|interval|repeat|400m|800m|meter|metre|x\s*\d|\d+\s*x/.test(text);
+}
+
+function splitLabelForExercise(exercise) {
+  if (exercise.reps) return exercise.reps;
+  const distance = String(exercise.sets || "").match(/\d+(?:\.\d+)?\s*(?:m|meter|metre|meters|metres|km|mile|miles)\b/i);
+  return distance?.[0] || "Split";
 }
 
 function splitSeconds(value) {
@@ -3259,7 +3268,7 @@ function renderSetLogFields(exercise, athleteResults = [], selectedDate = "") {
   if (!isStrength) {
     if (isSplitCardioExercise(exercise)) {
       const loggedBySet = new Map(loggedRows.map((result) => [Number(result.setNumber || 1), result]));
-      const splitLabel = exercise.reps || "Split";
+      const splitLabel = splitLabelForExercise(exercise);
       const count = Math.max(prescribedSetCount(exercise), ...loggedRows.map((result) => Number(result.setNumber || 1)));
       return `
         <div class="split-log-card" data-split-log>
