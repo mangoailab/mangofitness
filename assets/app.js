@@ -1515,14 +1515,14 @@ function initCoachApp() {
     const selectedBenchmark = values.benchmarkKey || "";
     const selectedMovement = values.movementKey || "";
     const rowFields = section === "cardio" ? `
-      <div class="field exercise-name-field"><label>Option name</label><input class="exercise-name" type="text" placeholder="Row tester or 400m x 4" value="${escapeHtml(values.name || values.benchmarkName || "Cardio option")}" required /></div>
+      <div class="field exercise-name-field"><label>Option name</label><input class="exercise-name" type="text" placeholder="Row tester or 400m x 4" value="${escapeHtml(values.name || values.benchmarkName || "Cardio option")}" /></div>
       <div class="field benchmark-field"><label>Benchmark map</label><select class="exercise-benchmark">${benchmarkOptions(selectedBenchmark)}</select></div>
       <div class="field compact-field"><label>Splits</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
       <div class="field compact-field"><label>Split label</label><input class="exercise-reps" type="text" placeholder="400m" value="${escapeHtml(values.reps)}" /></div>
       <div class="field target-field"><label>Score type</label><input class="exercise-target" type="text" placeholder="Time, splits, calories, meters, rounds + reps" value="${escapeHtml(values.target)}" /></div>
       <div class="field notes-field"><label>Description / notes</label><input class="exercise-notes" type="text" placeholder="Workout description or what the athlete should record" value="${escapeHtml(values.notes)}" /></div>
     ` : `
-      ${section === "lifting" ? `<div class="field exercise-name-field movement-map-field"><label>Movement</label><input class="exercise-name exercise-movement" data-movement-key="${escapeHtml(selectedMovement)}" placeholder="Start typing, e.g. chest" value="${escapeHtml(movementInputValue(values, selectedMovement))}" autocomplete="off" required /><div class="movement-suggestions hidden"></div></div>` : `<div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" required /></div>`}
+      ${section === "lifting" ? `<div class="field exercise-name-field movement-map-field"><label>Movement</label><input class="exercise-name exercise-movement" data-movement-key="${escapeHtml(selectedMovement)}" placeholder="Start typing, e.g. chest" value="${escapeHtml(movementInputValue(values, selectedMovement))}" autocomplete="off" /><div class="movement-suggestions hidden"></div></div>` : `<div class="field exercise-name-field"><label>Movement / station</label><input class="exercise-name" type="text" placeholder="Row, Back squat, Station 1" value="${escapeHtml(values.name)}" /></div>`}
       <div class="field compact-field"><label>Sets</label><input class="exercise-sets" type="text" placeholder="4" value="${escapeHtml(values.sets)}" /></div>
       <div class="field compact-field"><label>Reps</label><input class="exercise-reps" type="text" placeholder="500m + 5" value="${escapeHtml(values.reps)}" /></div>
       <div class="field compact-field"><label>Weight</label><input class="exercise-weight" type="text" placeholder="53/35 lb" value="${escapeHtml(values.weight)}" /></div>
