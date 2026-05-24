@@ -3473,6 +3473,56 @@ function initAthleteApp() {
     }
   }
 
+  function renderAthleteMonthSchedule(visibleWorkouts, statuses, selectedAthleteId) {
+    const monthStart = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), 1);
+    const monthEnd = new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth() + 1, 0);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = addDays(startOfWeek(monthEnd), 6);
+    const monthWorkouts = visibleWorkouts.filter((item) => {
+      const workoutDate = parseLocalDate(item.date);
+      return workoutDate >= monthStart && workoutDate <= monthEnd;
+    });
+    const workoutsByDate = monthWorkouts.reduce((map, item) => {
+      if (!map.has(item.date)) map.set(item.date, []);
+      map.get(item.date).push(item);
+      return map;
+    }, new Map());
+    const dayCount = Math.round((calendarEnd - calendarStart) / 86400000) + 1;
+    return `
+      <section class="coach-month-board athlete-month-board" aria-label="${escapeHtml(monthLabel(monthStart))} training schedule">
+        <div class="coach-month-board-head">
+          <strong>${escapeHtml(monthLabel(monthStart))}</strong>
+          <span class="muted">${monthWorkouts.length} workout${monthWorkouts.length === 1 ? "" : "s"}</span>
+        </div>
+        <div class="coach-month-weekdays">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => `<span>${day}</span>`).join("")}</div>
+        <div class="coach-month-grid">
+          ${Array.from({ length: dayCount }, (_, index) => {
+            const day = addDays(calendarStart, index);
+            const dayIso = isoDate(day);
+            const dayWorkouts = workoutsByDate.get(dayIso) || [];
+            const hasAthleteCreated = dayWorkouts.some((item) => item.isAthleteCreated);
+            return `
+              <section class="coach-month-day athlete-month-day${day.getMonth() !== monthStart.getMonth() ? " is-outside-month" : ""}${dayIso === date.value ? " is-selected" : ""}${hasAthleteCreated ? " has-self-workout" : ""}" data-athlete-month-date="${escapeHtml(dayIso)}">
+                <button type="button" class="coach-month-day-number athlete-month-day-button" data-athlete-date="${escapeHtml(dayIso)}" aria-label="View ${escapeHtml(calendarDayLabel(day))}">${escapeHtml(String(day.getDate()))}</button>
+                <div class="coach-month-notes">
+                  ${dayWorkouts.map((item) => {
+                    const status = statuses.find((entry) => entry.workout_id === item.id && entry.athlete_id === selectedAthleteId);
+                    return `
+                      <button type="button" class="coach-month-note athlete-month-note${item.isAthleteCreated ? " self-workout-card" : ""}" data-athlete-date="${escapeHtml(item.date)}" data-athlete-workout-id="${escapeHtml(item.id)}">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        <p>${escapeHtml(workoutAssignmentLabel(item))}${status?.status === "done" ? " · Done" : ""}</p>
+                      </button>
+                    `;
+                  }).join("")}
+                </div>
+              </section>
+            `;
+          }).join("")}
+        </div>
+      </section>
+    `;
+  }
+
   async function renderAthlete() {
     try {
       const workouts = await MangoFitnessStore.workouts();
@@ -3502,7 +3552,7 @@ function initAthleteApp() {
           map.get(item.date).push(item);
           return map;
         }, new Map());
-        scheduleView.innerHTML = Array.from({ length: 7 }, (_, index) => {
+        const weekScheduleHtml = Array.from({ length: 7 }, (_, index) => {
           const day = addDays(weekStart, index);
           const dayIso = isoDate(day);
           const dayWorkouts = workoutsByDate.get(dayIso) || [];
@@ -3526,10 +3576,15 @@ function initAthleteApp() {
             </section>
           `;
         }).join("");
+        scheduleView.innerHTML = `
+          <div class="athlete-week-strip">${weekScheduleHtml}</div>
+          ${renderAthleteMonthSchedule(visibleWorkouts, statuses, selectedAthleteId)}
+        `;
         scheduleView.querySelectorAll("[data-athlete-date]").forEach((button) => {
           button.addEventListener("click", () => {
             date.value = button.dataset.athleteDate;
             selectedWorkoutId = button.dataset.athleteWorkoutId || "";
+            selectedWeekStart = startOfWeek(parseLocalDate(date.value));
             renderAthlete();
           });
         });
