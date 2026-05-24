@@ -1690,6 +1690,14 @@ body.is-reordering .exercise-row.dragging {
 .athlete-month-day.has-self-workout {
   border-color: rgba(99, 102, 241, .28);
 }
+@media (orientation: portrait) {
+  .athlete-week-strip {
+    display: contents;
+  }
+  .athlete-month-board {
+    display: none;
+  }
+}
 .athlete-program-day-head {
   width: 100%;
   min-height: 0;
