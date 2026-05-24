@@ -2789,7 +2789,14 @@ function formatSplitTotal(seconds) {
 
 function formatSplitInputValue(value) {
   const text = String(value || "").trim();
-  if (!text || text.includes(":")) return text;
+  if (!text) return text;
+  const colonTime = text.match(/^(\d+):(\d{2,})$/);
+  if (colonTime && colonTime[2].length > 2) {
+    const digits = `${colonTime[1]}${colonTime[2]}`;
+    const secondsPart = Number(digits.slice(-2));
+    if (secondsPart < 60) return `${Number(digits.slice(0, -2))}:${digits.slice(-2)}`;
+  }
+  if (text.includes(":")) return text;
   const digits = text.replace(/\D/g, "");
   if (digits.length < 3 || digits.length > 4) return text;
   const secondsPart = Number(digits.slice(-2));
