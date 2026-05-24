@@ -1748,7 +1748,7 @@ body.is-reordering .exercise-row.dragging {
   white-space: nowrap;
 }
 .coach-month-board {
-  display: grid;
+  display: none;
   gap: 8px;
   width: 100%;
 }
