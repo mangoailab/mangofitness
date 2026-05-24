@@ -1660,35 +1660,6 @@ body.is-reordering .exercise-row.dragging {
 .athlete-program-calendar {
   grid-template-columns: repeat(7, minmax(118px, 1fr));
 }
-.athlete-week-strip {
-  display: contents;
-}
-.athlete-month-board {
-  grid-column: 1 / -1;
-  margin-top: 4px;
-}
-.athlete-month-day-button {
-  width: 100%;
-  min-height: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-  text-align: right;
-}
-.athlete-month-note {
-  width: 100%;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.athlete-month-note:hover {
-  transform: translateY(-1px);
-}
-.athlete-month-day.has-self-workout {
-  border-color: rgba(99, 102, 241, .28);
-}
 .athlete-program-day-head {
   width: 100%;
   min-height: 0;
@@ -2111,29 +2082,6 @@ body.is-moving-coach-program {
   .athlete-program-calendar .athlete-program-dot {
     width: 6px;
     height: 6px;
-  }
-  .athlete-week-strip {
-    display: none;
-  }
-  .athlete-month-board {
-    margin-top: 0;
-  }
-  .athlete-month-board .coach-month-weekdays,
-  .athlete-month-board .coach-month-grid {
-    gap: 4px;
-  }
-  .athlete-month-board .coach-month-day {
-    min-height: 56px;
-    padding: 4px;
-  }
-  .athlete-month-board .coach-month-note {
-    padding: 4px;
-  }
-  .athlete-month-board .coach-month-note strong {
-    font-size: 9px;
-  }
-  .athlete-month-board .coach-month-note p {
-    display: none;
   }
 }
 
