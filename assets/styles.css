@@ -292,8 +292,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 }
 .exercise-row,
 .item-card,
-.result-form,
-.own-cardio-log-form {
+.result-form {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--soft);
@@ -378,8 +377,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
 }
 .item-head p,
 .item-card p,
-.result-form p,
-.own-cardio-log-form p { margin: 4px 0 0; line-height: 1.45; }
+.result-form p { margin: 4px 0 0; line-height: 1.45; }
 .item-actions { width: auto; justify-content: flex-end; }
 .clean-list {
   margin: 12px 0 0;
@@ -657,8 +655,7 @@ a.button-link:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(15,
   padding-top: 10px;
 }
 .workout-detail h3 { margin: 0; font-size: 20px; }
-.result-form,
-.own-cardio-log-form {
+.result-form {
   background: white;
   display: grid;
   gap: 10px;
