@@ -2787,6 +2787,16 @@ function formatSplitTotal(seconds) {
   return hours ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}` : `${minutes}:${String(secs).padStart(2, "0")}`;
 }
 
+function formatSplitInputValue(value) {
+  const text = String(value || "").trim();
+  if (!text || text.includes(":")) return text;
+  const digits = text.replace(/\D/g, "");
+  if (digits.length < 3 || digits.length > 4) return text;
+  const secondsPart = Number(digits.slice(-2));
+  if (secondsPart >= 60) return text;
+  return `${Number(digits.slice(0, -2))}:${digits.slice(-2)}`;
+}
+
 function splitTimeFromForm(data, setNumber) {
   const seconds = splitSeconds(data.get(`set_${setNumber}_time`));
   return seconds == null ? "" : formatSplitTotal(seconds);
@@ -3650,7 +3660,18 @@ function initAthleteApp() {
           if (total) total.textContent = splitTotalFromInputs(form) || "—";
         };
         updateSplitTotal();
-        form.querySelectorAll('[name^="set_"][name$="_time"]').forEach((input) => input.addEventListener("input", updateSplitTotal));
+        form.querySelectorAll('[name^="set_"][name$="_time"]').forEach((input) => {
+          input.addEventListener("input", () => {
+            const formatted = formatSplitInputValue(input.value);
+            if (formatted !== input.value) input.value = formatted;
+            updateSplitTotal();
+          });
+          input.addEventListener("blur", () => {
+            const seconds = splitSeconds(input.value);
+            if (seconds != null) input.value = formatSplitTotal(seconds);
+            updateSplitTotal();
+          });
+        });
         const weightInputs = [...form.querySelectorAll('input[name$="_weight"]')];
         const setGhostWeight = (input, value) => {
           if (!input.dataset.basePlaceholder) input.dataset.basePlaceholder = input.getAttribute("placeholder") || "lb";
