@@ -24,6 +24,7 @@
 - Supabase project ref: `tqjxossmqwmukeeycuua`
 - Schema file: `supabase/schema-draft.sql`
 - Existing-project RLS migration: `supabase/harden-rls.sql`
+- 2026-05-25 live program update: today's workout was changed in Supabase to `Push/Pull + Tester Prep`; it copied the 2026-05-19 warm-up and lifting rows while preserving the already-created Week 2 tester cardio options.
 
 ## Roles and privacy
 
