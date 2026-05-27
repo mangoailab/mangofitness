@@ -215,7 +215,8 @@ values
   ('fran', 'Fran', 'Time', '21-15-9 reps for time: thrusters and pull-ups.', true),
   ('helen', 'Helen', 'Time', '3 rounds for time: 400m run, 21 kettlebell swings, 12 pull-ups.', true),
   ('annie', 'Annie', 'Time', '50-40-30-20-10 reps for time: double-unders and sit-ups.', true),
-  ('grace', 'Grace', 'Time', 'For time: 30 clean and jerks.', true)
+  ('grace', 'Grace', 'Time', 'For time: 30 clean and jerks.', true),
+  ('hyrox-pft', 'HYROX Physical Fitness Test', 'Time', 'HYROX PFT: 1000m run, 50 burpee broad jumps, 100 stationary lunges, 1000m row, 30 hand-release push-ups, 100 wall balls. Score for time.', true)
 on conflict (benchmark_key) do nothing;
 
 insert into strength_movements (movement_key, name, is_builtin)
@@ -237,6 +238,16 @@ values
   ('push-up', 'Push-up', true),
   ('kettlebell-swing', 'Kettlebell Swing', true)
 on conflict (movement_key) do nothing;
+
+insert into strength_movements (movement_key, name, description, category, show_on_leaderboard, is_benchmark, is_builtin)
+values
+  ('hyrox-pft', 'HYROX Physical Fitness Test', 'HYROX PFT: 1000m run, 50 burpee broad jumps, 100 stationary lunges, 1000m row, 30 hand-release push-ups, 100 wall balls. Score for time.', 'wod', true, true, true)
+on conflict (movement_key) do update set
+  name = excluded.name,
+  description = excluded.description,
+  category = excluded.category,
+  show_on_leaderboard = excluded.show_on_leaderboard,
+  is_benchmark = excluded.is_benchmark;
 
 insert into warmup_templates (template_key, name, notes, is_builtin)
 values
@@ -853,4 +864,3 @@ end;
 $$;
 
 grant execute on function public.save_athlete_workout_result(uuid, uuid, uuid, date, numeric, text, text, text, integer) to authenticated;
-

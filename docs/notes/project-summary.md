@@ -25,6 +25,7 @@
 - Schema file: `supabase/schema-draft.sql`
 - Existing-project RLS migration: `supabase/harden-rls.sql`
 - 2026-05-25 live program update: today's workout was changed in Supabase to `Push/Pull + Tester Prep`; it copied the 2026-05-19 warm-up and lifting rows while preserving the already-created Week 2 tester cardio options.
+- 2026-05-26 live data update: HYROX Physical Fitness Test results were recorded for Chris Chaudoir and Lawrence Kam on 2026-03-23 and 2026-05-01. HYROX PFT was added as both a cardio benchmark and a coach-managed benchmark movement (`hyrox-pft`) so it appears in benchmark/history flows and leaderboard-capable benchmark lists.
 
 ## Roles and privacy
 
