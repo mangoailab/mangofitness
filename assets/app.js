@@ -4303,6 +4303,9 @@ function initWorkoutTimer() {
   timer.querySelector("[data-timer-minimize]")?.addEventListener("click", () => {
     timer.dataset.state = timer.dataset.state === "strip" ? "collapsed" : "strip";
   });
+  timer.querySelector("[data-timer-close]")?.addEventListener("click", () => {
+    timer.dataset.state = "collapsed";
+  });
   startBtn?.addEventListener("click", startStopTimer);
   resetBtn?.addEventListener("click", resetTimer);
   editBtn?.addEventListener("click", () => settings?.classList.toggle("hidden"));
