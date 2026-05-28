@@ -3447,16 +3447,32 @@ body.is-moving-coach-program {
   width: auto;
 }
 .workout-timer-fab {
-  background: #132018;
-  border-color: rgba(255, 255, 255, .4);
+  background: transparent;
+  border-color: transparent;
   border-radius: 999px;
-  box-shadow: 0 14px 34px rgba(15, 32, 24, .24);
+  box-shadow: none;
   color: white;
-  font-size: 21px;
-  height: 52px;
-  min-height: 52px;
+  filter: drop-shadow(0 2px 5px rgba(15, 32, 24, .28));
+  height: 48px;
+  min-height: 48px;
   padding: 0;
-  width: 52px;
+  width: 48px;
+}
+.workout-timer-fab:hover {
+  background: rgba(255, 255, 255, .14);
+  box-shadow: none;
+  transform: none;
+}
+.workout-timer-fab svg {
+  display: block;
+  fill: none;
+  height: 30px;
+  margin: auto;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.25;
+  width: 30px;
 }
 .workout-timer-panel {
   background: white;

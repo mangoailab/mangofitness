@@ -96,7 +96,13 @@
   </main>
   <script src="assets/auth.js"></script>
   <aside id="athleteWorkoutTimer" class="workout-timer hidden" data-state="collapsed" aria-label="Workout timer">
-    <button type="button" class="workout-timer-fab" data-timer-expand aria-label="Open workout timer">⏱</button>
+    <button type="button" class="workout-timer-fab" data-timer-expand aria-label="Open workout timer">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M10 2h4" />
+        <path d="M12 14l3-3" />
+        <path d="M12 6a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z" />
+      </svg>
+    </button>
     <section class="workout-timer-panel" aria-live="polite">
       <div class="workout-timer-head">
         <div>

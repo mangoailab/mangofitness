@@ -48,7 +48,7 @@
 ## Workout status integrity
 
 - Athlete workout status stays binary: `done` or no status. `public.set_athlete_workout_status(...)` rejects anything except `done` and checks `public.can_mark_workout_status(workout_id, athlete_id)` so athletes can only mark workouts that are class/everyone or assigned to them.
-- Athlete portal includes a floating workout timer for active workouts. Keep it front-end only unless Lawrence asks for saved timer history: small fixed clock button, expandable timer, X close back to clock icon, portrait strip minimize state for score entry, and landscape large timer view. It supports stopwatch and configurable EMOM. Close/minimize must not reset time; only Reset clears the timer.
+- Athlete portal includes a floating workout timer for active workouts. Keep it front-end only unless Lawrence asks for saved timer history: simple white timer icon trigger without a dark bubble, expandable timer, X close back to clock icon, portrait strip minimize state for score entry, and landscape large timer view. It supports stopwatch and configurable EMOM. Close/minimize must not reset time; only Reset clears the timer.
 
 ## Historical benchmark system workout
 
