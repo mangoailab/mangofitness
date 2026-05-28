@@ -95,7 +95,53 @@
     </section>
   </main>
   <script src="assets/auth.js"></script>
-  <script src="assets/app.js?v=20260523-athlete-cardio-cleanup"></script>
+  <aside id="athleteWorkoutTimer" class="workout-timer hidden" data-state="collapsed" aria-label="Workout timer">
+    <button type="button" class="workout-timer-fab" data-timer-expand aria-label="Open workout timer">⏱</button>
+    <section class="workout-timer-panel" aria-live="polite">
+      <div class="workout-timer-head">
+        <div>
+          <strong>Workout Timer</strong>
+          <span class="workout-timer-mode-label" data-timer-mode-label>Stopwatch</span>
+        </div>
+        <div class="workout-timer-head-actions">
+          <button type="button" data-timer-edit>Edit</button>
+          <button type="button" data-timer-minimize aria-label="Minimize workout timer">−</button>
+        </div>
+      </div>
+      <button type="button" class="workout-timer-strip" data-timer-expand-panel aria-label="Expand workout timer">
+        <span data-timer-strip-label>Stopwatch</span>
+        <strong data-timer-strip-time>00:00</strong>
+      </button>
+      <div class="workout-timer-body">
+        <div class="workout-timer-time" data-timer-display>00:00</div>
+        <div class="workout-timer-meta" data-timer-meta>Ready</div>
+        <form class="workout-timer-settings hidden" data-timer-settings>
+          <div class="field">
+            <label for="timerMode">Timer type</label>
+            <select id="timerMode" data-timer-mode>
+              <option value="stopwatch">Stopwatch</option>
+              <option value="emom">EMOM</option>
+            </select>
+          </div>
+          <div class="workout-timer-setting-grid">
+            <div class="field">
+              <label for="timerDuration">Minutes</label>
+              <input id="timerDuration" type="number" min="1" max="120" step="1" value="10" data-timer-duration />
+            </div>
+            <div class="field">
+              <label for="timerInterval">Interval sec</label>
+              <input id="timerInterval" type="number" min="10" max="600" step="5" value="60" data-timer-interval />
+            </div>
+          </div>
+        </form>
+        <div class="workout-timer-actions">
+          <button type="button" class="primary" data-timer-start>Start</button>
+          <button type="button" data-timer-reset>Reset</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+  <script src="assets/app.js?v=20260528-workout-timer"></script>
   <script>
     initLoginPage({
       emailId: "athleteEmail",
@@ -109,6 +155,7 @@
       dashboardMessageId: "athleteDashboardMessage"
     });
     initAthleteApp();
+    initWorkoutTimer();
   </script>
 </body>
 </html>

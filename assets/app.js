@@ -4155,6 +4155,162 @@ function initAthleteApp() {
 
 }
 
+function initWorkoutTimer() {
+  const timer = document.getElementById("athleteWorkoutTimer");
+  const dashboard = document.getElementById("athleteDashboard");
+  if (!timer || !dashboard) return;
+
+  const display = timer.querySelector("[data-timer-display]");
+  const meta = timer.querySelector("[data-timer-meta]");
+  const stripTime = timer.querySelector("[data-timer-strip-time]");
+  const stripLabel = timer.querySelector("[data-timer-strip-label]");
+  const modeLabel = timer.querySelector("[data-timer-mode-label]");
+  const settings = timer.querySelector("[data-timer-settings]");
+  const modeInput = timer.querySelector("[data-timer-mode]");
+  const durationInput = timer.querySelector("[data-timer-duration]");
+  const intervalInput = timer.querySelector("[data-timer-interval]");
+  const startBtn = timer.querySelector("[data-timer-start]");
+  const resetBtn = timer.querySelector("[data-timer-reset]");
+  const editBtn = timer.querySelector("[data-timer-edit]");
+  const storageKey = "mangoFitness.workoutTimer.v1";
+  let ticker = null;
+  let state = {
+    mode: "stopwatch",
+    durationMinutes: 10,
+    intervalSeconds: 60,
+    elapsedMs: 0,
+    startedAt: null,
+    running: false
+  };
+
+  function readTimerState() {
+    try {
+      state = { ...state, ...JSON.parse(localStorage.getItem(storageKey) || "{}") };
+    } catch {
+      state = { ...state };
+    }
+  }
+
+  function writeTimerState() {
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  }
+
+  function totalMs() {
+    return Math.max(1, Number(state.durationMinutes) || 10) * 60000;
+  }
+
+  function intervalMs() {
+    return Math.max(10, Number(state.intervalSeconds) || 60) * 1000;
+  }
+
+  function currentElapsedMs() {
+    if (!state.running || !state.startedAt) return state.elapsedMs || 0;
+    return (state.elapsedMs || 0) + Math.max(0, Date.now() - state.startedAt);
+  }
+
+  function formatTimer(ms) {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function setTimerVisibility() {
+    timer.classList.toggle("hidden", dashboard.classList.contains("hidden"));
+  }
+
+  function renderTimer() {
+    const elapsed = currentElapsedMs();
+    const isEmom = state.mode === "emom";
+    let displayMs = elapsed;
+    let metaText = state.running ? "Running" : elapsed ? "Paused" : "Ready";
+
+    if (isEmom) {
+      const duration = totalMs();
+      const cappedElapsed = Math.min(elapsed, duration);
+      const rounds = Math.ceil(duration / intervalMs());
+      const round = Math.min(Math.floor(cappedElapsed / intervalMs()) + 1, rounds);
+      const remainder = cappedElapsed % intervalMs();
+      const intervalRemaining = cappedElapsed >= duration ? 0 : (remainder === 0 ? intervalMs() : intervalMs() - remainder);
+      displayMs = Math.max(0, intervalRemaining);
+      metaText = cappedElapsed >= duration ? "Complete" : `Round ${round} of ${rounds}`;
+      if (elapsed >= duration && state.running) {
+        state.elapsedMs = duration;
+        state.startedAt = null;
+        state.running = false;
+        writeTimerState();
+      }
+    }
+
+    const modeText = isEmom ? "EMOM" : "Stopwatch";
+    const timeText = formatTimer(displayMs);
+    if (display) display.textContent = timeText;
+    if (stripTime) stripTime.textContent = timeText;
+    if (stripLabel) stripLabel.textContent = modeText;
+    if (modeLabel) modeLabel.textContent = modeText;
+    if (meta) meta.textContent = metaText;
+    if (startBtn) startBtn.textContent = state.running ? "Stop" : "Start";
+    if (modeInput) modeInput.value = state.mode;
+    if (durationInput) durationInput.value = state.durationMinutes;
+    if (intervalInput) intervalInput.value = state.intervalSeconds;
+  }
+
+  function startTicker() {
+    if (ticker) window.clearInterval(ticker);
+    ticker = window.setInterval(renderTimer, 250);
+  }
+
+  function startStopTimer() {
+    if (state.running) {
+      state.elapsedMs = currentElapsedMs();
+      state.startedAt = null;
+      state.running = false;
+    } else {
+      if (state.mode === "emom" && currentElapsedMs() >= totalMs()) state.elapsedMs = 0;
+      state.startedAt = Date.now();
+      state.running = true;
+    }
+    writeTimerState();
+    renderTimer();
+  }
+
+  function resetTimer() {
+    state.elapsedMs = 0;
+    state.startedAt = null;
+    state.running = false;
+    writeTimerState();
+    renderTimer();
+  }
+
+  function updateSettings() {
+    state.mode = modeInput?.value || "stopwatch";
+    state.durationMinutes = Math.min(120, Math.max(1, Number(durationInput?.value) || 10));
+    state.intervalSeconds = Math.min(600, Math.max(10, Number(intervalInput?.value) || 60));
+    resetTimer();
+  }
+
+  readTimerState();
+  setTimerVisibility();
+  renderTimer();
+  startTicker();
+
+  new MutationObserver(setTimerVisibility).observe(dashboard, { attributes: true, attributeFilter: ["class"] });
+  timer.querySelectorAll("[data-timer-expand], [data-timer-expand-panel]").forEach((button) => {
+    button.addEventListener("click", () => {
+      timer.dataset.state = "expanded";
+    });
+  });
+  timer.querySelector("[data-timer-minimize]")?.addEventListener("click", () => {
+    timer.dataset.state = timer.dataset.state === "strip" ? "collapsed" : "strip";
+  });
+  startBtn?.addEventListener("click", startStopTimer);
+  resetBtn?.addEventListener("click", resetTimer);
+  editBtn?.addEventListener("click", () => settings?.classList.toggle("hidden"));
+  modeInput?.addEventListener("change", updateSettings);
+  durationInput?.addEventListener("change", updateSettings);
+  intervalInput?.addEventListener("change", updateSettings);
+}
+
 async function loadAthleteOptionsForSelect(select, emptyLabel = "Select athlete") {
   if (!select) return;
   try {

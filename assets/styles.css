@@ -3433,6 +3433,175 @@ body.is-moving-coach-program {
 .workout-status-form button {
   width: 100%;
 }
+.workout-timer {
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  display: block;
+  position: fixed;
+  right: calc(18px + env(safe-area-inset-right));
+  width: min(360px, calc(100vw - 28px));
+  z-index: 50;
+}
+.workout-timer[data-state="collapsed"] {
+  bottom: auto;
+  top: calc(14px + env(safe-area-inset-top));
+  width: auto;
+}
+.workout-timer-fab {
+  background: #132018;
+  border-color: rgba(255, 255, 255, .4);
+  border-radius: 999px;
+  box-shadow: 0 14px 34px rgba(15, 32, 24, .24);
+  color: white;
+  font-size: 21px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0;
+  width: 52px;
+}
+.workout-timer-panel {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 20px 48px rgba(15, 32, 24, .20);
+  overflow: hidden;
+}
+.workout-timer[data-state="collapsed"] .workout-timer-panel,
+.workout-timer[data-state="expanded"] .workout-timer-fab,
+.workout-timer[data-state="strip"] .workout-timer-fab {
+  display: none;
+}
+.workout-timer-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 12px 0;
+}
+.workout-timer-head strong {
+  display: block;
+  font-size: 14px;
+}
+.workout-timer-mode-label {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+.workout-timer-head-actions {
+  display: flex;
+  gap: 6px;
+}
+.workout-timer-head-actions button {
+  min-height: 34px;
+  padding: 7px 10px;
+}
+.workout-timer-body {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+.workout-timer-time {
+  font-variant-numeric: tabular-nums;
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-align: center;
+}
+.workout-timer-meta {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+.workout-timer-setting-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.workout-timer-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.workout-timer-actions button {
+  width: 100%;
+}
+.workout-timer-strip {
+  align-items: center;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: none;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.workout-timer-strip strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+}
+.workout-timer[data-state="strip"] {
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  left: 12px;
+  right: 12px;
+  width: auto;
+}
+.workout-timer[data-state="strip"] .workout-timer-head,
+.workout-timer[data-state="strip"] .workout-timer-body {
+  display: none;
+}
+.workout-timer[data-state="strip"] .workout-timer-strip {
+  display: flex;
+}
+@media (max-width: 900px) and (orientation: landscape) {
+  .workout-timer[data-state="expanded"] {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    width: auto;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-panel {
+    height: 100%;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-body {
+    align-content: center;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+    height: calc(100% - 58px);
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-time {
+    align-self: end;
+    font-size: clamp(72px, 18vw, 132px);
+    grid-column: 1;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-meta {
+    align-self: start;
+    font-size: 18px;
+    grid-column: 1;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-settings,
+  .workout-timer[data-state="expanded"] .workout-timer-actions {
+    align-self: center;
+    grid-column: 2;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-actions {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+  .workout-timer[data-state="expanded"] {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    right: 12px;
+    width: min(330px, calc(100vw - 24px));
+  }
+  .workout-timer-time {
+    font-size: 48px;
+  }
+}
 .strength-progress-sessions {
   display: grid;
   gap: 10px;
