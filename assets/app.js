@@ -4250,6 +4250,9 @@ function initWorkoutTimer() {
     if (modeLabel) modeLabel.textContent = modeText;
     if (meta) meta.textContent = metaText;
     if (startBtn) startBtn.textContent = state.running ? "Stop" : "Start";
+  }
+
+  function syncSettingsFields() {
     if (modeInput) modeInput.value = state.mode;
     if (durationInput) durationInput.value = state.durationMinutes;
     if (intervalInput) intervalInput.value = state.intervalSeconds;
@@ -4291,6 +4294,7 @@ function initWorkoutTimer() {
 
   readTimerState();
   setTimerVisibility();
+  syncSettingsFields();
   renderTimer();
   startTicker();
 
@@ -4308,7 +4312,11 @@ function initWorkoutTimer() {
   });
   startBtn?.addEventListener("click", startStopTimer);
   resetBtn?.addEventListener("click", resetTimer);
-  editBtn?.addEventListener("click", () => settings?.classList.toggle("hidden"));
+  editBtn?.addEventListener("click", () => {
+    const isOpening = settings?.classList.contains("hidden");
+    if (isOpening) syncSettingsFields();
+    settings?.classList.toggle("hidden");
+  });
   modeInput?.addEventListener("change", updateSettings);
   durationInput?.addEventListener("change", updateSettings);
   intervalInput?.addEventListener("change", updateSettings);
