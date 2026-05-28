@@ -3518,6 +3518,11 @@ body.is-moving-coach-program {
   gap: 12px;
   padding: 12px;
 }
+.workout-timer-display-group {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
 .workout-timer-time {
   font-variant-numeric: tabular-nums;
   font-size: 56px;
@@ -3573,7 +3578,7 @@ body.is-moving-coach-program {
 .workout-timer[data-state="strip"] .workout-timer-strip {
   display: flex;
 }
-@media (max-width: 900px) and (orientation: landscape) {
+@media (max-width: 1024px) and (orientation: landscape) {
   .workout-timer[data-state="expanded"] {
     bottom: 10px;
     left: 10px;
@@ -3583,22 +3588,27 @@ body.is-moving-coach-program {
   }
   .workout-timer[data-state="expanded"] .workout-timer-panel {
     height: 100%;
+    max-height: calc(100dvh - 20px);
   }
   .workout-timer[data-state="expanded"] .workout-timer-body {
     align-content: center;
+    grid-template-rows: minmax(0, 1fr) auto auto;
     justify-items: center;
     grid-template-columns: minmax(0, 1fr);
     height: calc(100% - 58px);
   }
-  .workout-timer[data-state="expanded"] .workout-timer-time {
-    align-self: end;
-    font-size: clamp(72px, 18vw, 132px);
+  .workout-timer[data-state="expanded"] .workout-timer-display-group {
+    align-self: center;
     grid-column: 1;
+    min-width: 0;
+    width: 100%;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-time {
+    font-size: clamp(72px, 18vw, 132px);
+    max-width: 100%;
   }
   .workout-timer[data-state="expanded"] .workout-timer-meta {
-    align-self: start;
     font-size: 18px;
-    grid-column: 1;
   }
   .workout-timer[data-state="expanded"] .workout-timer-settings,
   .workout-timer[data-state="expanded"] .workout-timer-actions {
@@ -3609,6 +3619,40 @@ body.is-moving-coach-program {
   }
   .workout-timer[data-state="expanded"] .workout-timer-actions {
     max-width: 360px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-time {
+    font-size: clamp(44px, 10vw, 72px);
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-head {
+    padding-top: 8px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-body {
+    align-content: stretch;
+    gap: 6px;
+    grid-template-rows: auto auto auto;
+    height: calc(100% - 48px);
+    overflow-y: auto;
+    padding: 6px 12px 10px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-display-group {
+    gap: 6px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-meta {
+    font-size: 14px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-settings {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(180px, 1fr) minmax(220px, 1.1fr);
+    max-width: 620px;
+    width: min(100%, 620px);
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-actions {
+    background: white;
+    bottom: 0;
+    max-width: 320px;
+    padding-top: 2px;
+    position: sticky;
   }
 }
 @media (max-width: 640px) and (orientation: portrait) {

@@ -4258,6 +4258,11 @@ function initWorkoutTimer() {
     if (intervalInput) intervalInput.value = state.intervalSeconds;
   }
 
+  function setEditingTimer(isEditing) {
+    timer.dataset.editing = isEditing ? "true" : "false";
+    settings?.classList.toggle("hidden", !isEditing);
+  }
+
   function startTicker() {
     if (ticker) window.clearInterval(ticker);
     ticker = window.setInterval(renderTimer, 250);
@@ -4309,13 +4314,14 @@ function initWorkoutTimer() {
   });
   timer.querySelector("[data-timer-close]")?.addEventListener("click", () => {
     timer.dataset.state = "collapsed";
+    setEditingTimer(false);
   });
   startBtn?.addEventListener("click", startStopTimer);
   resetBtn?.addEventListener("click", resetTimer);
   editBtn?.addEventListener("click", () => {
     const isOpening = settings?.classList.contains("hidden");
     if (isOpening) syncSettingsFields();
-    settings?.classList.toggle("hidden");
+    setEditingTimer(Boolean(isOpening));
   });
   modeInput?.addEventListener("change", updateSettings);
   durationInput?.addEventListener("change", updateSettings);
