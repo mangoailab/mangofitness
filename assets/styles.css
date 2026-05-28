@@ -3586,7 +3586,8 @@ body.is-moving-coach-program {
   }
   .workout-timer[data-state="expanded"] .workout-timer-body {
     align-content: center;
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+    justify-items: center;
+    grid-template-columns: minmax(0, 1fr);
     height: calc(100% - 58px);
   }
   .workout-timer[data-state="expanded"] .workout-timer-time {
@@ -3602,10 +3603,12 @@ body.is-moving-coach-program {
   .workout-timer[data-state="expanded"] .workout-timer-settings,
   .workout-timer[data-state="expanded"] .workout-timer-actions {
     align-self: center;
-    grid-column: 2;
+    grid-column: 1;
+    max-width: 520px;
+    width: min(100%, 520px);
   }
   .workout-timer[data-state="expanded"] .workout-timer-actions {
-    grid-template-columns: 1fr;
+    max-width: 360px;
   }
 }
 @media (max-width: 640px) and (orientation: portrait) {
