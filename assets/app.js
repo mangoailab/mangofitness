@@ -3477,9 +3477,9 @@ function initAthleteApp() {
       const statuses = selectedAthleteId ? await MangoFitnessStore.workoutStatuses() : [];
       const weekStart = selectedWeekStart;
       const weekEnd = addDays(weekStart, 6);
-      const visibleWorkouts = MangoFitnessStore.client?.()
-        ? workouts
-        : workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId));
+      const visibleWorkouts = selectedAthleteId
+        ? workouts.filter((item) => isWorkoutVisibleToAthlete(item, selectedAthleteId))
+        : workouts.filter((item) => (item.assignmentType || "everyone") === "everyone");
       const weekWorkouts = visibleWorkouts.filter((item) => {
         const workoutDate = parseLocalDate(item.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
