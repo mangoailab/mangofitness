@@ -3655,6 +3655,66 @@ body.is-moving-coach-program {
     position: sticky;
   }
 }
+@media (orientation: landscape) and (max-height: 650px) {
+  .workout-timer[data-state="expanded"] {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    width: auto;
+  }
+  .workout-timer[data-state="expanded"] .workout-timer-panel {
+    height: 100%;
+    max-height: calc(100dvh - 20px);
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-head {
+    padding-top: 8px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-body {
+    align-content: start;
+    gap: 6px;
+    grid-template-rows: auto auto auto;
+    height: calc(100% - 48px);
+    overflow-y: auto;
+    padding: 4px 12px 8px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-display-group {
+    gap: 4px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-time {
+    font-size: clamp(40px, 8vw, 68px);
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-meta {
+    font-size: 13px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-settings {
+    display: grid;
+    gap: 6px;
+    max-width: 620px;
+    width: min(100%, 620px);
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-settings .field {
+    margin-bottom: 0;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-settings label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-settings input,
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-settings select {
+    border-radius: 12px;
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  .workout-timer[data-state="expanded"][data-editing="true"] .workout-timer-actions {
+    background: white;
+    bottom: 0;
+    max-width: 320px;
+    padding-bottom: max(2px, env(safe-area-inset-bottom));
+    padding-top: 2px;
+    position: sticky;
+  }
+}
 @media (max-width: 640px) and (orientation: portrait) {
   .workout-timer[data-state="expanded"] {
     bottom: calc(12px + env(safe-area-inset-bottom));
